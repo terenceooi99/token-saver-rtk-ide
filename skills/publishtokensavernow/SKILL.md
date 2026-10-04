@@ -15,7 +15,7 @@ When `/publishtokensavernow` is triggered:
      - `Added & Improved`
      - `Fixed & Hardened` (if applicable)
      - `Docs & CI` (if applicable)
-   - Update version numbers and snippets in `README.md` (e.g. `npx ovsx publish token-saver-ide-plugin-<version>.vsix`).
+   - Update version numbers and snippets in `README.md` (e.g. `npx ovsx publish token-saver-rtk-ide-<version>.vsix`).
 
 2. **Determine Version Bump**:
    - Check current version in `package.json`.
@@ -32,8 +32,8 @@ When `/publishtokensavernow` is triggered:
 4. **Verify Pipeline Status**:
    - Confirm the new git tag `v<version>` was pushed to `origin main`.
    - Provide the user with direct monitoring links:
-     - 🚀 **GitHub Actions Pipeline**: `https://github.com/terenceooi99/token-saver-ide-plugin/actions`
-     - 📦 **Open VSX Extension Page**: `https://open-vsx.org/extension/terenceooi/token-saver-ide-plugin`
+     - 🚀 **GitHub Actions Pipeline**: `https://github.com/terenceooi99/token-saver-rtk-ide/actions`
+     - 📦 **Open VSX Extension Page**: `https://open-vsx.org/extension/terenceooi/token-saver-rtk-ide`
 
 ## ⚠️ Critical Release Guardrails
 1. **Always Update CHANGELOG.md First**: Every release tag must be accompanied by an up-to-date entry in `CHANGELOG.md`.

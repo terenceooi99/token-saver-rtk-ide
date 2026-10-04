@@ -1,12 +1,12 @@
-# ⚡ Token Saver (RTK, Headroom & Ponytail) for VS Code & Agentic IDEs
+# ⚡ Token Saver for VS Code & Agentic IDEs
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![OpenVSX](https://img.shields.io/badge/Open%20VSX-available-blue.svg)](https://open-vsx.org/extension/terenceooi/token-saver-ide-plugin)
+[![OpenVSX](https://img.shields.io/badge/Open%20VSX-available-blue.svg)](https://open-vsx.org/extension/terenceooi/token-saver-rtk-ide)
 [![Sponsor on Wise](https://img.shields.io/badge/Sponsor-Wise-9fe870?logo=wise&logoColor=black)](https://wise.com/pay/me/terenceooit)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Compatible-007ACC.svg)](https://code.visualstudio.com)
 [![Cursor](https://img.shields.io/badge/Cursor%20IDE-Compatible-black.svg)](https://cursor.com)
 [![Windsurf](https://img.shields.io/badge/Windsurf%20IDE-Compatible-00E5FF.svg)](https://codeium.com/windsurf)
-[![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-ide-plugin)
+[![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-rtk-ide)
 
 **Token Saver (RTK, Headroom, Ponytail & OmniRoute)** is an all-in-one token optimization suite and CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), and [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), it slashes AI context window token consumption by **60% - 90%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.) and code generation across **all major Agentic AI IDEs and coding assistants**.
 
@@ -268,7 +268,7 @@ You can also synchronize rules directly from terminal:
 
 2. **Publish to Open VSX**:
    ```bash
-   npx ovsx publish token-saver-ide-plugin-<Current-Version>.vsix -p <YOUR_OPENVSX_ACCESS_TOKEN>
+   npx ovsx publish token-saver-rtk-ide-<Current-Version>.vsix -p <YOUR_OPENVSX_ACCESS_TOKEN>
    ```
 
 3. **Automated Tag & CI Release**:
@@ -292,7 +292,7 @@ If Token Saver helps you save tokens, accelerate agent development, or lower you
 ## 👤 Author & Maintainer
 
 - **Terence** — [terenceooi1688@gmail.com](mailto:terenceooi1688@gmail.com)
-- **GitHub**: [terenceooi99/token-saver-ide-plugin](https://github.com/terenceooi99/token-saver-ide-plugin)
+- **GitHub**: [terenceooi99/token-saver-rtk-ide](https://github.com/terenceooi99/token-saver-rtk-ide)
 - **Sponsor / Tip**: [Tip me @ Wise](https://wise.com/pay/me/terenceooit)
 
 ---

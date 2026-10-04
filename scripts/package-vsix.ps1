@@ -64,11 +64,11 @@ $vsixManifestXml = @"
 			<Property Id="Microsoft.VisualStudio.Code.LocalizedLanguages" Value="" />
 			<Property Id="Microsoft.VisualStudio.Code.EnabledApiProposals" Value="" />
 			<Property Id="Microsoft.VisualStudio.Code.ExecutesCode" Value="true" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Source" Value="https://github.com/terenceooi99/token-saver-ide-plugin.git" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Getstarted" Value="https://github.com/terenceooi99/token-saver-ide-plugin.git" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.GitHub" Value="https://github.com/terenceooi99/token-saver-ide-plugin.git" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Support" Value="https://github.com/terenceooi99/token-saver-ide-plugin/issues" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Learn" Value="https://github.com/terenceooi99/token-saver-ide-plugin#readme" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Source" Value="https://github.com/terenceooi99/token-saver-rtk-ide.git" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Getstarted" Value="https://github.com/terenceooi99/token-saver-rtk-ide.git" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.GitHub" Value="https://github.com/terenceooi99/token-saver-rtk-ide.git" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Support" Value="https://github.com/terenceooi99/token-saver-rtk-ide/issues" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Learn" Value="https://github.com/terenceooi99/token-saver-rtk-ide#readme" />
 			<Property Id="Microsoft.VisualStudio.Services.GitHubFlavoredMarkdown" Value="true" />
 			<Property Id="Microsoft.VisualStudio.Services.Content.Pricing" Value="Free"/>
 		</Properties>
@@ -142,13 +142,13 @@ if (-not (Test-Path $latestVsixDir)) {
     New-Item -ItemType Directory -Path $latestVsixDir -Force | Out-Null
 }
 
-$latestVsixFile = Join-Path $latestVsixDir "token-saver-ide-plugin.vsix"
+$latestVsixFile = Join-Path $latestVsixDir "token-saver-rtk-ide.vsix"
 $versionedVsixFile = Join-Path $projectRoot "$name-$version.vsix"
 
 Copy-Item $tempZip $latestVsixFile -Force
 Move-Item $tempZip $versionedVsixFile -Force
 
-$oldVsix = Join-Path $latestVsixDir "token-saver-rtk-ide.vsix"
+$oldVsix = Join-Path $latestVsixDir "token-saver-ide-plugin.vsix"
 if (Test-Path $oldVsix) {
     Remove-Item -Force $oldVsix -ErrorAction SilentlyContinue
 }
