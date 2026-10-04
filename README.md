@@ -179,8 +179,8 @@ The extension provides full graphical and automated control directly from your *
   <img src="resources/dashboard-breakdown.png" alt="Token Saver Real-time Compression Scoreboard & Savings Breakdown" width="100%" />
 </p>
 
-4. **Upstream GitHub 4-Way Core Sync (RTK, Headroom, Ponytail & Anti-Slop)**:
-   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, & `miqdadbadjuber/anti-slop`).
+4. **Upstream GitHub 5-Way Core Sync (RTK, Headroom, Ponytail, Anti-Slop & OmniRoute)**:
+   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, & `diegosouzapw/OmniRoute`).
    - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail and Anti-Slop.
 5. **Dynamic Live Status Bar**:
    - Shows real-time savings: `⚡ RTK: 48.2k saved (72%)` or `⚪ RTK: OFF`.
@@ -201,6 +201,10 @@ The extension provides full graphical and automated control directly from your *
    - `Token Saver: Configure Ponytail Mode (YAGNI & Output Token Saver)`
    - `Token Saver: Run Compact Diff (rtk git diff -U1)`
    - `Token Saver: Generate AST / Symbol Outline for Current File`
+   - `Token Saver: Start OmniRoute AI Gateway (Port 20128)`
+   - `Token Saver: Stop OmniRoute AI Gateway`
+   - `Token Saver: Open OmniRoute Web Dashboard`
+   - `Token Saver: Toggle OmniRoute AI Gateway Integration`
    - `Token Saver: 1-Click Skill Installation (/rtk-*, /ponytail, /antislop)`
    - `Token Saver: Sync Global Antigravity Rules (~/.gemini)`
    - `Token Saver: Show Token Savings Scoreboard (rtk gain)`
@@ -216,6 +220,12 @@ The extension provides full graphical and automated control directly from your *
 | :--- | :--- | :--- |
 | `tokenSaver.enableOnStartup` | `true` | Automatically enable RTK token compression when opening a project. |
 | `tokenSaver.headroomEnabled` | `true` | Enable Headroom context compression (CCR / SmartCrusher / CodeCompressor). |
+| `tokenSaver.antiSlopEnabled` | `true` | Enable Anti-Slop AI quality and slop elimination framework. |
+| `tokenSaver.antiSlopMode` | `"during"` | Anti-Slop review execution mode (`during`, `after`, `ask`, `off`). |
+| `tokenSaver.omniRouteEnabled` | `true` | Enable OmniRoute AI Gateway integration and model routing. |
+| `tokenSaver.omniRoutePort` | `20128` | Local port for OmniRoute AI Gateway proxy server. |
+| `tokenSaver.omniRouteAutoStart` | `false` | Automatically start OmniRoute AI Gateway on IDE startup. |
+| `tokenSaver.omniRouteEndpoint` | `"http://localhost:20128/v1"` | OpenAI-compatible endpoint URL for OmniRoute local proxy. |
 | `tokenSaver.autoInstallSkills` | `true` | Automatically install Antigravity & Agent chat skills (`/rtk-*`, `/ponytail-*`, `/antislop-*`) on startup. |
 | `tokenSaver.targetScope` | `"all"` | Target IDE / Agent rule scope (`all`, `global`, `workspace`, `copilot`, `cursor`, `windsurf`, `cline`, `claude`, `agents`). |
 | `tokenSaver.checkForUpdatesOnStartup` | `true` | Check for newer RTK & Headroom releases on startup. |
@@ -223,8 +233,6 @@ The extension provides full graphical and automated control directly from your *
 | `tokenSaver.tokenPricePerMillion` | `3.00` | Estimated USD price per 1M tokens for dollar savings calculation. |
 | `tokenSaver.statusMetricDisplay` | `"compact"` | Format of live metrics in status bar (`compact`, `verbose`, `iconOnly`). |
 | `tokenSaver.ponytailMode` | `"full"` | Ponytail YAGNI mode (`full`, `lite`, `ultra`, `off`). |
-| `tokenSaver.antiSlopEnabled` | `true` | Enable Anti-Slop AI quality and slop elimination framework. |
-| `tokenSaver.antiSlopMode` | `"during"` | Anti-Slop review execution mode (`during`, `after`, `ask`, `off`). |
 | `tokenSaver.terseAgentMode` | `true` | Instruct agents to drop conversational filler to maximize output token savings. |
 | `tokenSaver.compactDiffContext` | `true` | Direct AI agents to use `-U1` compact context for git diffs. |
 | `tokenSaver.astOutlineContext` | `true` | Direct AI agents to inspect symbol outlines before reading full files. |

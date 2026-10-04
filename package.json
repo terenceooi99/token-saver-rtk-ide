@@ -2,7 +2,7 @@
   "name": "token-saver-rtk-ide",
   "displayName": "Token Saver for VS Code & Agentic IDEs",
   "description": "Smart token optimization & CLI compression proxy for VS Code, Cursor, Windsurf, Cline, Roo Code, Claude Code & Antigravity IDE using matured upstream open-sourced solutions.",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "publisher": "terenceooi",
   "author": {
     "name": "Terence",

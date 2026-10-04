@@ -2,6 +2,21 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.10.0] - 2026-10-05
+### Added & Improved
+- **Anti-Slop AI Quality Framework Integration (`miqdadbadjuber/anti-slop`)**:
+  - Integrated full anti-slop quality filter & rule suite into the extension to stop generic AI slop, filler copywriting, and boilerplate code across all major AI agent IDEs.
+  - Added 6 dedicated AI agent skills: `/antislop` (core router), `/antislop-ui` (spacing, hierarchy & typography), `/antislop-copywriting` (anti-AI writing patterns), `/antislop-human` (human & accessibility standards), `/antislop-layoutmobile` (responsive & tap target constraints), and `/antislop-code` (code comment hygiene).
+  - Integrated automated WCAG contrast checker tooling (`contrast-check.py` and `contrast-mcp.py`).
+  - Added interactive dashboard Anti-Slop controls with 4 execution modes (`during`, `after`, `ask`, `off`) and one-click GitHub sync.
+- **Interactive Multi-Model ROI & Cost Savings Dashboard**:
+  - Added comprehensive LLM ROI calculator (`/rtk-roi`, `/rtk-gain`) with model-level pricing comparisons for GPT-4o, Claude 3.5 Sonnet, Claude 3 Opus, Gemini 1.5 Pro, and DeepSeek V3.
+  - High-fidelity visual token breakdown charts and live telemetry synchronization in the webview dashboard.
+  - Enhanced responsive glassmorphism layout and interactive control panels.
+- **5-Way Upstream GitHub Synchronization & Clean Purge Lifecycle**:
+  - Unified multi-engine management across 5 upstream open-source projects: **RTK** (`rtk-ai/rtk`), **Headroom** (`headroomlabs-ai/headroom`), **Ponytail** (`DietrichGebert/ponytail`), **Anti-Slop** (`miqdadbadjuber/anti-slop`), and **OmniRoute** (`diegosouzapw/OmniRoute`).
+  - Added granular uninstall and purge commands for individual upstream layers alongside complete clean wipe options (`tokenSaver.uninstallAllUpstream`).
+
 ## [1.9.0] - 2026-10-04
 ### Added & Improved
 - **Visuals & Architectural Documentation**:
