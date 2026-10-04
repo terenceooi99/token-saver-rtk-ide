@@ -8,11 +8,69 @@
 [![Windsurf](https://img.shields.io/badge/Windsurf%20IDE-Compatible-00E5FF.svg)](https://codeium.com/windsurf)
 [![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-ide-plugin)
 
-**Token Saver (RTK, Headroom & Ponytail)** is an all-in-one token optimization suite and CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), and [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), it slashes AI context window token consumption by **60% - 90%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.) and code generation across **all major Agentic AI IDEs and coding assistants**.
+**Token Saver (RTK, Headroom, Ponytail & OmniRoute)** is an all-in-one token optimization suite and CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), and [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), it slashes AI context window token consumption by **60% - 90%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.) and code generation across **all major Agentic AI IDEs and coding assistants**.
 
 <p align="center">
-  <img src="resources/dashboard-preview.png" alt="Token Saver Apple Design Interactive Dashboard" width="100%" />
+  <img src="resources/dashboard-preview.png" alt="Token Saver Interactive Glassmorphic Dashboard" width="100%" />
 </p>
+
+---
+
+## 🏗️ Architectural Flowchart
+
+The following flowchart illustrates how **Token Saver** bridges multiple AI IDEs, coordinates four specialized token reduction engines, and optimizes terminal output & prompt context before hitting LLM models:
+
+```mermaid
+flowchart TD
+    subgraph IDEs ["Supported IDEs & AI Agents"]
+        VSCode["VS Code / GitHub Copilot"]
+        Cursor["Cursor AI Agent"]
+        Windsurf["Windsurf Cascade"]
+        ClineRoo["Cline & Roo Code"]
+        Claude["Claude Code CLI"]
+        Antigravity["Google Antigravity IDE"]
+    end
+
+    subgraph TokenSaver ["Token Saver Core Extension Layer"]
+        RuleSync["Multi-IDE Rule Synchronizer<br/>(Safe Delimiter System)"]
+        WebviewDash["Interactive Webview Dashboard<br/>(Live Counters, Breakdown & Controls)"]
+        StatusBar["Dynamic Status Bar Meter<br/>(Real-Time Savings & Cost Gauge)"]
+        SlashSkills["Chat Skills & Commands Engine<br/>(/rtk-*, /ponytail-*, /omniroute)"]
+    end
+
+    subgraph OptimEngines ["Token Optimization & Routing Engines"]
+        RTK["RTK (Rust Token Killer)<br/>CLI Output Compression (60-90% Reduction)"]
+        Headroom["Headroom Context Compression<br/>(CCR / Large Log & JSON Compression)"]
+        Ponytail["Ponytail YAGNI Engine<br/>(Terse Directives, Compact Diffs, AST Outlines)"]
+        OmniRoute["OmniRoute AI Gateway (:20128)<br/>(Multi-Model Routing & Auto-Failover)"]
+    end
+
+    subgraph ContextOptimization ["Context Window & Execution Flow"]
+        TerminalOut["Condensed Terminal Output<br/>(git, npm, cargo, pytest, rg, etc.)"]
+        AgentPrompt["Optimized AI Prompt & Context<br/>(Zero Noise, High-Signal Tokens)"]
+        LLMModels["LLM Providers & Models<br/>(Claude 3.7 / GPT-4o / Gemini / DeepSeek)"]
+    end
+
+    %% Connections
+    IDEs <-->|"Rule Sync & Injections"| RuleSync
+    IDEs -->|"Slash Commands & Chat"| SlashSkills
+    IDEs -->|"User Configuration"| WebviewDash
+    WebviewDash -->|"Status Bar Updates"| StatusBar
+
+    SlashSkills -->|"Executes Shell Commands"| RTK
+    SlashSkills -->|"Compresses Large Payloads"| Headroom
+    SlashSkills -->|"Enforces Terse Code Diff"| Ponytail
+    SlashSkills -->|"Routes AI Queries"| OmniRoute
+
+    RTK -->|"Filters Verbosity"| TerminalOut
+    Headroom -->|"Compresses JSON/Logs"| AgentPrompt
+    Ponytail -->|"Prunes Boilerplate"| AgentPrompt
+    OmniRoute -->|"Routes AI Requests"| LLMModels
+
+    TerminalOut -->|"Feeds Condensed Signal"| AgentPrompt
+    AgentPrompt -->|"Consumes 60-90% Fewer Tokens"| LLMModels
+    LLMModels -.->|"Telemetry & Savings Data"| WebviewDash
+```
 
 ---
 
