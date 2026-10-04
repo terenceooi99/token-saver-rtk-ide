@@ -3,6 +3,7 @@ const StatusBarManager = require('./statusbar');
 const RtkService = require('./rtk-service');
 const RtkUpdater = require('./rtk-updater');
 const SkillInstaller = require('./skill-installer');
+const OmniRouteService = require('./omniroute-service');
 const DashboardPanel = require('./dashboard-panel');
 const SidebarProvider = require('./sidebar-provider');
 
@@ -63,17 +64,22 @@ async function activate(context) {
     let isEnabled = context.globalState.get('tokenSaver.enabled', config.get('enableOnStartup', true));
     const targetScope = config.get('targetScope', 'all');
     const autoInstallSkills = config.get('autoInstallSkills', true);
+    const omniRouteEnabled = config.get('omniRouteEnabled', true);
+    const omniPort = config.get('omniRoutePort', 20128);
 
-    // Initial check of RTK, Headroom & Ponytail engines
+    // Initial check of RTK, Headroom, Ponytail & OmniRoute engines
     const check = await RtkService.checkInstalled();
     const headroomCheck = await RtkService.checkHeadroomInstalled();
     const ponytailCheck = await RtkService.checkPonytailInstalled();
+    const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
-    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed) {
+    const isOmniMissing = omniRouteEnabled && !omniStatus.installed;
+    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || isOmniMissing) {
         const missing = [];
         if (!check.installed) missing.push('RTK CLI');
         if (!headroomCheck.installed) missing.push('Headroom CCR');
         if (!ponytailCheck.installed) missing.push('Ponytail YAGNI (GitHub)');
+        if (isOmniMissing) missing.push('OmniRoute Gateway');
 
         const options = ['🤖 Ask AI (Copy Prompt)'];
         if (!ponytailCheck.installed) {
@@ -95,6 +101,11 @@ async function activate(context) {
                 vscode.commands.executeCommand('tokenSaver.openDashboard');
             }
         });
+    }
+
+    // Auto-start OmniRoute gateway if configured and enabled
+    if (omniRouteEnabled && config.get('omniRouteAutoStart', false)) {
+        OmniRouteService.startGateway(omniPort);
     }
 
     // Auto-install skills (Way 1: Chat / Slash Commands) & sync Multi-IDE rules (Way 2: Dashboard & Status Bar)
@@ -128,7 +139,7 @@ async function activate(context) {
         checkWeeklyAutoSync(context);
     }, 30000);
 
-    // Listen to configuration changes (e.g. tokenPricePerMillion, statusMetricDisplay, ponytailMode, headroomEnabled)
+    // Listen to configuration changes (e.g. tokenPricePerMillion, statusMetricDisplay, ponytailMode, headroomEnabled, omniRouteEnabled)
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(async (e) => {
             if (e.affectsConfiguration('tokenSaver')) {
@@ -348,6 +359,105 @@ async function activate(context) {
         outputChannel.appendLine(outline);
     });
 
+    const startOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.startOmniRoute', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const port = config.get('omniRoutePort', 20128);
+        OmniRouteService.startGateway(port);
+        await refreshStatus(context);
+    });
+
+    const stopOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.stopOmniRoute', async () => {
+        OmniRouteService.stopGateway();
+        await refreshStatus(context);
+    });
+
+    const openOmniRouteUiCmd = vscode.commands.registerCommand('tokenSaver.openOmniRouteUi', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const port = config.get('omniRoutePort', 20128);
+        OmniRouteService.openWebUi(port);
+    });
+
+    const omniRouteDoctorCmd = vscode.commands.registerCommand('tokenSaver.omniRouteDoctor', async () => {
+        OmniRouteService.runDoctor();
+    });
+
+    const installOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.installOmniRoute', async () => {
+        OmniRouteService.installCli();
+    });
+
+    const copyOmniRouteConfigCmd = vscode.commands.registerCommand('tokenSaver.copyOmniRouteConfig', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const port = config.get('omniRoutePort', 20128);
+        const presets = OmniRouteService.getIdePresets(port);
+        const picks = Object.values(presets).map(p => ({
+            label: `${p.icon} ${p.name}`,
+            description: p.quickSnippet.replace(/\n/g, ' | '),
+            preset: p
+        }));
+        const sel = await vscode.window.showQuickPick(picks, { placeHolder: 'Select AI coding tool to copy OmniRoute configuration for:' });
+        if (sel) {
+            await vscode.env.clipboard.writeText(sel.preset.configJson);
+            vscode.window.showInformationMessage(`📋 Copied OmniRoute configuration for ${sel.preset.name} to clipboard!`);
+        }
+    });
+
+    const toggleOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.toggleOmniRoute', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const current = config.get('omniRouteEnabled', true);
+        await config.update('omniRouteEnabled', !current, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(
+            !current
+                ? '🌐 OmniRoute AI Gateway feature is now ENABLED.'
+                : '⚪ OmniRoute AI Gateway feature is now DISABLED.'
+        );
+        await refreshStatus(context);
+    });
+
+    const enableOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.enableOmniRoute', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        await config.update('omniRouteEnabled', true, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage('🌐 OmniRoute AI Gateway feature ENABLED.');
+        await refreshStatus(context);
+    });
+
+    const disableOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.disableOmniRoute', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        await config.update('omniRouteEnabled', false, vscode.ConfigurationTarget.Global);
+        OmniRouteService.stopGateway();
+        vscode.window.showInformationMessage('⚪ OmniRoute AI Gateway feature DISABLED.');
+        await refreshStatus(context);
+    });
+
+    const uninstallUpstreamCmd = vscode.commands.registerCommand('tokenSaver.uninstallUpstream', async () => {
+        await RtkUpdater.showUninstallPicker();
+        await refreshStatus(context);
+    });
+
+    const uninstallRtkCmd = vscode.commands.registerCommand('tokenSaver.uninstallRtk', async () => {
+        await RtkUpdater.performLayerUninstall('rtk');
+        await refreshStatus(context);
+    });
+
+    const uninstallHeadroomCmd = vscode.commands.registerCommand('tokenSaver.uninstallHeadroom', async () => {
+        await RtkUpdater.performLayerUninstall('headroom');
+        await refreshStatus(context);
+    });
+
+    const uninstallPonytailCmd = vscode.commands.registerCommand('tokenSaver.uninstallPonytail', async () => {
+        await RtkUpdater.performLayerUninstall('ponytail');
+        await refreshStatus(context);
+    });
+
+    const uninstallOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.uninstallOmniRoute', async () => {
+        await RtkUpdater.performLayerUninstall('omniroute');
+        await refreshStatus(context);
+    });
+
+    const uninstallAllUpstreamCmd = vscode.commands.registerCommand('tokenSaver.uninstallAllUpstream', async () => {
+        await RtkUpdater.performAllUninstall();
+        await refreshStatus(context);
+    });
+
     context.subscriptions.push(
         openDashboardCmd,
         toggleCmd,
@@ -367,7 +477,22 @@ async function activate(context) {
         copyInstallCommandsCmd,
         setPonytailModeCmd,
         runCompactDiffCmd,
-        generateAstOutlineCmd
+        generateAstOutlineCmd,
+        startOmniRouteCmd,
+        stopOmniRouteCmd,
+        openOmniRouteUiCmd,
+        omniRouteDoctorCmd,
+        installOmniRouteCmd,
+        copyOmniRouteConfigCmd,
+        toggleOmniRouteCmd,
+        enableOmniRouteCmd,
+        disableOmniRouteCmd,
+        uninstallUpstreamCmd,
+        uninstallRtkCmd,
+        uninstallHeadroomCmd,
+        uninstallPonytailCmd,
+        uninstallOmniRouteCmd,
+        uninstallAllUpstreamCmd
     );
 }
 

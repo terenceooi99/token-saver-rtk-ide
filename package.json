@@ -186,10 +186,93 @@
         "title": "Generate AST / Symbol Outline for Current File",
         "category": "Token Saver",
         "icon": "$(symbol-structure)"
+      },
+      {
+        "command": "tokenSaver.startOmniRoute",
+        "title": "Start OmniRoute AI Gateway (Port 20128)",
+        "category": "Token Saver",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "tokenSaver.stopOmniRoute",
+        "title": "Stop OmniRoute AI Gateway",
+        "category": "Token Saver",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "tokenSaver.openOmniRouteUi",
+        "title": "Open OmniRoute Web Dashboard (http://localhost:20128)",
+        "category": "Token Saver",
+        "icon": "$(browser)"
+      },
+      {
+        "command": "tokenSaver.omniRouteDoctor",
+        "title": "Run OmniRoute Gateway Diagnostics (omniroute doctor)",
+        "category": "Token Saver",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "tokenSaver.installOmniRoute",
+        "title": "Install OmniRoute Gateway (npm i -g omniroute)",
+        "category": "Token Saver",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "tokenSaver.copyOmniRouteConfig",
+        "title": "Copy OmniRoute Vibe Coder Endpoint Config (Cursor / Cline / Claude)",
+        "category": "Token Saver",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "tokenSaver.toggleOmniRoute",
+        "title": "Toggle OmniRoute AI Gateway Integration (On/Off)",
+        "category": "Token Saver",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "tokenSaver.enableOmniRoute",
+        "title": "Enable OmniRoute AI Gateway",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.disableOmniRoute",
+        "title": "Disable OmniRoute AI Gateway",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.uninstallUpstream",
+        "title": "Uninstall Upstream GitHub Layer (RTK, Headroom, Ponytail, OmniRoute, Rules & Skills)",
+        "category": "Token Saver",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "tokenSaver.uninstallRtk",
+        "title": "Uninstall RTK CLI (rtk-ai/rtk)",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.uninstallHeadroom",
+        "title": "Uninstall Headroom CCR Layer (headroomlabs-ai/headroom)",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.uninstallPonytail",
+        "title": "Uninstall Ponytail YAGNI Suite (DietrichGebert/ponytail)",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.uninstallOmniRoute",
+        "title": "Uninstall OmniRoute AI Gateway (diegosouzapw/OmniRoute)",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.uninstallAllUpstream",
+        "title": "Uninstall All Upstream GitHub Layers (Full Clean Purge)",
+        "category": "Token Saver"
       }
     ],
     "configuration": {
-      "title": "Token Saver (RTK, Headroom & Ponytail)",
+      "title": "Token Saver (RTK, Headroom, Ponytail & OmniRoute)",
       "properties": {
         "tokenSaver.enableOnStartup": {
           "type": "boolean",
@@ -200,6 +283,26 @@
           "type": "boolean",
           "default": true,
           "description": "Enable Headroom context compression (CCR / SmartCrusher / CodeCompressor) from upstream headroomlabs-ai/headroom."
+        },
+        "tokenSaver.omniRouteEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable OmniRoute AI Gateway integration, auto-failover, and model router features."
+        },
+        "tokenSaver.omniRoutePort": {
+          "type": "number",
+          "default": 20128,
+          "description": "Port for local OmniRoute AI Gateway (default 20128, accessible at http://localhost:20128)."
+        },
+        "tokenSaver.omniRouteAutoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start OmniRoute AI Gateway background process on IDE startup (only when omniRouteEnabled is true)."
+        },
+        "tokenSaver.omniRouteEndpoint": {
+          "type": "string",
+          "default": "http://localhost:20128/v1",
+          "description": "OpenAI-compatible endpoint URL for OmniRoute local proxy."
         },
         "tokenSaver.autoInstallSkills": {
           "type": "boolean",

@@ -83,6 +83,11 @@ class RtkService {
         });
     }
 
+    static checkOmniRouteInstalled() {
+        const OmniRouteService = require('./omniroute-service');
+        return OmniRouteService.checkInstalled();
+    }
+
     static getSavingsRaw() {
         return new Promise((resolve, reject) => {
             exec('rtk gain', (error, stdout, stderr) => {
@@ -335,7 +340,14 @@ class RtkService {
             rtkCmd = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash';
         }
 
-        const headroomCmd = 'pip install "headroom-ai[all]" || pipx install headroom-ai || pip install headroom-ai';
+        const headroomCmd = isWindows
+            ? 'python -m pip install "headroom-ai[all]" 2>$null; if (!$?) { pip install "headroom-ai[all]" }'
+            : 'pip install "headroom-ai[all]" || pipx install headroom-ai || python3 -m pip install "headroom-ai[all]"';
+
+        const omniRouteCmd = isWindows
+            ? 'if (Get-Command npm -ErrorAction SilentlyContinue) { npm install -g omniroute } else { Write-Host "ℹ️ Node.js / npm not detected (Install Node.js to use OmniRoute)" }'
+            : 'command -v npm >/dev/null 2>&1 && npm install -g omniroute || echo "ℹ️ npm not found"';
+
         const ponytailCmd = isWindows
             ? 'git clone https://github.com/DietrichGebert/ponytail.git "$HOME/.config/ponytail" 2>$null || echo "Ponytail fetched"'
             : 'git clone https://github.com/DietrichGebert/ponytail.git ~/.config/ponytail 2>/dev/null || echo "Ponytail fetched"';
@@ -344,18 +356,66 @@ class RtkService {
         return {
             rtkCmd,
             headroomCmd,
+            omniRouteCmd,
             ponytailCmd,
             verifyCmd,
-            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd}` : `${rtkCmd} && ${headroomCmd}`
+            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd}`
         };
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true) {
+    static getUninstallCommands(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin')) {
+        let rtkUninstallCmd;
+        if (isWindows) {
+            rtkUninstallCmd = 'winget uninstall --id rtk-ai.rtk --accept-source-agreements';
+        } else if (isMac) {
+            rtkUninstallCmd = 'brew uninstall rtk || rm -f $(which rtk 2>/dev/null)';
+        } else {
+            rtkUninstallCmd = 'rm -f /usr/local/bin/rtk ~/.local/bin/rtk $(which rtk 2>/dev/null)';
+        }
+
+        const headroomUninstallCmd = isWindows
+            ? 'python -m pip uninstall -y headroom-ai 2>$null; if (!$?) { pip uninstall -y headroom-ai }'
+            : 'pip uninstall -y headroom-ai || pipx uninstall headroom-ai || python3 -m pip uninstall -y headroom-ai';
+
+        const omniRouteUninstallCmd = isWindows
+            ? 'if (Get-Command npm -ErrorAction SilentlyContinue) { npm uninstall -g omniroute }'
+            : 'command -v npm >/dev/null 2>&1 && npm uninstall -g omniroute || true';
+
+        return {
+            rtkUninstallCmd,
+            headroomUninstallCmd,
+            omniRouteUninstallCmd,
+            combinedUninstallCmd: isWindows 
+                ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd}` 
+                : `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd}`
+        };
+    }
+
+    static uninstallRtk() {
+        const isWindows = process.platform === 'win32';
+        const isMac = process.platform === 'darwin';
+        const cmds = this.getUninstallCommands(isWindows, isMac);
+        this.runInTerminal(cmds.rtkUninstallCmd);
+    }
+
+    static uninstallHeadroom() {
+        const isWindows = process.platform === 'win32';
+        const isMac = process.platform === 'darwin';
+        const cmds = this.getUninstallCommands(isWindows, isMac);
+        this.runInTerminal(cmds.headroomUninstallCmd);
+    }
+
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const cmds = this.getInstallCommands(isWindows, isMac);
 
         let items = [];
         let stepIdx = 1;
+
+        if (omniMissing) {
+            items.push(`${stepIdx}. **Install OmniRoute AI Gateway (Smart Router)**:\n   Run command: \`${cmds.omniRouteCmd}\`\n   (Provides OpenAI-compatible router at \`http://localhost:20128/v1\` with auto-fallback).`);
+            stepIdx++;
+        }
 
         if (rtkMissing) {
             items.push(`${stepIdx}. **Install RTK CLI (Rust Token Killer)**:\n   Run command: \`${cmds.rtkCmd}\``);
@@ -372,12 +432,12 @@ class RtkService {
             stepIdx++;
         }
 
-        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\` and \`headroom --version\`, and verify Ponytail skills are available in the IDE.`);
+        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, and \`omniroute --version\`, and verify Ponytail & OmniRoute skills are available in the IDE.`);
         stepIdx++;
         items.push(`${stepIdx}. **Confirm Success**:\n   Report the installed version numbers and active status back to me once done.`);
 
         const prompt = [
-            `Please help me install, fetch, and configure the necessary token saving tools (RTK, Headroom, and Ponytail) for Token Saver on this ${osName} machine:`,
+            `Please help me install, fetch, and configure the necessary token saving and AI routing tools (OmniRoute, RTK, Headroom, and Ponytail) for Token Saver on this ${osName} machine:`,
             '',
             items.join('\n\n'),
             '',

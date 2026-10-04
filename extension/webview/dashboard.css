@@ -1842,3 +1842,370 @@ pre#rawOutputText {
 .dashboard-container.is-compact .raw-output-box {
     display: none !important;
 }
+
+/* ==========================================================================
+   OmniRoute AI Gateway & Vibe Coder Wizard Styles
+   ========================================================================== */
+
+.panel-tag.tag-purple {
+    background: rgba(175, 82, 222, 0.15);
+    color: #d28cff;
+    border: 1px solid rgba(175, 82, 222, 0.3);
+}
+
+.omni-gateway-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.omni-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.omni-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--apple-red);
+    box-shadow: 0 0 8px rgba(255, 69, 58, 0.5);
+    transition: var(--apple-spring);
+}
+
+.omni-dot.online {
+    background: var(--apple-green);
+    box-shadow: 0 0 10px rgba(48, 209, 88, 0.7);
+    animation: pulse-green 2s infinite ease-in-out;
+}
+
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 6px rgba(48, 209, 88, 0.6); }
+    50% { box-shadow: 0 0 14px rgba(48, 209, 88, 0.9); }
+}
+
+.omni-status-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.omni-status-main {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apple-text-primary);
+}
+
+.omni-status-sub {
+    font-size: 11px;
+    color: var(--apple-text-secondary);
+    font-family: var(--font-mono);
+}
+
+.omni-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Vibe Coder Wizard */
+.vibe-wizard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.vibe-wizard-header {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.wizard-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.2px;
+}
+
+.wizard-sub {
+    font-size: 11.5px;
+    color: var(--apple-text-secondary);
+}
+
+.vibe-steps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.vibe-step-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.vibe-step-card.step-card-wide {
+    grid-column: 1 / -1;
+}
+
+.step-badge {
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(10, 132, 255, 0.15);
+    color: var(--apple-blue);
+    border: 1px solid rgba(10, 132, 255, 0.3);
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+
+.step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apple-text-primary);
+    margin: 0;
+}
+
+.step-desc {
+    font-size: 11.5px;
+    color: var(--apple-text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.step-desc code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    color: var(--apple-cyan);
+    font-size: 10.5px;
+}
+
+.step-code-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xs);
+    padding: 6px 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #5cd8ff;
+    margin-top: auto;
+}
+
+.btn-copy-mini {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.7;
+    transition: var(--apple-spring);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.btn-copy-mini:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-step-action {
+    background: rgba(175, 82, 222, 0.15);
+    border: 1px solid rgba(175, 82, 222, 0.3);
+    color: #d28cff;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    cursor: pointer;
+    transition: var(--apple-spring);
+    text-align: center;
+    margin-top: auto;
+}
+
+.btn-step-action:hover {
+    background: rgba(175, 82, 222, 0.28);
+    color: #ffffff;
+    border-color: rgba(175, 82, 222, 0.5);
+}
+
+/* IDE Preset Tabs */
+.ide-preset-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 8px;
+}
+
+.preset-tab {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--apple-text-secondary);
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--apple-spring);
+}
+
+.preset-tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--apple-text-primary);
+}
+
+.preset-tab.active {
+    background: rgba(10, 132, 255, 0.2);
+    border-color: var(--apple-blue);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.preset-content-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.preset-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.preset-header-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--apple-text-primary);
+}
+
+.preset-steps-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--apple-text-secondary);
+    line-height: 1.4;
+}
+
+.preset-steps-list code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    color: var(--apple-cyan);
+    font-size: 11px;
+}
+
+.preset-code-preview {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    overflow-x: auto;
+}
+
+.preset-code-preview pre {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #e0e0e0;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.btn-action-omni {
+    border-left: 3px solid #af52de !important;
+}
+
+.btn-action-danger {
+    border-left: 3px solid var(--apple-rose) !important;
+}
+
+.btn-action-danger:hover {
+    border-color: rgba(255, 69, 58, 0.4) !important;
+    background: rgba(255, 69, 58, 0.08) !important;
+}
+
+.badge-danger {
+    background: rgba(255, 69, 58, 0.15) !important;
+    color: #ffb4ab !important;
+    border: 1px solid rgba(255, 69, 58, 0.3) !important;
+}
+
+.btn-uninstall-clean {
+    background: rgba(255, 69, 58, 0.12);
+    border: 1px solid rgba(255, 69, 58, 0.3);
+    color: #ffb4ab;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: var(--apple-spring);
+}
+
+.btn-uninstall-clean:hover {
+    background: rgba(255, 69, 58, 0.25);
+    border-color: rgba(255, 69, 58, 0.5);
+    color: #ffffff;
+}
+
+.btn-diag-trash {
+    background: rgba(255, 69, 58, 0.12);
+    border: 1px solid rgba(255, 69, 58, 0.3);
+    color: #ffb4ab;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: var(--apple-spring);
+}
+
+.btn-diag-trash:hover {
+    background: rgba(255, 69, 58, 0.3);
+    border-color: var(--apple-rose);
+    color: #ffffff;
+}
+
+.omni-header-toggle {
+    display: inline-flex;
+    align-items: center;
+}
+
+@container dashboard (max-width: 600px) {
+    .vibe-steps-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+

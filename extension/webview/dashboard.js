@@ -93,6 +93,75 @@ const headroomDiagActions = document.getElementById('headroomDiagActions');
 const headroomDiagAiBtn = document.getElementById('headroomDiagAiBtn');
 const headroomDiagRunBtn = document.getElementById('headroomDiagRunBtn');
 
+// OmniRoute Elements
+const sectionOmniRoute = document.getElementById('sectionOmniRoute');
+const omniStatusBadge = document.getElementById('omniStatusBadge');
+const omniLiveDot = document.getElementById('omniLiveDot');
+const omniStatusMain = document.getElementById('omniStatusMain');
+const omniStatusSub = document.getElementById('omniStatusSub');
+const omniStartBtn = document.getElementById('omniStartBtn');
+const omniStopBtn = document.getElementById('omniStopBtn');
+const omniOpenUiBtn = document.getElementById('omniOpenUiBtn');
+const omniDoctorBtn = document.getElementById('omniDoctorBtn');
+const omniStepOpenUiBtn = document.getElementById('omniStepOpenUiBtn');
+const omniCopyLaunchCmdBtn = document.getElementById('omniCopyLaunchCmdBtn');
+const omniPresetTabs = document.getElementById('omniPresetTabs');
+const omniPresetTitle = document.getElementById('omniPresetTitle');
+const omniPresetStepsList = document.getElementById('omniPresetStepsList');
+const omniPresetCodePreview = document.getElementById('omniPresetCodePreview');
+const omniCopyPresetBtn = document.getElementById('omniCopyPresetBtn');
+
+const quickOmniBtn = document.getElementById('quickOmniBtn');
+const quickOmniLabel = document.getElementById('quickOmniLabel');
+const quickOmniSub = document.getElementById('quickOmniSub');
+const quickOmniBadge = document.getElementById('quickOmniBadge');
+
+const diagOmniStatus = document.getElementById('diagOmniStatus');
+const omniDiagActions = document.getElementById('omniDiagActions');
+const omniDiagStartBtn = document.getElementById('omniDiagStartBtn');
+const omniDiagUninstallBtn = document.getElementById('omniDiagUninstallBtn');
+
+const omniEnabledCheckbox = document.getElementById('omniEnabledCheckbox');
+const uninstallUpstreamBtn = document.getElementById('uninstallUpstreamBtn');
+const headerUninstallBtn = document.getElementById('headerUninstallBtn');
+const rtkDiagUninstallBtn = document.getElementById('rtkDiagUninstallBtn');
+const headroomDiagUninstallBtn = document.getElementById('headroomDiagUninstallBtn');
+const ponytailDiagUninstallBtn = document.getElementById('ponytailDiagUninstallBtn');
+
+let currentOmniPresets = null;
+let activeOmniIde = 'cursor';
+
+function renderOmniPreset(ideKey) {
+    if (!currentOmniPresets || !currentOmniPresets[ideKey]) return;
+    activeOmniIde = ideKey;
+    const preset = currentOmniPresets[ideKey];
+
+    if (omniPresetTabs) {
+        omniPresetTabs.querySelectorAll('.preset-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.ide === ideKey);
+        });
+    }
+
+    if (omniPresetTitle) {
+        omniPresetTitle.textContent = preset.title || `${preset.name} Configuration`;
+    }
+
+    if (omniPresetStepsList) {
+        omniPresetStepsList.innerHTML = '';
+        if (Array.isArray(preset.steps)) {
+            preset.steps.forEach(step => {
+                const li = document.createElement('li');
+                li.innerHTML = step.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                omniPresetStepsList.appendChild(li);
+            });
+        }
+    }
+
+    if (omniPresetCodePreview) {
+        omniPresetCodePreview.textContent = preset.configJson || preset.quickSnippet;
+    }
+}
+
 const IDE_ICONS = {
     antigravity_global: '🌌',
     antigravity_workspace: '🌌',
@@ -652,6 +721,109 @@ if (ponytailDiagSyncBtn) {
     });
 }
 
+// OmniRoute Listeners
+if (omniStartBtn) {
+    omniStartBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'startOmniRoute' });
+    });
+}
+if (omniStopBtn) {
+    omniStopBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'stopOmniRoute' });
+    });
+}
+if (omniOpenUiBtn) {
+    omniOpenUiBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openOmniRouteUi' });
+    });
+}
+if (omniDoctorBtn) {
+    omniDoctorBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'runOmniRouteDoctor' });
+    });
+}
+if (omniStepOpenUiBtn) {
+    omniStepOpenUiBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openOmniRouteUi' });
+    });
+}
+if (omniCopyLaunchCmdBtn) {
+    omniCopyLaunchCmdBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'copyOmniRoutePreset', text: 'npx -y omniroute', presetName: 'Launch Command' });
+        omniCopyLaunchCmdBtn.textContent = '✓';
+        setTimeout(() => { omniCopyLaunchCmdBtn.textContent = '📋'; }, 2500);
+    });
+}
+if (omniPresetTabs) {
+    omniPresetTabs.querySelectorAll('.preset-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const ide = tab.dataset.ide;
+            renderOmniPreset(ide);
+        });
+    });
+}
+if (omniCopyPresetBtn) {
+    omniCopyPresetBtn.addEventListener('click', () => {
+        if (currentOmniPresets && currentOmniPresets[activeOmniIde]) {
+            const preset = currentOmniPresets[activeOmniIde];
+            const textToCopy = preset.configJson || preset.quickSnippet;
+            vscode.postMessage({ command: 'copyOmniRoutePreset', text: textToCopy, presetName: preset.name });
+            omniCopyPresetBtn.textContent = '✓ Copied!';
+            setTimeout(() => { omniCopyPresetBtn.textContent = '📋 Copy Configuration'; }, 2500);
+        }
+    });
+}
+if (quickOmniBtn) {
+    quickOmniBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'startOmniRoute' });
+    });
+}
+if (omniDiagStartBtn) {
+    omniDiagStartBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'startOmniRoute' });
+    });
+}
+if (omniEnabledCheckbox) {
+    omniEnabledCheckbox.addEventListener('change', () => {
+        vscode.postMessage({ command: 'toggleOmniRoute' });
+    });
+}
+if (uninstallUpstreamBtn) {
+    uninstallUpstreamBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openUninstallPicker' });
+    });
+}
+if (headerUninstallBtn) {
+    headerUninstallBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openUninstallPicker' });
+    });
+}
+if (omniDiagUninstallBtn) {
+    omniDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'omniroute' });
+    });
+}
+if (rtkDiagUninstallBtn) {
+    rtkDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'rtk' });
+    });
+}
+if (headroomDiagUninstallBtn) {
+    headroomDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'headroom' });
+    });
+}
+if (ponytailDiagUninstallBtn) {
+    ponytailDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'ponytail' });
+    });
+}
+
 // Handle incoming messages from extension host
 window.addEventListener('message', (event) => {
     const message = event.data;
@@ -681,6 +853,9 @@ window.addEventListener('message', (event) => {
                 }
                 if (message.data.ponytail && message.data.ponytail.hasUpdate) {
                     parts.push(`Ponytail (${(message.data.ponytail.release && message.data.ponytail.release.tag) || 'GitHub'})`);
+                }
+                if (message.data.omniroute && message.data.omniroute.hasUpdate && message.data.omniroute.release) {
+                    parts.push(`OmniRoute ${message.data.omniroute.release.tag}`);
                 }
                 if (checkUpdatesLabel) {
                     checkUpdatesLabel.textContent = `Update: ${parts.join(' & ')}!`;
@@ -815,13 +990,17 @@ function renderDashboardState(data) {
     const isRtkMissing = !installed;
     const isHeadroomMissing = !data.headroomInstalled;
     const isPonytailMissing = !data.ponytailInstalled;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing;
+    const isOmniMissing = !data.omniRouteInstalled && !data.omniRouteRunning;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isOmniMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
             setupBanner.style.display = 'flex';
             if (setupMissingTags) {
                 const chips = [];
+                if (isOmniMissing) {
+                    chips.push('<span class="missing-chip chip-purple" style="background: rgba(175, 82, 222, 0.15); color: #d28cff; border: 1px solid rgba(175, 82, 222, 0.3);">🌐 OmniRoute Missing</span>');
+                }
                 if (isRtkMissing) {
                     chips.push('<span class="missing-chip chip-rose">⚡ RTK CLI Missing</span>');
                 }
@@ -835,21 +1014,119 @@ function renderDashboardState(data) {
             }
             if (setupBannerDesc) {
                 const missingNames = [];
+                if (isOmniMissing) missingNames.push('OmniRoute Gateway');
                 if (isRtkMissing) missingNames.push('RTK CLI');
                 if (isHeadroomMissing) missingNames.push('Headroom');
                 if (isPonytailMissing) missingNames.push('Ponytail YAGNI');
-                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash 60–90% token consumption across AI agent interactions and terminal tasks.`;
+                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption and route multi-model traffic with auto-fallback.`;
             }
         } else {
             setupBanner.style.display = 'none';
         }
     }
 
+    // OmniRoute Gateway Rendering
+    const omniPort = data.omniRoutePort || 20128;
+    const omniEnabled = data.omniRouteEnabled !== false;
+    const omniRunning = Boolean(data.omniRouteRunning) && omniEnabled;
+    const omniInstalled = Boolean(data.omniRouteInstalled);
+
+    if (omniEnabledCheckbox) {
+        omniEnabledCheckbox.checked = omniEnabled;
+    }
+
+    if (omniLiveDot) {
+        omniLiveDot.className = omniRunning ? 'omni-dot online' : 'omni-dot';
+    }
+    if (omniStatusMain) {
+        if (!omniEnabled) {
+            omniStatusMain.textContent = 'OmniRoute Disabled in Settings';
+        } else {
+            omniStatusMain.textContent = omniRunning 
+                ? `Gateway Active (Port ${omniPort})` 
+                : (omniInstalled ? 'Gateway Ready (Offline)' : 'Gateway Not Detected');
+        }
+    }
+    if (omniStatusSub) {
+        if (!omniEnabled) {
+            omniStatusSub.textContent = 'Toggle "Active" switch above or user setting tokenSaver.omniRouteEnabled to re-enable';
+        } else {
+            omniStatusSub.textContent = omniRunning 
+                ? `Live at http://localhost:${omniPort}/v1 • Auto-Fallback Active` 
+                : `Endpoint: http://localhost:${omniPort}/v1`;
+        }
+    }
+    if (omniStatusBadge) {
+        if (!omniEnabled) {
+            omniStatusBadge.textContent = '⚪ DISABLED';
+            omniStatusBadge.className = 'panel-tag';
+        } else {
+            omniStatusBadge.textContent = omniRunning 
+                ? `🟢 RUNNING (:${omniPort})` 
+                : (omniInstalled ? '🔴 STOPPED' : '⚠️ NOT DETECTED');
+            omniStatusBadge.className = omniRunning ? 'panel-tag tag-cyan' : 'panel-tag tag-purple';
+        }
+    }
+    if (omniStartBtn && omniStopBtn) {
+        omniStartBtn.style.display = omniRunning ? 'none' : 'inline-block';
+        omniStopBtn.style.display = omniRunning ? 'inline-block' : 'none';
+        if (!omniEnabled) {
+            omniStartBtn.textContent = '⚡ Enable & Start';
+        } else {
+            omniStartBtn.textContent = '⚡ Start Gateway';
+        }
+    }
+
+    // Vibe Coder Presets Update
+    if (data.omniRoutePresets) {
+        currentOmniPresets = data.omniRoutePresets;
+        renderOmniPreset(activeOmniIde);
+    }
+
+    // Quick Action Button for OmniRoute
+    if (quickOmniBadge && quickOmniSub) {
+        if (!omniEnabled) {
+            quickOmniBadge.className = 'action-status-badge';
+            quickOmniBadge.innerHTML = '<span class="badge-text">Disabled</span>';
+            quickOmniSub.textContent = 'Disabled (Setting)';
+        } else if (omniRunning) {
+            quickOmniBadge.className = 'action-status-badge synced';
+            quickOmniBadge.innerHTML = '<span class="badge-icon">✓</span> <span class="badge-text">Online</span>';
+            quickOmniSub.textContent = `Active on port ${omniPort}`;
+        } else {
+            quickOmniBadge.className = 'action-status-badge';
+            quickOmniBadge.innerHTML = '<span class="badge-text">⚡ Launch</span>';
+            quickOmniSub.textContent = `Local AI Router (:${omniPort})`;
+        }
+    }
+
+    // Diagnostics OmniRoute row
+    if (diagOmniStatus) {
+        if (!omniEnabled) {
+            diagOmniStatus.textContent = 'Disabled in Settings';
+            diagOmniStatus.style.color = 'var(--text-muted)';
+        } else {
+            diagOmniStatus.textContent = omniRunning 
+                ? `Running (Port ${omniPort})` 
+                : (omniInstalled ? `Offline (${data.omniRouteVersion || 'Ready'})` : 'Not Detected');
+            diagOmniStatus.style.color = omniRunning ? 'var(--accent-green)' : (omniInstalled ? 'var(--accent-blue)' : 'var(--accent-amber)');
+        }
+    }
+    if (omniDiagStartBtn) {
+        omniDiagStartBtn.textContent = omniRunning ? '🌐 Open UI' : '⚡ Start';
+    }
+    if (omniDiagUninstallBtn) {
+        omniDiagUninstallBtn.style.display = omniInstalled ? 'inline-block' : 'none';
+    }
+
     // Diagnostics
     diagCliStatus.textContent = installed ? 'Detected & Ready' : 'Not Installed';
     diagCliStatus.style.color = installed ? 'var(--accent-green)' : 'var(--accent-rose)';
     if (rtkDiagActions) {
-        rtkDiagActions.style.display = installed ? 'none' : 'inline-flex';
+        rtkDiagActions.style.display = 'inline-flex';
+        if (rtkDiagAiBtn) rtkDiagAiBtn.style.display = installed ? 'none' : 'inline-block';
+        if (rtkDiagRunBtn) rtkDiagRunBtn.style.display = installed ? 'none' : 'inline-block';
+        if (rtkDiagUninstallBtn) rtkDiagUninstallBtn.style.display = installed ? 'inline-block' : 'none';
     }
 
     if (diagHeadroomStatus) {
@@ -864,7 +1141,11 @@ function renderDashboardState(data) {
         }
     }
     if (headroomDiagActions) {
-        headroomDiagActions.style.display = data.headroomInstalled ? 'none' : 'inline-flex';
+        headroomDiagActions.style.display = 'inline-flex';
+        const hrInstalled = Boolean(data.headroomInstalled);
+        if (headroomDiagAiBtn) headroomDiagAiBtn.style.display = hrInstalled ? 'none' : 'inline-block';
+        if (headroomDiagRunBtn) headroomDiagRunBtn.style.display = hrInstalled ? 'none' : 'inline-block';
+        if (headroomDiagUninstallBtn) headroomDiagUninstallBtn.style.display = hrInstalled ? 'inline-block' : 'none';
     }
 
     if (diagPonytailStatus) {
@@ -878,7 +1159,11 @@ function renderDashboardState(data) {
         }
     }
     if (ponytailDiagActions) {
-        ponytailDiagActions.style.display = data.ponytailInstalled ? 'none' : 'inline-flex';
+        ponytailDiagActions.style.display = 'inline-flex';
+        const pInstalled = Boolean(data.ponytailInstalled);
+        if (ponytailDiagAiBtn) ponytailDiagAiBtn.style.display = pInstalled ? 'none' : 'inline-block';
+        if (ponytailDiagSyncBtn) ponytailDiagSyncBtn.style.display = pInstalled ? 'none' : 'inline-block';
+        if (ponytailDiagUninstallBtn) ponytailDiagUninstallBtn.style.display = pInstalled ? 'inline-block' : 'none';
     }
 
     if (ponytailActionBadge) {

@@ -66,22 +66,26 @@ Execute standard shell/terminal commands directly without \`rtk\` prefixing.
     'rtk-update': `---
 name: rtk-update
 description: >
-  Manually check and update upstream GitHub repositories (rtk-ai/rtk and headroomlabs-ai/headroom).
-  Activate when the user types /rtk-update, /headroom-sync, "update upstream", "sync rtk", or asks to
-  synchronize upstream tools.
+  Manually check and update or uninstall upstream GitHub repositories (rtk-ai/rtk, headroomlabs-ai/headroom, DietrichGebert/ponytail, and diegosouzapw/OmniRoute).
+  Activate when the user types /rtk-update, /headroom-sync, /ponytail-sync, "update upstream", "sync rtk", or asks to
+  synchronize or uninstall upstream tools.
 ---
 
 # Upstream GitHub Sync & Update (/rtk-update)
 
-Manually update and synchronize the dual upstream token saver engines:
+Manually update, synchronize, or manage upstream token saver engines:
 1. **RTK (Rust Token Killer):** CLI binary from GitHub (\`rtk-ai/rtk\`)
 2. **Headroom:** Context compression engine from GitHub (\`headroomlabs-ai/headroom\`)
+3. **Ponytail:** YAGNI token saver suite from GitHub (\`DietrichGebert/ponytail\`)
+4. **OmniRoute:** AI Gateway & model router from GitHub (\`diegosouzapw/OmniRoute\`)
 
 ## Execution Steps
 
 1. **Check Local Engine Versions:**
    - Run \`rtk --version\` to check the installed RTK binary version.
    - Run \`headroom --version\` (or \`python -m headroom --version\`) to check Headroom.
+   - Run \`omniroute --version\` to check OmniRoute.
+   - Verify Ponytail skills in global config (\`~/.gemini/config/skills/ponytail/SKILL.md\`).
 
 2. **Fetch Upstream Release & Update:**
    - **RTK (CLI):**
@@ -90,10 +94,13 @@ Manually update and synchronize the dual upstream token saver engines:
      - *Linux:* \`curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash\`
    - **Headroom (Context Compression Layer):**
      - \`pip install --upgrade "headroom-ai[all]"\` or \`pipx upgrade headroom-ai\`
+   - **OmniRoute (AI Gateway):**
+     - \`npm install -g omniroute\`
+   - **Ponytail (YAGNI Suite):**
+     - Fetch/sync latest skills from \`https://github.com/DietrichGebert/ponytail\` to \`~/.gemini/config/skills/\` and \`.agents/skills/\`.
 
-3. **Verify Installation:**
-   - Run \`rtk --version\` and \`rtk gain\` for CLI compression.
-   - Run \`headroom --version\` for context compression.
+3. **Uninstall Any Upstream Layer:**
+   - Use command \`tokenSaver.uninstallUpstream\` or individual uninstall commands in the IDE dashboard.
 `,
     'ponytail': `---
 name: ponytail
@@ -454,6 +461,34 @@ Generates a concise, high-signal project skeleton while filtering out token-wast
 
 ## Execution
 Run \`rtk tree -L 2\` or \`rtk ls\` on the target directory, annotating key architectural directories and entry points with minimal tokens.
+`
+,
+    'rtk-omniroute': `---
+name: rtk-omniroute
+description: >
+  OmniRoute AI Gateway & Smart Model Router for Vibe Coders.
+  Activate when the user types /rtk-omniroute, /omniroute, "omniroute", "ai router", "model gateway",
+  or asks how to route AI requests, avoid rate limits, or connect Cursor/Cline/Claude to OmniRoute.
+---
+
+# OmniRoute AI Gateway & Smart Router (/rtk-omniroute)
+
+OmniRoute is an open-source, local AI gateway and quota-aware router running at \`http://localhost:20128/v1\`. It unifies access across 290+ AI providers with automatic fallback, token compression, and rate-limit immunity.
+
+## 1. Quick Start & Gateway Control
+
+- **Start Local Gateway:** Run \`npx -y omniroute\` (or \`omniroute\`). Gateway listens on port \`20128\`.
+- **Web Dashboard:** Open \`http://localhost:20128\` to configure API keys (Gemini, DeepSeek, OpenAI, Claude, OpenRouter, Groq).
+- **Run Diagnostics:** \`omniroute doctor\`
+
+## 2. Vibe Coder 3-Step Setup
+
+1. **Launch:** Run \`npx -y omniroute\` in terminal.
+2. **Add Keys:** Go to \`http://localhost:20128\` and add your free or paid provider API keys.
+3. **Connect Your IDE:**
+   - **Base URL:** \`http://localhost:20128/v1\`
+   - **API Key:** \`omniroute\` (or dashboard auth password)
+   - **Models:** \`claude-3-7-sonnet\`, \`gpt-4o\`, \`deepseek-r1\`, \`gemini-2.5-pro\`
 `
 };
 
@@ -827,6 +862,68 @@ Always prefix terminal and CLI execution commands with \`rtk\` (e.g. \`rtk git s
             hasGlobal: globalFound.length > 0,
             hasWorkspace: wsFound.length > 0
         };
+    }
+
+    /**
+     * Delete specified skill directories from a base directory
+     */
+    static removeSkillsFromDir(baseDir, skillNames) {
+        if (!baseDir || !fs.existsSync(baseDir)) return [];
+        const removed = [];
+        for (const skill of skillNames) {
+            const skillFolder = path.join(baseDir, skill);
+            if (fs.existsSync(skillFolder)) {
+                try {
+                    fs.rmSync(skillFolder, { recursive: true, force: true });
+                    removed.push(skill);
+                } catch (e) {
+                    console.error(`Failed to delete skill directory ${skillFolder}:`, e);
+                }
+            }
+        }
+        return removed;
+    }
+
+    /**
+     * Uninstall Ponytail skills specifically (DietrichGebert/ponytail)
+     */
+    static uninstallPonytailSkills() {
+        const ponytailSkills = [
+            'ponytail',
+            'ponytail-audit',
+            'ponytail-debt',
+            'ponytail-gain',
+            'ponytail-help',
+            'ponytail-review'
+        ];
+        const removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), ponytailSkills);
+        const removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), ponytailSkills);
+        return {
+            global: removedGlobal,
+            workspace: removedWs,
+            total: [...new Set([...removedGlobal, ...removedWs])]
+        };
+    }
+
+    /**
+     * Uninstall all Token Saver / RTK / Ponytail skills
+     */
+    static uninstallAllSkills() {
+        const allSkillNames = Object.keys(SKILLS_MAP);
+        const removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), allSkillNames);
+        const removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), allSkillNames);
+        return {
+            global: removedGlobal,
+            workspace: removedWs,
+            total: [...new Set([...removedGlobal, ...removedWs])]
+        };
+    }
+
+    /**
+     * Completely remove all injected RTK / Token Saver rule blocks from all IDE target files
+     */
+    static removeAllRules() {
+        return this.syncRules(false, 'all');
     }
 
     /**

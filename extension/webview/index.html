@@ -293,6 +293,112 @@
                     </div>
                 </section>
 
+                <!-- OmniRoute AI Gateway & Router (For Vibe Coders) -->
+                <section class="panel-card omniroute-section" id="sectionOmniRoute">
+                    <div class="panel-header collapsible" data-target="bodyOmniRoute">
+                        <div class="panel-header-left">
+                            <span class="collapse-chevron">▾</span>
+                            <div>
+                                <h2>🌐 OmniRoute AI Gateway & Router</h2>
+                                <p class="panel-subtitle">Unified OpenAI proxy (:20128/v1), quota-aware fallback, & 290+ providers</p>
+                            </div>
+                        </div>
+                        <div class="header-tags-group">
+                            <div class="omni-header-toggle" title="Toggle OmniRoute On/Off (User Setting: tokenSaver.omniRouteEnabled)" onclick="event.stopPropagation()">
+                                <label class="weekly-toggle-label" for="omniEnabledCheckbox">
+                                    <span class="weekly-toggle-text">Active</span>
+                                    <div class="custom-toggle">
+                                        <input type="checkbox" id="omniEnabledCheckbox" checked>
+                                        <span class="custom-toggle-slider"></span>
+                                    </div>
+                                </label>
+                            </div>
+                            <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank" class="repo-badge-link" title="Upstream GitHub: diegosouzapw/OmniRoute">GitHub: diegosouzapw/OmniRoute ↗</a>
+                            <span class="panel-tag tag-purple" id="omniStatusBadge">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="bodyOmniRoute">
+                        <!-- Gateway Status Bar & Quick Actions -->
+                        <div class="omni-gateway-bar">
+                            <div class="omni-status-indicator">
+                                <span class="omni-dot" id="omniLiveDot"></span>
+                                <div class="omni-status-texts">
+                                    <span class="omni-status-main" id="omniStatusMain">Gateway Offline</span>
+                                    <span class="omni-status-sub" id="omniStatusSub">Endpoint: http://localhost:20128/v1</span>
+                                </div>
+                            </div>
+                            <div class="omni-bar-actions">
+                                <button class="btn btn-sm btn-primary" id="omniStartBtn" title="Start OmniRoute Gateway in Terminal">⚡ Start Gateway</button>
+                                <button class="btn btn-sm btn-ghost" id="omniStopBtn" style="display: none;" title="Stop OmniRoute Gateway">🛑 Stop</button>
+                                <button class="btn btn-sm btn-ghost" id="omniOpenUiBtn" title="Open OmniRoute Web Dashboard in Browser">🌐 Open Web UI (:20128) ↗</button>
+                                <button class="btn btn-sm btn-ghost" id="omniDoctorBtn" title="Run OmniRoute Diagnostics">🩺 Doctor</button>
+                            </div>
+                        </div>
+
+                        <!-- Vibe Coder 3-Step Wizard -->
+                        <div class="vibe-wizard-container">
+                            <div class="vibe-wizard-header">
+                                <span class="wizard-title">✨ Vibe Coder's 3-Step Guide to Unlimited AI</span>
+                                <span class="wizard-sub">Bypass rate limits, pool free tiers, and vibe code non-stop with smart auto-failover</span>
+                            </div>
+
+                            <div class="vibe-steps-grid">
+                                <!-- Step 1: Launch -->
+                                <div class="vibe-step-card">
+                                    <div class="step-badge">Step 1</div>
+                                    <h3 class="step-title">Launch Gateway</h3>
+                                    <p class="step-desc">Starts local proxy server on port <code>20128</code> with built-in token compression.</p>
+                                    <div class="step-code-box">
+                                        <code>npx -y omniroute</code>
+                                        <button class="btn-copy-mini" id="omniCopyLaunchCmdBtn" title="Copy launch command">📋</button>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Configure Keys -->
+                                <div class="vibe-step-card">
+                                    <div class="step-badge">Step 2</div>
+                                    <h3 class="step-title">Add Provider Keys</h3>
+                                    <p class="step-desc">Connect free/paid keys (Gemini, DeepSeek, OpenAI, Claude, OpenRouter, Groq).</p>
+                                    <button class="btn btn-step-action" id="omniStepOpenUiBtn">
+                                        <span>🔑 Open Key Config (:20128)</span>
+                                    </button>
+                                </div>
+
+                                <!-- Step 3: Connect Agent -->
+                                <div class="vibe-step-card step-card-wide">
+                                    <div class="step-badge">Step 3</div>
+                                    <h3 class="step-title">Connect Your Coding Agent</h3>
+                                    <p class="step-desc">Point your IDE or CLI assistant to your local OmniRoute endpoint to vibe code with auto-fallback.</p>
+
+                                    <!-- IDE Tabs Switcher -->
+                                    <div class="ide-preset-tabs" id="omniPresetTabs">
+                                        <button class="preset-tab active" data-ide="cursor">🎯 Cursor</button>
+                                        <button class="preset-tab" data-ide="cline">💻 Cline / Roo</button>
+                                        <button class="preset-tab" data-ide="claude">🧠 Claude Code</button>
+                                        <button class="preset-tab" data-ide="antigravity">🌌 Antigravity</button>
+                                        <button class="preset-tab" data-ide="vscode">🤖 VS Code</button>
+                                    </div>
+
+                                    <!-- Active Preset Content Display -->
+                                    <div class="preset-content-box" id="omniPresetContentBox">
+                                        <div class="preset-content-header">
+                                            <span class="preset-header-title" id="omniPresetTitle">Cursor IDE Config</span>
+                                            <button class="btn btn-sm btn-primary" id="omniCopyPresetBtn">📋 Copy Configuration</button>
+                                        </div>
+                                        <ol class="preset-steps-list" id="omniPresetStepsList">
+                                            <!-- Injected by JS -->
+                                        </ol>
+                                        <div class="preset-code-preview">
+                                            <pre id="omniPresetCodePreview">{ ... }</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Command Savings Breakdown -->
                 <section class="panel-card chart-section" id="sectionSavings">
                     <div class="panel-header collapsible" data-target="bodySavings">
@@ -326,6 +432,19 @@
                     </div>
                     <div class="panel-body" id="bodyActions">
                         <div class="action-buttons-list">
+                            <button class="btn btn-action btn-action-omni" id="quickOmniBtn" title="Start or Manage OmniRoute Gateway">
+                                <div class="btn-action-left">
+                                    <span class="btn-icon">🌐</span>
+                                    <div class="btn-text-block">
+                                        <span class="btn-label" id="quickOmniLabel">OmniRoute Gateway</span>
+                                        <span class="btn-sub" id="quickOmniSub">Local AI Router (:20128)</span>
+                                    </div>
+                                </div>
+                                <span class="action-status-badge" id="quickOmniBadge">
+                                    <span class="badge-text">Launch</span>
+                                </span>
+                            </button>
+
                             <button class="btn btn-action" id="syncSkillsBtn" title="Install or re-sync Antigravity / AI Agent chat skills">
                                 <div class="btn-action-left">
                                     <span class="btn-icon">🧠</span>
@@ -356,12 +475,12 @@
                             </button>
 
                             <div class="action-row-split">
-                                <button class="btn btn-action action-btn-main" id="checkUpdatesBtn" title="Check upstream GitHub repositories (rtk-ai/rtk, headroomlabs-ai/headroom & DietrichGebert/ponytail) for updates">
+                                <button class="btn btn-action action-btn-main" id="checkUpdatesBtn" title="Check upstream GitHub repositories (rtk, headroom, ponytail & omniroute) for updates">
                                     <div class="btn-action-left">
                                         <span class="btn-icon">🚀</span>
                                         <div class="btn-text-block">
                                             <span class="btn-label" id="checkUpdatesLabel">Sync Upstream GitHub</span>
-                                            <span class="btn-sub" id="checkUpdatesSub">Check rtk, headroom & ponytail</span>
+                                            <span class="btn-sub" id="checkUpdatesSub">Check rtk, headroom & omniroute</span>
                                         </div>
                                     </div>
                                 </button>
@@ -375,6 +494,19 @@
                                     </label>
                                 </div>
                             </div>
+
+                            <button class="btn btn-action btn-action-danger" id="uninstallUpstreamBtn" title="Uninstall any upstream GitHub layer (RTK, Headroom, Ponytail, OmniRoute, Rules & Skills)">
+                                <div class="btn-action-left">
+                                    <span class="btn-icon">🗑️</span>
+                                    <div class="btn-text-block">
+                                        <span class="btn-label" id="uninstallUpstreamLabel">Uninstall Upstream</span>
+                                        <span class="btn-sub" id="uninstallUpstreamSub">Manage / Remove Layers</span>
+                                    </div>
+                                </div>
+                                <span class="action-status-badge badge-danger">
+                                    <span class="badge-text">Clean</span>
+                                </span>
+                            </button>
 
                             <button class="btn btn-action" id="openTerminalBtn" title="Open terminal to run rtk gain interactively">
                                 <div class="btn-action-left">
@@ -406,9 +538,22 @@
                             <span class="collapse-chevron">▾</span>
                             <h2>🛠️ System Health</h2>
                         </div>
+                        <div class="header-tags-group">
+                            <button class="btn-header-action btn-uninstall-clean" id="headerUninstallBtn" title="Uninstall any upstream GitHub layer">🗑️ Clean / Uninstall</button>
+                        </div>
                     </div>
                     <div class="panel-body" id="bodyHealth">
                         <div class="diagnostics-list">
+                            <div class="diag-row">
+                                <span class="diag-key">OmniRoute:</span>
+                                <div class="diag-val-wrapper">
+                                    <span class="diag-val" id="diagOmniStatus">Checking...</span>
+                                    <span class="diag-action-btns" id="omniDiagActions">
+                                        <button class="btn-diag-mini btn-diag-run" id="omniDiagStartBtn" title="Start Gateway">⚡ Start</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="omniDiagUninstallBtn" title="Uninstall OmniRoute">🗑️</button>
+                                    </span>
+                                </div>
+                            </div>
                             <div class="diag-row">
                                 <span class="diag-key">RTK CLI:</span>
                                 <div class="diag-val-wrapper">
@@ -416,6 +561,7 @@
                                     <span class="diag-action-btns" id="rtkDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="rtkDiagAiBtn" title="Copy AI install prompt for RTK">🤖 Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-run" id="rtkDiagRunBtn" title="Run RTK install in terminal">⚡ Install</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="rtkDiagUninstallBtn" title="Uninstall RTK CLI">🗑️</button>
                                     </span>
                                 </div>
                             </div>
@@ -426,6 +572,7 @@
                                     <span class="diag-action-btns" id="headroomDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="headroomDiagAiBtn" title="Copy AI install prompt for Headroom">🤖 Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-run" id="headroomDiagRunBtn" title="Run Headroom install in terminal">⚡ Install</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="headroomDiagUninstallBtn" title="Uninstall Headroom">🗑️</button>
                                     </span>
                                 </div>
                             </div>
@@ -436,6 +583,7 @@
                                     <span class="diag-action-btns" id="ponytailDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="ponytailDiagAiBtn" title="Copy AI install prompt for Ponytail">🤖 Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="ponytailDiagSyncBtn" title="Fetch Ponytail from GitHub to Global IDE">🥋 Sync</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="ponytailDiagUninstallBtn" title="Uninstall Ponytail Skills">🗑️</button>
                                     </span>
                                 </div>
                             </div>
@@ -463,11 +611,12 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <span>⚡ Token Saver (RTK & Headroom)</span>
+            <span>⚡ Token Saver (RTK, Headroom & OmniRoute)</span>
             <span class="footer-links">
                 <a href="https://github.com/rtk-ai/rtk" target="_blank">RTK Core</a> • 
                 <a href="https://github.com/headroomlabs-ai/headroom" target="_blank">Headroom</a> • 
                 <a href="https://github.com/DietrichGebert/ponytail" target="_blank">Ponytail (YAGNI)</a> • 
+                <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a> • 
                 <a href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank">GitHub</a> • 
                 <a href="https://wise.com/pay/me/terenceooit" target="_blank" class="tip-link" id="wiseTipLink" title="Tip me @ Wise">☕ Tip me @ Wise</a>
             </span>

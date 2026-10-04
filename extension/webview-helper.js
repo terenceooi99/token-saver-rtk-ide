@@ -4,6 +4,7 @@ const fs = require('fs');
 const RtkService = require('./rtk-service');
 const RtkUpdater = require('./rtk-updater');
 const SkillInstaller = require('./skill-installer');
+const OmniRouteService = require('./omniroute-service');
 
 class WebviewHelper {
     static getHtml(extensionUri, webview) {
@@ -26,12 +27,16 @@ class WebviewHelper {
         const weeklyAutoSync = context.globalState.get('tokenSaver.weeklyAutoSync', config.get('weeklyAutoSync', true));
         const tokenPricePerMillion = config.get('tokenPricePerMillion', 3.00);
         const headroomEnabled = config.get('headroomEnabled', true);
+        const omniPort = config.get('omniRoutePort', 20128);
+
         const check = await RtkService.checkInstalled();
         const headroomCheck = await RtkService.checkHeadroomInstalled();
         const ponytailCheck = await RtkService.checkPonytailInstalled();
+        const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
         const metrics = await RtkService.getParsedMetrics();
         const skillsInstalled = SkillInstaller.checkSkillsInstalled('all');
         const ideStatus = SkillInstaller.getIdeStatus();
+        const omniPresets = OmniRouteService.getIdePresets(omniPort);
 
         return {
             isEnabled,
@@ -44,6 +49,14 @@ class WebviewHelper {
             ponytailVersion: ponytailCheck.version || 'Not synced',
             ponytailSkillsCount: ponytailCheck.skillsCount || 0,
             ponytailMode: config.get('ponytailMode', 'full'),
+            omniRouteEnabled: config.get('omniRouteEnabled', true),
+            omniRouteInstalled: omniStatus.installed,
+            omniRouteRunning: omniStatus.running,
+            omniRoutePort: omniPort,
+            omniRouteVersion: omniStatus.version,
+            omniRouteEndpoint: omniStatus.endpoint,
+            omniRouteWebUiUrl: omniStatus.webUiUrl,
+            omniRoutePresets: omniPresets,
             terseAgentMode: config.get('terseAgentMode', true),
             compactDiffContext: config.get('compactDiffContext', true),
             astOutlineContext: config.get('astOutlineContext', true),
@@ -240,6 +253,48 @@ class WebviewHelper {
                 break;
             case 'runFileOutline':
                 await vscode.commands.executeCommand('tokenSaver.generateAstOutline');
+                break;
+            case 'toggleOmniRoute':
+                await vscode.commands.executeCommand('tokenSaver.toggleOmniRoute');
+                triggerRefresh(300);
+                break;
+            case 'startOmniRoute':
+                await vscode.commands.executeCommand('tokenSaver.startOmniRoute');
+                triggerRefresh(1500);
+                break;
+            case 'stopOmniRoute':
+                await vscode.commands.executeCommand('tokenSaver.stopOmniRoute');
+                triggerRefresh(500);
+                break;
+            case 'openOmniRouteUi':
+                await vscode.commands.executeCommand('tokenSaver.openOmniRouteUi');
+                break;
+            case 'runOmniRouteDoctor':
+                await vscode.commands.executeCommand('tokenSaver.omniRouteDoctor');
+                break;
+            case 'installOmniRoute':
+                await vscode.commands.executeCommand('tokenSaver.installOmniRoute');
+                triggerRefresh(1000);
+                break;
+            case 'copyOmniRoutePreset':
+                if (message.text) {
+                    await vscode.env.clipboard.writeText(message.text);
+                    webview.postMessage({ type: 'toast', message: `📋 ${message.presetName || 'Config'} copied to clipboard!` });
+                }
+                break;
+            case 'openUninstallPicker':
+                await vscode.commands.executeCommand('tokenSaver.uninstallUpstream');
+                triggerRefresh(500);
+                break;
+            case 'uninstallLayer':
+                if (message.layerKey) {
+                    await RtkUpdater.performLayerUninstall(message.layerKey);
+                    triggerRefresh(500);
+                }
+                break;
+            case 'uninstallAllUpstream':
+                await RtkUpdater.performAllUninstall();
+                triggerRefresh(500);
                 break;
         }
     }
