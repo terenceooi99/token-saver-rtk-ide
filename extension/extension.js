@@ -21,6 +21,9 @@ async function refreshStatus(context) {
     if (sidebarProvider) {
         sidebarProvider.sendLatestData();
     }
+    if (DashboardPanel.currentPanel) {
+        DashboardPanel.currentPanel.sendLatestData();
+    }
 }
 
 async function checkWeeklyAutoSync(context) {
@@ -255,6 +258,10 @@ async function activate(context) {
         }
     });
 
+    const refreshCmd = vscode.commands.registerCommand('tokenSaver.refresh', async () => {
+        await refreshStatus(context);
+    });
+
     const showSavingsCmd = vscode.commands.registerCommand('tokenSaver.showSavings', async () => {
         try {
             outputChannel.clear();
@@ -473,6 +480,7 @@ async function activate(context) {
         syncPonytailCmd,
         installSkillsCmd,
         syncGlobalRulesCmd,
+        refreshCmd,
         showSavingsCmd,
         installCliCmd,
         copyAiInstallPromptCmd,

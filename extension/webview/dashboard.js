@@ -13,6 +13,7 @@ const minimizeBtn = document.getElementById('minimizeBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const themeIcon = document.getElementById('themeIcon');
 
+const refreshDropdownGroup = document.getElementById('refreshDropdownGroup');
 const refreshBtn = document.getElementById('refreshBtn');
 const refreshIcon = document.getElementById('refreshIcon');
 const refreshMenuBtn = document.getElementById('refreshMenuBtn');
@@ -346,23 +347,37 @@ function triggerRefresh(isAutomatic = false) {
         refreshIcon.classList.add('spinning');
         setTimeout(() => {
             refreshIcon.classList.remove('spinning');
-        }, 600);
+        }, 750);
+    }
+    if (refreshBtn) {
+        refreshBtn.classList.add('active');
+        setTimeout(() => {
+            refreshBtn.classList.remove('active');
+        }, 750);
     }
     vscode.postMessage({ command: 'refresh', isAutomatic });
 }
 
 // Refresh Dropdown Event Listeners
-refreshBtn.addEventListener('click', () => {
-    triggerRefresh(false);
-});
+if (refreshBtn) {
+    refreshBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        triggerRefresh(false);
+    });
+}
 
-refreshMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    refreshDropdownMenu.classList.toggle('show');
-    if (refreshDropdownMenu.classList.contains('show') && customMinuteInput) {
-        customMinuteInput.focus();
-    }
-});
+if (refreshMenuBtn) {
+    refreshMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = refreshDropdownMenu.classList.toggle('show');
+        if (refreshDropdownGroup) {
+            refreshDropdownGroup.classList.toggle('open', isOpen);
+        }
+        if (isOpen && customMinuteInput) {
+            customMinuteInput.focus();
+        }
+    });
+}
 
 if (applyMinuteBtn) {
     applyMinuteBtn.addEventListener('click', (e) => {
@@ -472,8 +487,11 @@ if (costPresetToggleBtn && costPresetsPopover) {
 
 // Close dropdowns and popovers on outside click or Escape
 window.addEventListener('click', (e) => {
-    if (!refreshDropdownMenu.contains(e.target) && !refreshMenuBtn.contains(e.target)) {
+    if (refreshDropdownMenu && !refreshDropdownMenu.contains(e.target) && refreshMenuBtn && !refreshMenuBtn.contains(e.target)) {
         refreshDropdownMenu.classList.remove('show');
+        if (refreshDropdownGroup) {
+            refreshDropdownGroup.classList.remove('open');
+        }
     }
     if (costPresetsPopover && costPresetToggleBtn && !costPresetsPopover.contains(e.target) && !costPresetToggleBtn.contains(e.target)) {
         costPresetsPopover.classList.remove('show');
@@ -487,7 +505,8 @@ window.addEventListener('click', (e) => {
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        refreshDropdownMenu.classList.remove('show');
+        if (refreshDropdownMenu) refreshDropdownMenu.classList.remove('show');
+        if (refreshDropdownGroup) refreshDropdownGroup.classList.remove('open');
         if (costPresetsPopover && costPresetToggleBtn) {
             costPresetsPopover.classList.remove('show');
             costPresetToggleBtn.classList.remove('active');
@@ -497,6 +516,8 @@ window.addEventListener('keydown', (e) => {
             }
         }
     }
+});
+
 // Theme Management (Default: Dark Mode)
 let currentTheme = 'dark';
 try {

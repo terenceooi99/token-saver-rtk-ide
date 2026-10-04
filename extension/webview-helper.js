@@ -81,8 +81,13 @@ class WebviewHelper {
 
         switch (message.command) {
             case 'ready':
+                if (onStateRequest) await onStateRequest();
+                break;
             case 'refresh':
                 if (onStateRequest) await onStateRequest();
+                try {
+                    await vscode.commands.executeCommand('tokenSaver.refresh');
+                } catch (_) {}
                 break;
             case 'popOut':
                 if (isSidebar) {
