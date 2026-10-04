@@ -7,6 +7,7 @@ const statusPill = document.getElementById('statusPill');
 const statusText = document.getElementById('statusText');
 const toggleModeBtn = document.getElementById('toggleModeBtn');
 const toggleHeadroomBtn = document.getElementById('toggleHeadroomBtn');
+const toggleOmniRouteBtn = document.getElementById('toggleOmniRouteBtn');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
 
@@ -45,6 +46,7 @@ const skillsSubText = document.getElementById('skillsSubText');
 const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
 const checkUpdatesLabel = document.getElementById('checkUpdatesLabel');
 const checkUpdatesSub = document.getElementById('checkUpdatesSub');
+const checkUpdatesBadge = document.getElementById('checkUpdatesBadge');
 const weeklySyncCheckbox = document.getElementById('weeklySyncCheckbox');
 const weeklySyncWrapper = document.getElementById('weeklySyncWrapper');
 
@@ -552,6 +554,12 @@ if (toggleHeadroomBtn) {
     });
 }
 
+if (toggleOmniRouteBtn) {
+    toggleOmniRouteBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'toggleOmniRoute' });
+    });
+}
+
 syncAllIdesBtn.addEventListener('click', () => {
     syncAllIdesBtn.textContent = 'Syncing...';
     vscode.postMessage({ command: 'syncAllIdeRules' });
@@ -564,9 +572,11 @@ syncSkillsBtn.addEventListener('click', () => {
     vscode.postMessage({ command: 'installSkills' });
 });
 
-checkUpdatesBtn.addEventListener('click', () => {
-    vscode.postMessage({ command: 'checkUpdates' });
-});
+if (checkUpdatesBtn) {
+    checkUpdatesBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openSyncPicker' });
+    });
+}
 
 if (weeklySyncCheckbox) {
     weeklySyncCheckbox.addEventListener('change', (e) => {
@@ -581,10 +591,14 @@ openTerminalBtn.addEventListener('click', () => {
     vscode.postMessage({ command: 'openScoreboardTerminal' });
 });
 
-testLatencyBtn.addEventListener('click', () => {
-    latencySubText.textContent = 'Measuring latency...';
-    vscode.postMessage({ command: 'testLatency' });
-});
+if (testLatencyBtn) {
+    testLatencyBtn.addEventListener('click', () => {
+        if (latencySubText) {
+            latencySubText.textContent = 'Pinging all upstream layers...';
+        }
+        vscode.postMessage({ command: 'testLatency' });
+    });
+}
 
 if (ponytailSegmentGroup) {
     const btns = ponytailSegmentGroup.querySelectorAll('.segment-btn');
@@ -836,10 +850,15 @@ window.addEventListener('message', (event) => {
             renderDashboardState(message.data);
             break;
         case 'latencyResult':
-            if (message.data.available) {
-                latencySubText.textContent = `Latency: ${message.data.latency} (Zero overhead)`;
-            } else {
-                latencySubText.textContent = 'RTK binary not reachable';
+            if (message.data) {
+                if (message.data.summary) {
+                    latencySubText.textContent = message.data.summary;
+                    latencySubText.title = message.data.details || message.data.summary;
+                } else if (message.data.available) {
+                    latencySubText.textContent = `Latency: ${message.data.latency}`;
+                } else {
+                    latencySubText.textContent = 'Upstream layers not reachable';
+                }
             }
             break;
         case 'updateCheckResult':
@@ -862,6 +881,15 @@ window.addEventListener('message', (event) => {
                 }
                 if (checkUpdatesSub) {
                     checkUpdatesSub.textContent = 'Click to upgrade & sync upstream tools';
+                }
+                if (checkUpdatesBadge) {
+                    checkUpdatesBadge.className = 'action-status-badge install';
+                    checkUpdatesBadge.innerHTML = '<span class="badge-text">🚀 Update</span>';
+                }
+            } else {
+                if (checkUpdatesBadge) {
+                    checkUpdatesBadge.className = 'action-status-badge';
+                    checkUpdatesBadge.innerHTML = '<span class="badge-text">▾ Sync</span>';
                 }
             }
             break;
@@ -919,6 +947,18 @@ function renderDashboardState(data) {
         } else {
             toggleHeadroomBtn.textContent = 'Turn Headroom ON';
             toggleHeadroomBtn.className = 'btn btn-primary';
+        }
+    }
+
+    // OmniRoute Button in Header
+    if (toggleOmniRouteBtn) {
+        const isOmni = Boolean(data.omniRouteEnabled);
+        if (isOmni) {
+            toggleOmniRouteBtn.textContent = 'Turn OmniRoute OFF';
+            toggleOmniRouteBtn.className = 'btn btn-ghost';
+        } else {
+            toggleOmniRouteBtn.textContent = 'Turn OmniRoute ON';
+            toggleOmniRouteBtn.className = 'btn btn-primary';
         }
     }
 
@@ -1120,7 +1160,7 @@ function renderDashboardState(data) {
     }
 
     // Diagnostics
-    diagCliStatus.textContent = installed ? 'Detected & Ready' : 'Not Installed';
+    diagCliStatus.textContent = installed ? `Detected (${version || 'Ready'})` : 'Not Installed';
     diagCliStatus.style.color = installed ? 'var(--accent-green)' : 'var(--accent-rose)';
     if (rtkDiagActions) {
         rtkDiagActions.style.display = 'inline-flex';
@@ -1184,7 +1224,29 @@ function renderDashboardState(data) {
         }
     }
 
-    diagVersion.textContent = version;
+    // Upstream GitHub Installed Versions breakdown
+    const verList = [];
+    if (installed) {
+        verList.push(`RTK: ${version}`);
+    }
+    if (data.headroomInstalled) {
+        verList.push(`Headroom: ${data.headroomVersion}`);
+    }
+    if (data.ponytailInstalled) {
+        verList.push(`Ponytail: ${data.ponytailVersion || 'v1.0.0'} (${data.ponytailSkillsCount || 6}/6)`);
+    }
+    if (data.omniRouteInstalled) {
+        verList.push(`OmniRoute: ${data.omniRouteVersion || 'Ready'}`);
+    }
+
+    if (verList.length === 0) {
+        diagVersion.textContent = 'None detected';
+        diagVersion.title = 'No upstream GitHub layers detected';
+    } else {
+        diagVersion.textContent = verList.join(' • ');
+        diagVersion.title = verList.join('\n');
+    }
+
     diagBinaryPath.textContent = binaryPath;
     diagBinaryPath.title = binaryPath;
     diagScope.textContent = scope === 'all' ? 'All Supported IDEs & Agents' : scope;

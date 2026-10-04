@@ -114,13 +114,10 @@ class WebviewHelper {
                     SkillInstaller.syncRules(!message.currentlySynced, [message.targetId]);
                     triggerRefresh();
                 }
-                break;
+            case 'openSyncPicker':
             case 'checkUpdates':
-                const updateResult = await RtkUpdater.checkForUpdates(false);
-                webview.postMessage({
-                    type: 'updateCheckResult',
-                    data: updateResult
-                });
+                await vscode.commands.executeCommand('tokenSaver.checkUpdates');
+                triggerRefresh(500);
                 break;
             case 'toggleWeeklyAutoSync':
                 const isWeekly = message.enabled !== undefined ? message.enabled : true;

@@ -258,18 +258,113 @@ class RtkService {
         };
     }
 
-    static testLatency() {
-        return new Promise((resolve) => {
+    static async testLatency() {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const omniPort = config.get('omniRoutePort', 20128);
+
+        // 1. RTK Core Proxy Latency
+        const testRtk = () => new Promise((resolve) => {
             const start = Date.now();
             exec('rtk --version', (error) => {
-                const latency = Date.now() - start;
-                if (error) {
-                    resolve({ available: false, latency: null });
-                } else {
-                    resolve({ available: true, latency: `${latency}ms` });
-                }
+                const duration = Date.now() - start;
+                resolve({
+                    name: 'RTK',
+                    available: !error,
+                    latency: !error ? `${duration}ms` : 'N/A',
+                    ms: duration
+                });
             });
         });
+
+        // 2. Headroom CCR Latency
+        const testHeadroom = () => new Promise((resolve) => {
+            const start = Date.now();
+            exec('headroom --version || python -m headroom --version || py -m headroom --version', (error) => {
+                const duration = Date.now() - start;
+                resolve({
+                    name: 'Headroom',
+                    available: !error,
+                    latency: !error ? `${duration}ms` : 'N/A',
+                    ms: duration
+                });
+            });
+        });
+
+        // 3. Ponytail YAGNI Skills Latency
+        const testPonytail = () => new Promise((resolve) => {
+            const start = Date.now();
+            const home = os.homedir();
+            const globalSkillPath = path.join(home, '.gemini', 'config', 'skills', 'ponytail', 'SKILL.md');
+            const exists = fs.existsSync(globalSkillPath);
+            const duration = Math.max(1, Date.now() - start);
+            resolve({
+                name: 'Ponytail',
+                available: exists,
+                latency: exists ? `${duration}ms` : 'Not Synced',
+                ms: duration
+            });
+        });
+
+        // 4. OmniRoute Gateway Latency
+        const testOmniRoute = () => new Promise((resolve) => {
+            const start = Date.now();
+            const http = require('http');
+            const req = http.get(`http://127.0.0.1:${omniPort}/health`, { timeout: 800 }, () => {
+                const duration = Date.now() - start;
+                resolve({
+                    name: 'OmniRoute',
+                    available: true,
+                    running: true,
+                    latency: `${duration}ms`,
+                    ms: duration
+                });
+            });
+
+            const onFail = () => {
+                exec('omniroute --version', (error) => {
+                    const duration = Date.now() - start;
+                    resolve({
+                        name: 'OmniRoute',
+                        available: !error,
+                        running: false,
+                        latency: !error ? `${duration}ms (CLI)` : 'Offline',
+                        ms: duration
+                    });
+                });
+            };
+
+            req.on('error', onFail);
+            req.setTimeout(800, () => {
+                req.destroy();
+                onFail();
+            });
+        });
+
+        const [rtk, headroom, ponytail, omniroute] = await Promise.all([
+            testRtk(),
+            testHeadroom(),
+            testPonytail(),
+            testOmniRoute()
+        ]);
+
+        const parts = [];
+        if (rtk.available) parts.push(`RTK: ${rtk.latency}`);
+        if (headroom.available) parts.push(`Headroom: ${headroom.latency}`);
+        if (ponytail.available) parts.push(`Ponytail: ${ponytail.latency}`);
+        if (omniroute.available) parts.push(`OmniRoute: ${omniroute.latency}`);
+
+        const summary = parts.length > 0 ? parts.join(' • ') : 'No upstream layers detected';
+        const anyAvailable = rtk.available || headroom.available || ponytail.available || omniroute.available;
+
+        return {
+            available: anyAvailable,
+            summary,
+            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | OmniRoute: ${omniroute.latency}`,
+            rtk,
+            headroom,
+            ponytail,
+            omniroute
+        };
     }
 
     static getCompactDiffRaw() {

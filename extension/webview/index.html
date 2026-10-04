@@ -25,6 +25,7 @@
                 </div>
                 <button class="btn btn-primary" id="toggleModeBtn">Turn RTK ON</button>
                 <button class="btn btn-primary" id="toggleHeadroomBtn">Turn Headroom ON</button>
+                <button class="btn btn-primary" id="toggleOmniRouteBtn">Turn OmniRoute ON</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
@@ -304,15 +305,6 @@
                             </div>
                         </div>
                         <div class="header-tags-group">
-                            <div class="omni-header-toggle" title="Toggle OmniRoute On/Off (User Setting: tokenSaver.omniRouteEnabled)" onclick="event.stopPropagation()">
-                                <label class="weekly-toggle-label" for="omniEnabledCheckbox">
-                                    <span class="weekly-toggle-text">Active</span>
-                                    <div class="custom-toggle">
-                                        <input type="checkbox" id="omniEnabledCheckbox" checked>
-                                        <span class="custom-toggle-slider"></span>
-                                    </div>
-                                </label>
-                            </div>
                             <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank" class="repo-badge-link" title="Upstream GitHub: diegosouzapw/OmniRoute">GitHub: diegosouzapw/OmniRoute ↗</a>
                             <span class="panel-tag tag-purple" id="omniStatusBadge">Checking...</span>
                         </div>
@@ -459,30 +451,18 @@
                                 </span>
                             </button>
 
-                            <!-- Dedicated Ponytail GitHub Sync Button -->
-                            <button class="btn btn-action btn-action-ponytail" id="syncPonytailBtn" title="Fetch & Synchronize Ponytail YAGNI skills directly from GitHub (DietrichGebert/ponytail) to global IDE">
-                                <div class="btn-action-left">
-                                    <span class="btn-icon">🥋</span>
-                                    <div class="btn-text-block">
-                                        <span class="btn-label" id="syncPonytailLabel">Sync Ponytail GitHub</span>
-                                        <span class="btn-sub" id="syncPonytailSub">Fetch DietrichGebert/ponytail to IDE</span>
-                                    </div>
-                                </div>
-                                <span class="action-status-badge" id="ponytailActionBadge">
-                                    <span class="badge-icon">✓</span>
-                                    <span class="badge-text">Ready</span>
-                                </span>
-                            </button>
-
                             <div class="action-row-split">
-                                <button class="btn btn-action action-btn-main" id="checkUpdatesBtn" title="Check upstream GitHub repositories (rtk, headroom, ponytail & omniroute) for updates">
+                                <button class="btn btn-action action-btn-main" id="checkUpdatesBtn" title="Sync & Check Upstream GitHub repositories (RTK, Headroom, Ponytail & OmniRoute)">
                                     <div class="btn-action-left">
                                         <span class="btn-icon">🚀</span>
                                         <div class="btn-text-block">
                                             <span class="btn-label" id="checkUpdatesLabel">Sync Upstream GitHub</span>
-                                            <span class="btn-sub" id="checkUpdatesSub">Check rtk, headroom & omniroute</span>
+                                            <span class="btn-sub" id="checkUpdatesSub">RTK, Headroom, Ponytail & OmniRoute</span>
                                         </div>
                                     </div>
+                                    <span class="action-status-badge" id="checkUpdatesBadge">
+                                        <span class="badge-text">▾ Sync</span>
+                                    </span>
                                 </button>
                                 <div class="action-side-toggle" id="weeklySyncWrapper" title="Weekly Auto Sync: automatically check for new upstream releases once a week">
                                     <label class="weekly-toggle-label" for="weeklySyncCheckbox">
@@ -518,12 +498,12 @@
                                 </div>
                             </button>
 
-                            <button class="btn btn-action" id="testLatencyBtn" title="Test RTK proxy response time and latency">
+                            <button class="btn btn-action" id="testLatencyBtn" title="Test Upstream GitHub Layer Latencies (RTK, Headroom, Ponytail & OmniRoute)">
                                 <div class="btn-action-left">
                                     <span class="btn-icon">⏱️</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label">Test Proxy Latency</span>
-                                        <span class="btn-sub" id="latencySubText">Measure overhead ms</span>
+                                        <span class="btn-label" id="testLatencyLabel">Test Upstream Latencies</span>
+                                        <span class="btn-sub" id="latencySubText">Measure RTK, Headroom, Ponytail & OmniRoute ms</span>
                                     </div>
                                 </div>
                             </button>
@@ -588,7 +568,7 @@
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">Version:</span>
+                                <span class="diag-key">Upstream Versions:</span>
                                 <span class="diag-val" id="diagVersion">--</span>
                             </div>
                             <div class="diag-row">

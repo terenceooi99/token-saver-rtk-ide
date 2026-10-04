@@ -225,11 +225,13 @@ async function activate(context) {
     });
 
     const checkUpdatesCmd = vscode.commands.registerCommand('tokenSaver.checkUpdates', async () => {
-        await RtkUpdater.checkForUpdates(false);
+        await RtkUpdater.showSyncPicker();
+        await refreshStatus(context);
     });
 
     const updateRtkCmd = vscode.commands.registerCommand('tokenSaver.updateRtk', async () => {
-        await RtkUpdater.manualUpdate();
+        await RtkUpdater.showSyncPicker();
+        await refreshStatus(context);
     });
 
     const installSkillsCmd = vscode.commands.registerCommand('tokenSaver.installSkills', async () => {

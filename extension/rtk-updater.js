@@ -459,9 +459,107 @@ class RtkUpdater {
         }
     }
 
+    static async showSyncPicker() {
+        return vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail & OmniRoute)...',
+                cancellable: false
+            },
+            async () => {
+                const OmniRouteService = require('./omniroute-service');
+                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease] = await Promise.all([
+                    RtkService.checkInstalled(),
+                    RtkService.checkHeadroomInstalled(),
+                    RtkService.checkPonytailInstalled(),
+                    RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : OmniRouteService.checkInstalled(),
+                    this.getLatestRelease('rtk-ai/rtk'),
+                    this.getLatestRelease('headroomlabs-ai/headroom'),
+                    this.getLatestRelease('DietrichGebert/ponytail'),
+                    this.getLatestRelease('diegosouzapw/OmniRoute')
+                ]);
+
+                const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
+                const headroomHasUpdate = headroomRelease.success && headroomCheck.installed && this.isNewer(headroomRelease.tag, headroomCheck.version);
+                const ponytailHasUpdate = ponytailRelease.success && (!ponytailCheck.installed || (ponytailCheck.skillsCount && ponytailCheck.skillsCount < 6));
+                const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || omniHasUpdate;
+
+                const picks = [
+                    {
+                        label: hasAnyUpdate ? '$(cloud-download) Update / Sync All Upstream GitHub Layers' : '$(sync) Sync All Upstream GitHub Layers',
+                        description: 'Batch update & sync RTK, Headroom, Ponytail and OmniRoute',
+                        detail: hasAnyUpdate ? '🚀 Updates available for one or more layers - Click to update all' : '✓ All components up-to-date - Click to force re-sync',
+                        actionKey: 'all'
+                    },
+                    {
+                        label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
+                        description: `Installed: ${ponytailCheck.installed ? `${ponytailCheck.skillsCount || 6}/6 skills active` : 'Not Synced'} | GitHub: ${ponytailRelease.tag || 'Latest'}`,
+                        detail: ponytailHasUpdate 
+                            ? `🚀 Update / Missing skills detected - Click to fetch & sync from GitHub` 
+                            : (ponytailCheck.installed ? '✓ Synced & active in Global IDE - Click to re-fetch' : '⚡ Click to fetch DietrichGebert/ponytail skills to IDE'),
+                        actionKey: 'ponytail'
+                    },
+                    {
+                        label: '$(terminal) RTK CLI (rtk-ai/rtk)',
+                        description: `Installed: ${rtkCheck.installed ? rtkCheck.version : 'Not Installed'} | GitHub: ${rtkRelease.tag || 'Latest'}`,
+                        detail: rtkHasUpdate 
+                            ? `🚀 Update Available (${rtkCheck.version} ➔ ${rtkRelease.tag}) - Click to update` 
+                            : (rtkCheck.installed ? `✓ Up to date (${rtkCheck.version})` : '⚡ Not Installed - Click to install via terminal'),
+                        actionKey: 'rtk'
+                    },
+                    {
+                        label: '$(package) Headroom CCR (headroomlabs-ai/headroom)',
+                        description: `Installed: ${headroomCheck.installed ? headroomCheck.version : 'Not Installed'} | GitHub: ${headroomRelease.tag || 'Latest'}`,
+                        detail: headroomHasUpdate 
+                            ? `🚀 Update Available (${headroomCheck.version} ➔ ${headroomRelease.tag}) - Click to update` 
+                            : (headroomCheck.installed ? `✓ Up to date (${headroomCheck.version})` : '⚡ Not Installed - Click to install via pip'),
+                        actionKey: 'headroom'
+                    },
+                    {
+                        label: '$(globe) OmniRoute AI Gateway (diegosouzapw/OmniRoute)',
+                        description: `Installed: ${omniCheck.installed ? (omniCheck.version || 'Ready') : 'Not Installed'} | GitHub: ${omniRelease.tag || 'Latest'}`,
+                        detail: omniHasUpdate 
+                            ? `🚀 Update Available (${omniCheck.version || 'installed'} ➔ ${omniRelease.tag}) - Click to update` 
+                            : (omniCheck.installed ? `✓ Up to date (${omniCheck.version || 'Ready'})` : '⚡ Not Installed - Click to install via npm'),
+                        actionKey: 'omniroute'
+                    },
+                    {
+                        label: '$(link-external) View Upstream GitHub Release Notes & Compare',
+                        description: 'Open release notes and commit history on GitHub',
+                        detail: 'Compare releases for rtk, headroom, ponytail & omniroute in your browser',
+                        actionKey: 'notes'
+                    }
+                ];
+
+                const sel = await vscode.window.showQuickPick(picks, {
+                    placeHolder: 'Select an upstream GitHub repository to sync, update, or compare:'
+                });
+
+                if (!sel) return;
+
+                if (sel.actionKey === 'all') {
+                    this.performAllUpdates();
+                } else if (sel.actionKey === 'ponytail') {
+                    await this.performPonytailSync();
+                } else if (sel.actionKey === 'rtk') {
+                    this.performUpdate();
+                } else if (sel.actionKey === 'headroom') {
+                    this.performHeadroomUpdate();
+                } else if (sel.actionKey === 'omniroute') {
+                    this.performOmniRouteUpdate();
+                } else if (sel.actionKey === 'notes') {
+                    if (rtkRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(rtkRelease.htmlUrl));
+                    if (headroomRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(headroomRelease.htmlUrl));
+                    if (ponytailRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(ponytailRelease.htmlUrl));
+                    if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
+                }
+            }
+        );
+    }
+
     static async manualUpdate() {
-        vscode.window.showInformationMessage('🔄 Checking & syncing upstream GitHub repositories (rtk, headroom, ponytail & omniroute)...');
-        return this.checkForUpdates(false);
+        return this.showSyncPicker();
     }
 }
 

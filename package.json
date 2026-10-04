@@ -116,12 +116,12 @@
       },
       {
         "command": "tokenSaver.checkUpdates",
-        "title": "Check for Upstream GitHub Updates (RTK, Headroom & Ponytail)",
+        "title": "Sync & Check Upstream GitHub (RTK, Headroom, Ponytail & OmniRoute)",
         "category": "Token Saver"
       },
       {
         "command": "tokenSaver.updateRtk",
-        "title": "Update from Upstream GitHub (RTK, Headroom & Ponytail)",
+        "title": "Update & Sync Upstream GitHub (RTK, Headroom, Ponytail & OmniRoute)",
         "category": "Token Saver",
         "icon": "$(cloud-download)"
       },
