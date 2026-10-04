@@ -1,17 +1,16 @@
 # Changelog
 
-All notable changes to the **Token Saver** project will be documented in this file.
+All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
 ## [1.9.0] - 2026-10-04
 ### Added & Improved
-- **Architectural Flowchart & README Overhaul**:
-  - Added comprehensive Mermaid architectural flowchart to README visualizing end-to-end data flow between Supported IDEs, Token Saver Core Extension Layer, four Token Optimization Engines (RTK, Headroom, Ponytail, OmniRoute), and downstream LLM context window execution.
-  - Updated hero description to include OmniRoute AI Gateway as a fourth upstream engine alongside RTK, Headroom, and Ponytail.
-- **Updated Dashboard Screenshots**:
-  - Replaced `resources/dashboard-preview.png` and `resources/dashboard-breakdown.png` with latest interface visuals showing 88.0K tokens saved, OmniRoute Gateway controls, Antigravity IDE Hub sync, and terminal scoreboard.
-- **Rebranding & OpenVSX Metadata**:
-  - Renamed extension `displayName` from "Token Saver (RTK) for VS Code & Agentic IDEs" to "Token Saver for VS Code & Agentic IDEs" for cleaner marketplace presentation.
-  - Updated `description` to: "Smart token optimization & CLI compression proxy for VS Code, Cursor, Windsurf, Cline, Roo Code, Claude Code & Antigravity IDE using matured upstream open-sourced solutions."
+- **Visuals & Architectural Documentation**:
+  - Added full end-to-end Mermaid architectural flowchart mapping multi-IDE rule synchronization, optimization engines, and LLM context reduction to `README.md`.
+  - Updated latest high-fidelity dashboard overview and savings breakdown screenshot artifacts (`dashboard-preview.png` and `dashboard-breakdown.png`).
+- **Open VSX & Package Metadata Refinement**:
+  - Updated extension display title to **"Token Saver for VS Code & Agentic IDEs"**.
+  - Refined description emphasizing mature upstream open-sourced token optimization solutions (RTK, Headroom, Ponytail, OmniRoute).
+  - Synchronized upstream release configurations and distribution scripts.
 
 ## [1.8.0] - 2026-10-01
 ### Added & Improved
