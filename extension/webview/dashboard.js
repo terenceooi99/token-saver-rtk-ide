@@ -10,6 +10,8 @@ const toggleHeadroomBtn = document.getElementById('toggleHeadroomBtn');
 const toggleOmniRouteBtn = document.getElementById('toggleOmniRouteBtn');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIcon = document.getElementById('themeIcon');
 
 const refreshBtn = document.getElementById('refreshBtn');
 const refreshIcon = document.getElementById('refreshIcon');
@@ -495,7 +497,47 @@ window.addEventListener('keydown', (e) => {
             }
         }
     }
-});
+// Theme Management (Default: Dark Mode)
+let currentTheme = 'dark';
+try {
+    const savedTheme = localStorage.getItem('tokenSaverTheme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+        currentTheme = savedTheme;
+    }
+} catch (_) {}
+
+function applyTheme(theme) {
+    currentTheme = theme;
+    if (theme === 'light') {
+        document.body.setAttribute('data-theme', 'light');
+        document.body.classList.add('light-theme');
+        if (themeIcon) themeIcon.textContent = '🌙';
+        if (themeToggleBtn) {
+            themeToggleBtn.title = 'Switch to Dark Mode';
+            themeToggleBtn.classList.add('active');
+        }
+    } else {
+        document.body.setAttribute('data-theme', 'dark');
+        document.body.classList.remove('light-theme');
+        if (themeIcon) themeIcon.textContent = '☀️';
+        if (themeToggleBtn) {
+            themeToggleBtn.title = 'Switch to Light Mode';
+            themeToggleBtn.classList.remove('active');
+        }
+    }
+    try {
+        localStorage.setItem('tokenSaverTheme', theme);
+    } catch (_) {}
+}
+
+// Initialize Theme
+applyTheme(currentTheme);
+
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+}
 
 // Minimize & Pop Out Event Listeners
 if (minimizeBtn) {
@@ -925,15 +967,20 @@ function renderDashboardState(data) {
         }
     }
 
-    // Status Pill & RTK Button
+    // Status Pill (if present) & RTK Button
+    if (statusPill && statusText) {
+        if (isEnabled) {
+            statusPill.className = 'status-pill active';
+            statusText.textContent = 'RTK ACTIVE';
+        } else {
+            statusPill.className = 'status-pill inactive';
+            statusText.textContent = 'RTK INACTIVE';
+        }
+    }
     if (isEnabled) {
-        statusPill.className = 'status-pill active';
-        statusText.textContent = 'RTK ACTIVE';
         toggleModeBtn.textContent = 'Turn RTK OFF';
         toggleModeBtn.className = 'btn btn-ghost';
     } else {
-        statusPill.className = 'status-pill inactive';
-        statusText.textContent = 'RTK INACTIVE';
         toggleModeBtn.textContent = 'Turn RTK ON';
         toggleModeBtn.className = 'btn btn-primary';
     }
@@ -1143,13 +1190,17 @@ function renderDashboardState(data) {
     // Diagnostics OmniRoute row
     if (diagOmniStatus) {
         if (!omniEnabled) {
-            diagOmniStatus.textContent = 'Disabled in Settings';
+            diagOmniStatus.textContent = 'Inactive (Disabled in Settings)';
             diagOmniStatus.style.color = 'var(--text-muted)';
+        } else if (omniRunning) {
+            diagOmniStatus.textContent = `Active (:Port ${omniPort} Online)`;
+            diagOmniStatus.style.color = 'var(--accent-green)';
+        } else if (omniInstalled) {
+            diagOmniStatus.textContent = `Inactive (:Port ${omniPort} Offline)`;
+            diagOmniStatus.style.color = 'var(--accent-amber)';
         } else {
-            diagOmniStatus.textContent = omniRunning 
-                ? `Running (Port ${omniPort})` 
-                : (omniInstalled ? `Offline (${data.omniRouteVersion || 'Ready'})` : 'Not Detected');
-            diagOmniStatus.style.color = omniRunning ? 'var(--accent-green)' : (omniInstalled ? 'var(--accent-blue)' : 'var(--accent-amber)');
+            diagOmniStatus.textContent = 'Issue (Not Installed)';
+            diagOmniStatus.style.color = 'var(--accent-rose)';
         }
     }
     if (omniDiagStartBtn) {
@@ -1159,9 +1210,19 @@ function renderDashboardState(data) {
         omniDiagUninstallBtn.style.display = omniInstalled ? 'inline-block' : 'none';
     }
 
-    // Diagnostics
-    diagCliStatus.textContent = installed ? `Detected (${version || 'Ready'})` : 'Not Installed';
-    diagCliStatus.style.color = installed ? 'var(--accent-green)' : 'var(--accent-rose)';
+    // Diagnostics RTK CLI row
+    if (diagCliStatus) {
+        if (!installed) {
+            diagCliStatus.textContent = 'Issue (Not Installed)';
+            diagCliStatus.style.color = 'var(--accent-rose)';
+        } else if (isEnabled) {
+            diagCliStatus.textContent = `Active (${version || 'Ready'})`;
+            diagCliStatus.style.color = 'var(--accent-green)';
+        } else {
+            diagCliStatus.textContent = 'Inactive (Disabled)';
+            diagCliStatus.style.color = 'var(--text-muted)';
+        }
+    }
     if (rtkDiagActions) {
         rtkDiagActions.style.display = 'inline-flex';
         if (rtkDiagAiBtn) rtkDiagAiBtn.style.display = installed ? 'none' : 'inline-block';
@@ -1170,14 +1231,21 @@ function renderDashboardState(data) {
     }
 
     if (diagHeadroomStatus) {
-        const hrInstalled = data.headroomInstalled;
+        const hrInstalled = Boolean(data.headroomInstalled);
+        const hrEnabled = Boolean(data.headroomEnabled);
         const hrVer = data.headroomVersion;
-        if (hrInstalled) {
+        if (hrInstalled && hrEnabled) {
             diagHeadroomStatus.textContent = `Active (${hrVer || 'Ready'})`;
             diagHeadroomStatus.style.color = 'var(--accent-green)';
+        } else if (hrInstalled && !hrEnabled) {
+            diagHeadroomStatus.textContent = 'Inactive (Disabled)';
+            diagHeadroomStatus.style.color = 'var(--text-muted)';
+        } else if (!hrInstalled && hrEnabled) {
+            diagHeadroomStatus.textContent = 'Issue (Not Installed)';
+            diagHeadroomStatus.style.color = 'var(--accent-rose)';
         } else {
-            diagHeadroomStatus.textContent = data.headroomEnabled ? 'Not Installed (Optional)' : 'Disabled';
-            diagHeadroomStatus.style.color = data.headroomEnabled ? 'var(--text-muted)' : 'var(--text-secondary)';
+            diagHeadroomStatus.textContent = 'Inactive (Disabled)';
+            diagHeadroomStatus.style.color = 'var(--text-muted)';
         }
     }
     if (headroomDiagActions) {
@@ -1190,11 +1258,15 @@ function renderDashboardState(data) {
 
     if (diagPonytailStatus) {
         const pInstalled = data.ponytailInstalled;
-        if (pInstalled) {
+        const pMode = data.ponytailMode || 'full';
+        if (pInstalled && pMode !== 'off') {
             diagPonytailStatus.textContent = `Active (${data.ponytailSkillsCount || 6}/6 skills)`;
             diagPonytailStatus.style.color = 'var(--accent-green)';
+        } else if (pInstalled && pMode === 'off') {
+            diagPonytailStatus.textContent = 'Inactive (Mode Off)';
+            diagPonytailStatus.style.color = 'var(--text-muted)';
         } else {
-            diagPonytailStatus.textContent = 'Not Synced (Click to Fetch)';
+            diagPonytailStatus.textContent = 'Inactive (Not Synced)';
             diagPonytailStatus.style.color = 'var(--accent-amber)';
         }
     }
@@ -1252,28 +1324,31 @@ function renderDashboardState(data) {
     diagScope.textContent = scope === 'all' ? 'All Supported IDEs & Agents' : scope;
     diagActiveTargets.textContent = `${syncedCount} IDE Targets Active`;
 
-    // 1-Click Antigravity Skills Status (Green Tick when detected)
+    // 1-Click Skill Installation Status (Green Tick when detected)
     const isSkillsInstalled = (typeof data.skillsInstalled === 'object' && data.skillsInstalled !== null)
         ? data.skillsInstalled.installed
         : Boolean(data.skillsInstalled);
+    const skillsTotal = (typeof data.skillsInstalled === 'object' && data.skillsInstalled !== null && data.skillsInstalled.total)
+        ? data.skillsInstalled.total
+        : 21;
     const skillsCount = (typeof data.skillsInstalled === 'object' && data.skillsInstalled !== null)
         ? data.skillsInstalled.count
-        : (isSkillsInstalled ? 4 : 0);
+        : (isSkillsInstalled ? skillsTotal : 0);
 
     if (skillsStatusBadge) {
         if (isSkillsInstalled) {
             skillsStatusBadge.className = 'action-status-badge synced';
             skillsStatusBadge.innerHTML = '<span class="badge-icon">✓</span> <span class="badge-text">Active</span>';
-            skillsStatusBadge.title = `RTK chat skills active (${skillsCount}/4 commands installed in IDE)`;
+            skillsStatusBadge.title = `Chat skills active (${skillsCount}/${skillsTotal} skills installed in IDE)`;
             if (skillsSubText) {
-                skillsSubText.textContent = `✓ /rtk-* chat commands ready (${skillsCount}/4 active)`;
+                skillsSubText.textContent = `✓ /rtk-* & /ponytail ready (${skillsCount}/${skillsTotal} active)`;
             }
         } else {
             skillsStatusBadge.className = 'action-status-badge install';
             skillsStatusBadge.innerHTML = '<span class="badge-text">+ Install</span>';
-            skillsStatusBadge.title = 'Click to install Antigravity chat skills';
+            skillsStatusBadge.title = `Click to install all ${skillsTotal} chat skills in IDE`;
             if (skillsSubText) {
-                skillsSubText.textContent = 'Install /rtk-* chat commands';
+                skillsSubText.textContent = `Install all ${skillsTotal} chat skills (/rtk-* & /ponytail)`;
             }
         }
     }

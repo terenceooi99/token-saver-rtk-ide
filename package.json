@@ -139,7 +139,7 @@
       },
       {
         "command": "tokenSaver.installSkills",
-        "title": "1-Click Install Antigravity Skills (/rtk-* & /ponytail)",
+        "title": "1-Click Skill Installation (/rtk-* & /ponytail)",
         "category": "Token Saver"
       },
       {

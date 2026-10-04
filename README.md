@@ -83,7 +83,7 @@
 | **`/publishtokensavernow`** | **Automates release tagging and publishing** to Open VSX & GitHub Releases. |
 
 *(Optional Manual Re-install)*:
-- **Command Palette**: `Token Saver: 1-Click Install Antigravity Skills (/rtk-* & /ponytail)`
+- **Command Palette**: `Token Saver: 1-Click Skill Installation (/rtk-* & /ponytail)`
 - **Windows (PowerShell)**: `.\scripts\install-skills.ps1`
 - **Linux / macOS (Bash)**: `./scripts/install-skills.sh`
 
@@ -131,7 +131,7 @@ The extension provides full graphical and automated control directly from your *
    - `Token Saver: Configure Ponytail Mode (YAGNI & Output Token Saver)`
    - `Token Saver: Run Compact Diff (rtk git diff -U1)`
    - `Token Saver: Generate AST / Symbol Outline for Current File`
-   - `Token Saver: 1-Click Install Antigravity Skills (/rtk-* & /ponytail)`
+   - `Token Saver: 1-Click Skill Installation (/rtk-* & /ponytail)`
    - `Token Saver: Sync Global Antigravity Rules (~/.gemini)`
    - `Token Saver: Show Token Savings Scoreboard (rtk gain)`
    - `Token Saver: Install RTK CLI Tool`

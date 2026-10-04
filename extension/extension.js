@@ -239,7 +239,7 @@ async function activate(context) {
             const results = SkillInstaller.installAllSkills();
             const dests = results.map(r => r.destination).join(' and ');
             vscode.window.showInformationMessage(
-                `🧠 Successfully installed Antigravity & AI Agent skills (/rtk-doctor, /rtk-sync, /rtk-compress, /rtk-run, /rtk-roi, /rtk-tree, /rtk-gain, /rtk-diff, /rtk-outline, /ponytail) to: ${dests}!`
+                `🧠 Successfully installed all 21 AI Agent skills (/rtk-*, /ponytail) to: ${dests}!`
             );
         } catch (err) {
             vscode.window.showErrorMessage(`Failed to install skills: ${err.message}`);

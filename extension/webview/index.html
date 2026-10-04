@@ -19,10 +19,6 @@
                 </div>
             </div>
             <div class="header-actions">
-                <div class="status-pill" id="statusPill">
-                    <span class="status-dot"></span>
-                    <span id="statusText">Checking...</span>
-                </div>
                 <button class="btn btn-primary" id="toggleModeBtn">Turn RTK ON</button>
                 <button class="btn btn-primary" id="toggleHeadroomBtn">Turn Headroom ON</button>
                 <button class="btn btn-primary" id="toggleOmniRouteBtn">Turn OmniRoute ON</button>
@@ -72,6 +68,9 @@
                     </div>
                 </div>
 
+                <button class="btn btn-ghost btn-theme-toggle" id="themeToggleBtn" title="Switch to Light Mode" aria-label="Toggle Theme">
+                    <span id="themeIcon">☀️</span>
+                </button>
                 <button class="btn btn-ghost" id="popOutBtn" title="Pop Out to Editor Tab">⤢</button>
                 <button class="btn btn-ghost" id="minimizeBtn" title="Minimize / Compact Dashboard">🗕</button>
             </div>
@@ -331,7 +330,7 @@
                         <!-- Vibe Coder 3-Step Wizard -->
                         <div class="vibe-wizard-container">
                             <div class="vibe-wizard-header">
-                                <span class="wizard-title">✨ Vibe Coder's 3-Step Guide to Unlimited AI</span>
+                                <span class="wizard-title">✨ 3-Step Guide to Install OmniRoute</span>
                                 <span class="wizard-sub">Bypass rate limits, pool free tiers, and vibe code non-stop with smart auto-failover</span>
                             </div>
 
@@ -437,11 +436,11 @@
                                 </span>
                             </button>
 
-                            <button class="btn btn-action" id="syncSkillsBtn" title="Install or re-sync Antigravity / AI Agent chat skills">
+                            <button class="btn btn-action" id="syncSkillsBtn" title="Install or re-sync all AI Agent & RTK chat skills">
                                 <div class="btn-action-left">
                                     <span class="btn-icon">🧠</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label">1-Click Antigravity Skills</span>
+                                        <span class="btn-label" id="skillsBtnLabel">1-Click Skill Installation</span>
                                         <span class="btn-sub" id="skillsSubText">Install /rtk-* & /ponytail chat commands</span>
                                     </div>
                                 </div>
