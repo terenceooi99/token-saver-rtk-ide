@@ -11,6 +11,7 @@ class WebviewHelper {
         const webviewDir = vscode.Uri.joinPath(extensionUri, 'extension', 'webview');
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(webviewDir, 'dashboard.css'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(webviewDir, 'dashboard.js'));
+        const iconUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'resources', 'icon.png'));
 
         const htmlPath = path.join(extensionUri.fsPath, 'extension', 'webview', 'index.html');
         let html = fs.readFileSync(htmlPath, 'utf8');
@@ -18,6 +19,7 @@ class WebviewHelper {
         return html
             .replace(/{{styleUri}}/g, styleUri.toString())
             .replace(/{{scriptUri}}/g, scriptUri.toString())
+            .replace(/{{iconUri}}/g, iconUri.toString())
             .replace(/{{cspSource}}/g, webview.cspSource);
     }
 
@@ -32,6 +34,7 @@ class WebviewHelper {
         const check = await RtkService.checkInstalled();
         const headroomCheck = await RtkService.checkHeadroomInstalled();
         const ponytailCheck = await RtkService.checkPonytailInstalled();
+        const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
         const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
         const metrics = await RtkService.getParsedMetrics();
         const skillsInstalled = SkillInstaller.checkSkillsInstalled('all');
@@ -49,6 +52,11 @@ class WebviewHelper {
             ponytailVersion: ponytailCheck.version || 'Not synced',
             ponytailSkillsCount: ponytailCheck.skillsCount || 0,
             ponytailMode: config.get('ponytailMode', 'full'),
+            antiSlopEnabled: config.get('antiSlopEnabled', true),
+            antiSlopMode: config.get('antiSlopMode', 'during'),
+            antiSlopInstalled: antiSlopCheck.installed,
+            antiSlopVersion: antiSlopCheck.version || 'Not synced',
+            antiSlopSkillsCount: antiSlopCheck.skillsCount || 0,
             omniRouteEnabled: config.get('omniRouteEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running,
@@ -147,6 +155,10 @@ class WebviewHelper {
                 await vscode.commands.executeCommand('tokenSaver.syncPonytail');
                 triggerRefresh(500);
                 break;
+            case 'syncAntiSlop':
+                await vscode.commands.executeCommand('tokenSaver.syncAntiSlop');
+                triggerRefresh(500);
+                break;
             case 'updateAllUpstream':
                 RtkUpdater.performAllUpdates();
                 triggerRefresh(500);
@@ -196,6 +208,53 @@ class WebviewHelper {
                     await vscode.commands.executeCommand('tokenSaver.setPonytailMode', message.mode);
                     triggerRefresh(300);
                 }
+                break;
+            case 'togglePonytail':
+                await vscode.commands.executeCommand('tokenSaver.togglePonytail');
+                triggerRefresh(300);
+                break;
+            case 'setAntiSlopMode':
+                if (message.mode) {
+                    await vscode.commands.executeCommand('tokenSaver.setAntiSlopMode', message.mode);
+                    triggerRefresh(300);
+                }
+                break;
+            case 'toggleAntiSlop':
+                let newAntiSlop;
+                if (message.enabled !== undefined) {
+                    newAntiSlop = message.enabled;
+                } else {
+                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                    const curEnabled = cfg.get('antiSlopEnabled', true);
+                    const curMode = cfg.get('antiSlopMode', 'during');
+                    newAntiSlop = !(curEnabled && curMode !== 'off');
+                }
+                try {
+                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                    await cfg.update('antiSlopEnabled', newAntiSlop, vscode.ConfigurationTarget.Global);
+                    if (newAntiSlop) {
+                        const curMode = cfg.get('antiSlopMode', 'during');
+                        if (curMode === 'off') {
+                            await cfg.update('antiSlopMode', 'during', vscode.ConfigurationTarget.Global);
+                        }
+                    } else {
+                        await cfg.update('antiSlopMode', 'off', vscode.ConfigurationTarget.Global);
+                    }
+                    const scope = cfg.get('targetScope', 'all');
+                    SkillInstaller.syncRules(context.globalState.get('tokenSaver.enabled', true), scope);
+                } catch (e) {
+                    // ignore
+                }
+                vscode.window.showInformationMessage(
+                    newAntiSlop
+                        ? '🛡️ Anti-Slop protection is now ENABLED.'
+                        : '⚪ Anti-Slop protection is now DISABLED.'
+                );
+                triggerRefresh(300);
+                break;
+            case 'uninstallSkills':
+                await vscode.commands.executeCommand('tokenSaver.uninstallSkills');
+                triggerRefresh(300);
                 break;
             case 'toggleTerseMode':
                 const newTerse = message.enabled !== undefined ? message.enabled : true;

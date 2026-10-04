@@ -116,12 +116,12 @@
       },
       {
         "command": "tokenSaver.checkUpdates",
-        "title": "Sync & Check Upstream GitHub (RTK, Headroom, Ponytail & OmniRoute)",
+        "title": "Sync & Check Upstream GitHub (RTK, Headroom, Ponytail, OmniRoute & Anti-Slop)",
         "category": "Token Saver"
       },
       {
         "command": "tokenSaver.updateRtk",
-        "title": "Update & Sync Upstream GitHub (RTK, Headroom, Ponytail & OmniRoute)",
+        "title": "Update & Sync Upstream GitHub (RTK, Headroom, Ponytail, OmniRoute & Anti-Slop)",
         "category": "Token Saver",
         "icon": "$(cloud-download)"
       },
@@ -132,6 +132,24 @@
         "icon": "$(sync)"
       },
       {
+        "command": "tokenSaver.syncAntiSlop",
+        "title": "Fetch & Sync Anti-Slop from GitHub (miqdadbadjuber/anti-slop)",
+        "category": "Token Saver",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "tokenSaver.toggleAntiSlop",
+        "title": "Toggle Anti-Slop Quality Filter & Rules",
+        "category": "Token Saver",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "tokenSaver.setAntiSlopMode",
+        "title": "Configure Anti-Slop Mode (During / After / Ask / Off)",
+        "category": "Token Saver",
+        "icon": "$(gear)"
+      },
+      {
         "command": "tokenSaver.toggleHeadroom",
         "title": "Toggle Headroom Context Compression",
         "category": "Token Saver",
@@ -139,8 +157,20 @@
       },
       {
         "command": "tokenSaver.installSkills",
-        "title": "1-Click Skill Installation (/rtk-* & /ponytail)",
+        "title": "1-Click Skill Installation (/rtk-*, /ponytail & /antislop)",
         "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.uninstallSkills",
+        "title": "Uninstall Skill Sets (Global or Workspace)",
+        "category": "Token Saver",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "tokenSaver.togglePonytail",
+        "title": "Toggle Ponytail YAGNI Mode",
+        "category": "Token Saver",
+        "icon": "$(zap)"
       },
       {
         "command": "tokenSaver.syncGlobalRules",
@@ -159,7 +189,7 @@
       },
       {
         "command": "tokenSaver.copyAiInstallPrompt",
-        "title": "Copy AI Agent Install Prompt (RTK, Headroom & Ponytail)",
+        "title": "Copy AI Agent Install Prompt (RTK, Headroom, Ponytail & Anti-Slop)",
         "category": "Token Saver",
         "icon": "$(copy)"
       },
@@ -241,7 +271,7 @@
       },
       {
         "command": "tokenSaver.uninstallUpstream",
-        "title": "Uninstall Upstream GitHub Layer (RTK, Headroom, Ponytail, OmniRoute, Rules & Skills)",
+        "title": "Uninstall Upstream GitHub Layer (RTK, Headroom, Ponytail, OmniRoute, Anti-Slop, Rules & Skills)",
         "category": "Token Saver",
         "icon": "$(trash)"
       },
@@ -261,6 +291,11 @@
         "category": "Token Saver"
       },
       {
+        "command": "tokenSaver.uninstallAntiSlop",
+        "title": "Uninstall Anti-Slop Suite (miqdadbadjuber/anti-slop)",
+        "category": "Token Saver"
+      },
+      {
         "command": "tokenSaver.uninstallOmniRoute",
         "title": "Uninstall OmniRoute AI Gateway (diegosouzapw/OmniRoute)",
         "category": "Token Saver"
@@ -272,12 +307,28 @@
       }
     ],
     "configuration": {
-      "title": "Token Saver (RTK, Headroom, Ponytail & OmniRoute)",
+      "title": "Token Saver (RTK, Headroom, Ponytail, OmniRoute & Anti-Slop)",
       "properties": {
         "tokenSaver.enableOnStartup": {
           "type": "boolean",
           "default": true,
           "description": "Automatically enable RTK token compression when opening a project."
+        },
+        "tokenSaver.antiSlopEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Anti-Slop rules & filters from upstream miqdadbadjuber/anti-slop to eliminate generic AI UI, copy, and code comments."
+        },
+        "tokenSaver.antiSlopMode": {
+          "type": "string",
+          "enum": [
+            "during",
+            "after",
+            "ask",
+            "off"
+          ],
+          "default": "during",
+          "description": "Anti-Slop usage mode: 'during' (filter slop while generating), 'after' (audit findings report), 'ask' (prompt each session), or 'off'."
         },
         "tokenSaver.headroomEnabled": {
           "type": "boolean",
@@ -307,7 +358,7 @@
         "tokenSaver.autoInstallSkills": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically install Antigravity & Agent chat skills (/rtk-* & /ponytail) on startup so Way 1 (Chat Commands) and Way 2 (Dashboard & Status Bar) are both available simultaneously."
+          "description": "Automatically install Antigravity & Agent chat skills (/rtk-*, /ponytail & /antislop) on startup so Way 1 (Chat Commands) and Way 2 (Dashboard & Status Bar) are both available simultaneously."
         },
         "tokenSaver.targetScope": {
           "type": "string",
@@ -328,12 +379,12 @@
         "tokenSaver.checkForUpdatesOnStartup": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically check for newer RTK, Headroom, and Ponytail updates from upstream GitHub repositories on startup."
+          "description": "Automatically check for newer RTK, Headroom, Ponytail, and Anti-Slop updates from upstream GitHub repositories on startup."
         },
         "tokenSaver.weeklyAutoSync": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically check and synchronize with upstream GitHub releases (RTK, Headroom & Ponytail) on a weekly schedule."
+          "description": "Automatically check and synchronize with upstream GitHub releases (RTK, Headroom, Ponytail & Anti-Slop) on a weekly schedule."
         },
         "tokenSaver.tokenPricePerMillion": {
           "type": "number",

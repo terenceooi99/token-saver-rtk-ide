@@ -114,22 +114,25 @@ class RtkUpdater {
 
     static async checkForUpdates(silent = false) {
         try {
-            const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease] = await Promise.all([
+            const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease] = await Promise.all([
                 RtkService.checkInstalled(),
                 RtkService.checkHeadroomInstalled(),
                 RtkService.checkPonytailInstalled(),
                 RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : require('./omniroute-service').checkInstalled(),
+                RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
                 this.getLatestRelease('rtk-ai/rtk'),
                 this.getLatestRelease('headroomlabs-ai/headroom'),
                 this.getLatestRelease('DietrichGebert/ponytail'),
-                this.getLatestRelease('diegosouzapw/OmniRoute')
+                this.getLatestRelease('diegosouzapw/OmniRoute'),
+                this.getLatestRelease('miqdadbadjuber/anti-slop')
             ]);
 
             const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
             const headroomHasUpdate = headroomRelease.success && headroomCheck.installed && this.isNewer(headroomRelease.tag, headroomCheck.version);
             const ponytailHasUpdate = ponytailRelease.success && (!ponytailCheck.installed || (ponytailCheck.skillsCount && ponytailCheck.skillsCount < 6));
             const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
-            const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || omniHasUpdate;
+            const antiSlopHasUpdate = antiSlopRelease.success && (!antiSlopCheck.installed || (antiSlopCheck.skillsCount && antiSlopCheck.skillsCount < 6));
+            const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || omniHasUpdate || antiSlopHasUpdate;
 
             if (hasAnyUpdate) {
                 const updatesList = [];
@@ -137,10 +140,12 @@ class RtkUpdater {
                 if (headroomHasUpdate) updatesList.push(`Headroom ${headroomRelease.tag}`);
                 if (ponytailHasUpdate) updatesList.push(`Ponytail (${ponytailRelease.tag || 'Latest'})`);
                 if (omniHasUpdate) updatesList.push(`OmniRoute ${omniRelease.tag}`);
+                if (antiSlopHasUpdate) updatesList.push(`Anti-Slop (${antiSlopRelease.tag || 'Latest'})`);
 
                 const choice = await vscode.window.showInformationMessage(
                     `🚀 Upstream updates available: ${updatesList.join(' & ')}`,
                     'Update / Sync All',
+                    'Sync Anti-Slop GitHub',
                     'Sync Ponytail GitHub',
                     'Update RTK',
                     'Update Headroom',
@@ -150,6 +155,8 @@ class RtkUpdater {
 
                 if (choice === 'Update / Sync All') {
                     this.performAllUpdates();
+                } else if (choice === 'Sync Anti-Slop GitHub') {
+                    await this.performAntiSlopSync();
                 } else if (choice === 'Sync Ponytail GitHub') {
                     await this.performPonytailSync();
                 } else if (choice === 'Update RTK') {
@@ -171,6 +178,9 @@ class RtkUpdater {
                     if (omniHasUpdate && omniRelease.htmlUrl) {
                         vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
                     }
+                    if (antiSlopRelease.htmlUrl) {
+                        vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
+                    }
                 }
             } else if (!silent) {
                 const parts = [];
@@ -183,16 +193,22 @@ class RtkUpdater {
                 if (ponytailCheck.installed) {
                     parts.push(`Ponytail: Active`);
                 }
+                if (antiSlopCheck.installed) {
+                    parts.push(`Anti-Slop: Active`);
+                }
                 if (omniCheck.installed) {
                     parts.push(`OmniRoute: ${omniCheck.version}`);
                 }
 
                 vscode.window.showInformationMessage(
                     `✨ Upstream GitHub Sync Status: ${parts.join(' | ')} (All up-to-date)`,
+                    'Sync Anti-Slop GitHub',
                     'Sync Ponytail GitHub',
                     'Install/Update CLI Tools'
                 ).then(c => {
-                    if (c === 'Sync Ponytail GitHub') {
+                    if (c === 'Sync Anti-Slop GitHub') {
+                        this.performAntiSlopSync();
+                    } else if (c === 'Sync Ponytail GitHub') {
                         this.performPonytailSync();
                     } else if (c === 'Install/Update CLI Tools') {
                         this.performAllUpdates();
@@ -220,6 +236,13 @@ class RtkUpdater {
                     installed: ponytailCheck.installed,
                     currentVersion: ponytailCheck.version || 'v1.0.0',
                     skillsCount: ponytailCheck.skillsCount || 0
+                },
+                antislop: {
+                    hasUpdate: antiSlopHasUpdate,
+                    release: antiSlopRelease,
+                    installed: antiSlopCheck.installed,
+                    currentVersion: antiSlopCheck.version || 'v3.2.20',
+                    skillsCount: antiSlopCheck.skillsCount || 0
                 },
                 omniroute: {
                     hasUpdate: omniHasUpdate,
@@ -263,6 +286,26 @@ class RtkUpdater {
             ? `if (Get-Command npm -ErrorAction SilentlyContinue) { npm install -g omniroute } else { Write-Host '⚠️ Node.js / npm not detected. To use OmniRoute, install Node.js (e.g. winget install OpenJS.NodeJS)' }`
             : `command -v npm >/dev/null 2>&1 && npm install -g omniroute || echo "ℹ️ npm not found"`;
         RtkService.runInTerminal(cmd);
+    }
+
+    static async performAntiSlopSync() {
+        try {
+            vscode.window.showInformationMessage('🔄 Fetching & synchronizing Anti-Slop from GitHub (miqdadbadjuber/anti-slop)...');
+            const results = SkillInstaller.installAllSkills();
+            const config = vscode.workspace.getConfiguration('tokenSaver');
+            const isEnabled = config.get('enableOnStartup', true);
+            const scope = config.get('targetScope', 'all');
+            SkillInstaller.syncRules(isEnabled, scope);
+
+            const dests = results.map(r => r.destination).join(' and ');
+            vscode.window.showInformationMessage(
+                `🛡️ Successfully fetched and synchronized Anti-Slop suite from GitHub to global IDE: ${dests}!`
+            );
+            return { success: true, results };
+        } catch (err) {
+            vscode.window.showErrorMessage(`Failed to sync Anti-Slop from GitHub: ${err.message}`);
+            return { success: false, error: err.message };
+        }
     }
 
     static async performPonytailSync() {
@@ -314,6 +357,7 @@ class RtkUpdater {
         const fullCmd = commands.join(' ; ');
         RtkService.runInTerminal(fullCmd);
         this.performPonytailSync();
+        this.performAntiSlopSync();
     }
 
     static async performLayerUninstall(layerKey) {
@@ -340,6 +384,19 @@ class RtkUpdater {
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Ponytail skills: ${e.message}`);
+                }
+                break;
+            case 'antislop':
+                try {
+                    const res = SkillInstaller.uninstallAntiSlopSkills();
+                    await config.update('antiSlopEnabled', false, vscode.ConfigurationTarget.Global);
+                    const scope = config.get('targetScope', 'all');
+                    SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    vscode.window.showInformationMessage(
+                        `🛡️ Uninstalled Anti-Slop suite (${res.total.length} skills removed). Anti-Slop disabled.`
+                    );
+                } catch (e) {
+                    vscode.window.showErrorMessage(`Failed to uninstall Anti-Slop skills: ${e.message}`);
                 }
                 break;
             case 'omniroute':
@@ -373,7 +430,7 @@ class RtkUpdater {
 
     static async performAllUninstall() {
         const confirm = await vscode.window.showWarningMessage(
-            '⚠️ Are you sure you want to completely UNINSTALL all upstream GitHub layers (RTK, Headroom, Ponytail, OmniRoute) and clean all injected rules & skills?',
+            '⚠️ Are you sure you want to completely UNINSTALL all upstream GitHub layers (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute) and clean all injected rules & skills?',
             { modal: true },
             'Yes, Uninstall Everything',
             'Cancel'
@@ -397,6 +454,7 @@ class RtkUpdater {
         // 2. Disable modes
         try {
             await config.update('ponytailMode', 'off', vscode.ConfigurationTarget.Global);
+            await config.update('antiSlopEnabled', false, vscode.ConfigurationTarget.Global);
             await config.update('headroomEnabled', false, vscode.ConfigurationTarget.Global);
             await config.update('omniRouteEnabled', false, vscode.ConfigurationTarget.Global);
         } catch (e) {
@@ -420,7 +478,7 @@ class RtkUpdater {
         const picks = [
             {
                 label: '$(trash) All Upstream GitHub Layers (Full Clean Purge)',
-                description: 'Uninstall RTK, Headroom, Ponytail, OmniRoute, and remove all injected rules & skills',
+                description: 'Uninstall RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, and remove all injected rules & skills',
                 layerKey: 'all'
             },
             {
@@ -432,6 +490,11 @@ class RtkUpdater {
                 label: '$(package) Headroom CCR Layer (headroomlabs-ai/headroom)',
                 description: 'Uninstall headroom-ai python package via pip / pipx',
                 layerKey: 'headroom'
+            },
+            {
+                label: '$(shield) Anti-Slop Framework (miqdadbadjuber/anti-slop)',
+                description: 'Remove /antislop-* skills and disable Anti-Slop rule injection',
+                layerKey: 'antislop'
             },
             {
                 label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
@@ -463,34 +526,45 @@ class RtkUpdater {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail & OmniRoute)...',
+                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop & OmniRoute)...',
                 cancellable: false
             },
             async () => {
                 const OmniRouteService = require('./omniroute-service');
-                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease] = await Promise.all([
+                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease] = await Promise.all([
                     RtkService.checkInstalled(),
                     RtkService.checkHeadroomInstalled(),
                     RtkService.checkPonytailInstalled(),
                     RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : OmniRouteService.checkInstalled(),
+                    RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
                     this.getLatestRelease('rtk-ai/rtk'),
                     this.getLatestRelease('headroomlabs-ai/headroom'),
                     this.getLatestRelease('DietrichGebert/ponytail'),
-                    this.getLatestRelease('diegosouzapw/OmniRoute')
+                    this.getLatestRelease('diegosouzapw/OmniRoute'),
+                    this.getLatestRelease('miqdadbadjuber/anti-slop')
                 ]);
 
                 const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
                 const headroomHasUpdate = headroomRelease.success && headroomCheck.installed && this.isNewer(headroomRelease.tag, headroomCheck.version);
                 const ponytailHasUpdate = ponytailRelease.success && (!ponytailCheck.installed || (ponytailCheck.skillsCount && ponytailCheck.skillsCount < 6));
+                const antiSlopHasUpdate = antiSlopRelease.success && (!antiSlopCheck.installed || (antiSlopCheck.skillsCount && antiSlopCheck.skillsCount < 6));
                 const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
-                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || omniHasUpdate;
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate;
 
                 const picks = [
                     {
                         label: hasAnyUpdate ? '$(cloud-download) Update / Sync All Upstream GitHub Layers' : '$(sync) Sync All Upstream GitHub Layers',
-                        description: 'Batch update & sync RTK, Headroom, Ponytail and OmniRoute',
+                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop and OmniRoute',
                         detail: hasAnyUpdate ? '🚀 Updates available for one or more layers - Click to update all' : '✓ All components up-to-date - Click to force re-sync',
                         actionKey: 'all'
+                    },
+                    {
+                        label: '$(shield) Anti-Slop Framework (miqdadbadjuber/anti-slop)',
+                        description: `Installed: ${antiSlopCheck.installed ? `${antiSlopCheck.skillsCount || 6}/6 skills active` : 'Not Synced'} | GitHub: ${antiSlopRelease.tag || 'Latest'}`,
+                        detail: antiSlopHasUpdate
+                            ? `🚀 Update / Missing skills detected - Click to fetch & sync from GitHub`
+                            : (antiSlopCheck.installed ? '✓ Synced & active in Global IDE - Click to re-fetch' : '⚡ Click to fetch miqdadbadjuber/anti-slop skills to IDE'),
+                        actionKey: 'antislop'
                     },
                     {
                         label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
@@ -527,7 +601,7 @@ class RtkUpdater {
                     {
                         label: '$(link-external) View Upstream GitHub Release Notes & Compare',
                         description: 'Open release notes and commit history on GitHub',
-                        detail: 'Compare releases for rtk, headroom, ponytail & omniroute in your browser',
+                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop & omniroute in your browser',
                         actionKey: 'notes'
                     }
                 ];
@@ -540,6 +614,8 @@ class RtkUpdater {
 
                 if (sel.actionKey === 'all') {
                     this.performAllUpdates();
+                } else if (sel.actionKey === 'antislop') {
+                    await this.performAntiSlopSync();
                 } else if (sel.actionKey === 'ponytail') {
                     await this.performPonytailSync();
                 } else if (sel.actionKey === 'rtk') {
@@ -552,6 +628,7 @@ class RtkUpdater {
                     if (rtkRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(rtkRelease.htmlUrl));
                     if (headroomRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(headroomRelease.htmlUrl));
                     if (ponytailRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(ponytailRelease.htmlUrl));
+                    if (antiSlopRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
                     if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
                 }
             }

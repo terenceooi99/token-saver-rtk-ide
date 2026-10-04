@@ -13,21 +13,19 @@ if (-not (Test-Path $globalConfigSkills)) {
     New-Item -ItemType Directory -Path $globalConfigSkills -Force | Out-Null
 }
 
-$skills = @("rtk-savedtokenon", "rtk-savedtokenoff", "rtk-gain", "rtk-update", "publishtokensavernow")
+$skillsSourceDir = Join-Path $projectRoot "skills"
+$skillDirs = Get-ChildItem -Path $skillsSourceDir -Directory
 
-foreach ($skill in $skills) {
-    $srcDir = Join-Path $projectRoot "skills\$skill"
+foreach ($dir in $skillDirs) {
+    $skill = $dir.Name
+    $srcDir = $dir.FullName
     $destDir = Join-Path $globalConfigSkills $skill
 
-    if (Test-Path $srcDir) {
-        if (-not (Test-Path $destDir)) {
-            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-        }
-        Copy-Item -Path "$srcDir\*" -Destination $destDir -Recurse -Force
-        Write-Host " [OK] Installed skill: /$skill to $destDir" -ForegroundColor Green
-    } else {
-        Write-Warning "Source directory not found: $srcDir"
+    if (-not (Test-Path $destDir)) {
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
     }
+    Copy-Item -Path "$srcDir\*" -Destination $destDir -Recurse -Force
+    Write-Host " [OK] Installed skill: /$skill to $destDir" -ForegroundColor Green
 }
 
 Write-Host "`nToken Saver (RTK) skills installed successfully!" -ForegroundColor Cyan

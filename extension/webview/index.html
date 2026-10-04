@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src {{cspSource}} https: data:; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
     <title>Token Saver (RTK) Dashboard</title>
     <link rel="stylesheet" href="{{styleUri}}">
 </head>
@@ -12,7 +12,14 @@
         <!-- Header -->
         <header class="dashboard-header">
             <div class="brand">
-                <div class="brand-icon">⚡</div>
+                <div class="brand-icon">
+                    <img src="{{iconUri}}" class="brand-icon-img" alt="Token Saver" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                    <svg class="brand-icon-fallback" style="display:none;" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4.5 16.5A8.5 8.5 0 1 1 19.5 16.5" />
+                        <line x1="12" y1="12" x2="16" y2="8" />
+                        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                    </svg>
+                </div>
                 <div class="brand-text">
                     <div class="brand-title-row">
                         <h1>Token Saver</h1>
@@ -24,6 +31,8 @@
             <div class="header-actions">
                 <button class="btn btn-primary" id="toggleModeBtn">Turn RTK ON</button>
                 <button class="btn btn-primary" id="toggleHeadroomBtn">Turn Headroom ON</button>
+                <button class="btn btn-primary" id="togglePonytailBtn">Turn Ponytail ON</button>
+                <button class="btn btn-primary" id="toggleAntiSlopBtn">Turn Anti-Slop ON</button>
                 <button class="btn btn-primary" id="toggleOmniRouteBtn">Turn OmniRoute ON</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
@@ -252,10 +261,10 @@
                                 <span class="opt-title">Terse Agent Directives:</span>
                                 <span class="opt-desc">Strips greetings, filler words, and conversational fluff to slash output tokens</span>
                             </div>
-                            <div class="custom-toggle">
+                            <label class="custom-toggle" for="terseAgentCheckbox" title="Toggle Terse Agent Directives">
                                 <input type="checkbox" id="terseAgentCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
-                            </div>
+                            </label>
                         </div>
 
                         <!-- AST Symbol Outlines Toggle -->
@@ -264,10 +273,10 @@
                                 <span class="opt-title">AST Symbol Outlines (/rtk-outline):</span>
                                 <span class="opt-desc">Directs AI to inspect class/function signatures before reading full files (saves 80–95% tokens)</span>
                             </div>
-                            <div class="custom-toggle">
+                            <label class="custom-toggle" for="astOutlineCheckbox" title="Toggle AST Symbol Outlines">
                                 <input type="checkbox" id="astOutlineCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
-                            </div>
+                            </label>
                         </div>
 
                         <!-- Headroom Context Compression Toggle -->
@@ -276,10 +285,10 @@
                                 <span class="opt-title">Headroom Context Compression (CCR):</span>
                                 <span class="opt-desc">Compresses heavy JSON payloads, tool responses, and code context via upstream headroomlabs-ai/headroom</span>
                             </div>
-                            <div class="custom-toggle">
+                            <label class="custom-toggle" for="headroomCheckbox" title="Toggle Headroom Context Compression">
                                 <input type="checkbox" id="headroomCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
-                            </div>
+                            </label>
                         </div>
 
                         <!-- Compact Diff Context (-U1) Toggle -->
@@ -288,9 +297,45 @@
                                 <span class="opt-title">Compact Diffs (-U1 Context):</span>
                                 <span class="opt-desc">Directs AI to use single-line context diffs (rtk git diff -U1), saving 50–70% diff tokens</span>
                             </div>
-                            <div class="custom-toggle">
+                            <label class="custom-toggle" for="compactDiffCheckbox" title="Toggle Compact Diffs">
                                 <input type="checkbox" id="compactDiffCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Anti-Slop AI Quality Framework -->
+                <section class="panel-card antislop-section" id="sectionAntiSlop">
+                    <div class="panel-header collapsible" data-target="bodyAntiSlop">
+                        <div class="panel-header-left">
+                            <span class="collapse-chevron">▾</span>
+                            <div>
+                                <h2>🛡️ Anti-Slop AI Quality Framework</h2>
+                                <p class="panel-subtitle">Eliminates AI clichés, generic code, lazy design, & robotic copywriting</p>
+                            </div>
+                        </div>
+                        <div class="header-tags-group">
+                            <a href="https://github.com/miqdadbadjuber/anti-slop" target="_blank" class="repo-badge-link" title="Upstream GitHub: miqdadbadjuber/anti-slop">GitHub: miqdadbadjuber/anti-slop ↗</a>
+                            <span class="panel-tag tag-cyan" id="antiSlopActiveBadge">During Mode</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="bodyAntiSlop">
+                        <!-- Anti-Slop Mode Selector & GitHub Sync -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <div class="opt-title-line">
+                                    <span class="opt-title">Anti-Slop Mode:</span>
+                                    <button class="btn-mini-sync" id="antiSlopInlineSyncBtn" title="Fetch & sync latest Anti-Slop skills from GitHub to global IDE">🔄 Sync from GitHub</button>
+                                </div>
+                                <span class="opt-desc">Controls how AI guards against slop: 'During' (direct execution), 'After' (two-phase audit), 'Ask' (prompt user), 'Off'</span>
+                            </div>
+                            <div class="mode-segment-group" id="antiSlopSegmentGroup">
+                                <button class="segment-btn" data-mode="off">Off</button>
+                                <button class="segment-btn active" data-mode="during">During</button>
+                                <button class="segment-btn" data-mode="after">After</button>
+                                <button class="segment-btn" data-mode="ask">Ask</button>
                             </div>
                         </div>
                     </div>
@@ -453,6 +498,19 @@
                                 </span>
                             </button>
 
+                            <button class="btn btn-action" id="quickUninstallSkillsBtn" title="Uninstall any sets of AI Agent skills (RTK, Ponytail, Anti-Slop) globally or in workspace">
+                                <div class="btn-action-left">
+                                    <span class="btn-icon">🗑️</span>
+                                    <div class="btn-text-block">
+                                        <span class="btn-label" id="uninstallSkillsLabel">Uninstall Skills</span>
+                                        <span class="btn-sub" id="uninstallSkillsSub">Remove RTK, Ponytail, or Anti-Slop (Global / Workspace)</span>
+                                    </div>
+                                </div>
+                                <span class="action-status-badge badge-warning">
+                                    <span class="badge-text">Clean</span>
+                                </span>
+                            </button>
+
                             <div class="action-row-split">
                                 <button class="btn btn-action action-btn-main" id="checkUpdatesBtn" title="Sync & Check Upstream GitHub repositories (RTK, Headroom, Ponytail & OmniRoute)">
                                     <div class="btn-action-left">
@@ -570,8 +628,27 @@
                                 </div>
                             </div>
                             <div class="diag-row">
+                                <span class="diag-key">Anti-Slop (GitHub):</span>
+                                <div class="diag-val-wrapper">
+                                    <span class="diag-val" id="diagAntiSlopStatus">Checking...</span>
+                                    <span class="diag-action-btns" id="antiSlopDiagActions" style="display: none;">
+                                        <button class="btn-diag-mini btn-diag-ai" id="antiSlopDiagAiBtn" title="Copy AI install prompt for Anti-Slop">🤖 Ask AI</button>
+                                        <button class="btn-diag-mini btn-diag-sync" id="antiSlopDiagSyncBtn" title="Fetch Anti-Slop from GitHub to Global IDE">🛡️ Sync</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="antiSlopDiagUninstallBtn" title="Uninstall Anti-Slop Skills">🗑️</button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="diag-row diag-row-dropdown" id="diagVersionRow">
                                 <span class="diag-key">Upstream Versions:</span>
-                                <span class="diag-val" id="diagVersion">--</span>
+                                <div class="diag-dropdown-wrapper">
+                                    <button class="btn-diag-dropdown" id="diagVersionToggleBtn" type="button" title="Click to view all upstream engine versions">
+                                        <span id="diagVersionSummary">Loading versions...</span>
+                                        <span class="dropdown-chevron" id="diagVersionChevron">▾</span>
+                                    </button>
+                                    <div class="diag-dropdown-menu" id="diagVersionDropdown" style="display: none;">
+                                        <!-- Dynamic upstream version list items injected by JS -->
+                                    </div>
+                                </div>
                             </div>
                             <div class="diag-row">
                                 <span class="diag-key">Location:</span>
@@ -593,11 +670,12 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <span class="footer-brand-title">⚡ Token Saver (RTK, Headroom & OmniRoute) • <a href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link" title="Token Saver GitHub Repository">GitHub</a></span>
+            <span class="footer-brand-title">⚡ Token Saver (RTK, Headroom, Anti-Slop & OmniRoute) • <a href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link" title="Token Saver GitHub Repository">GitHub</a></span>
             <span class="footer-links">
                 <a href="https://github.com/rtk-ai/rtk" target="_blank">RTK Core</a> • 
                 <a href="https://github.com/headroomlabs-ai/headroom" target="_blank">Headroom</a> • 
                 <a href="https://github.com/DietrichGebert/ponytail" target="_blank">Ponytail (YAGNI)</a> • 
+                <a href="https://github.com/miqdadbadjuber/anti-slop" target="_blank">Anti-Slop</a> • 
                 <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a>
             </span>
         </footer>

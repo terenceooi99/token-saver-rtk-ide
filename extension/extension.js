@@ -70,21 +70,26 @@ async function activate(context) {
     const omniRouteEnabled = config.get('omniRouteEnabled', true);
     const omniPort = config.get('omniRoutePort', 20128);
 
-    // Initial check of RTK, Headroom, Ponytail & OmniRoute engines
+    // Initial check of RTK, Headroom, Ponytail, Anti-Slop & OmniRoute engines
     const check = await RtkService.checkInstalled();
     const headroomCheck = await RtkService.checkHeadroomInstalled();
     const ponytailCheck = await RtkService.checkPonytailInstalled();
+    const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
     const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
     const isOmniMissing = omniRouteEnabled && !omniStatus.installed;
-    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || isOmniMissing) {
+    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || isOmniMissing) {
         const missing = [];
         if (!check.installed) missing.push('RTK CLI');
         if (!headroomCheck.installed) missing.push('Headroom CCR');
         if (!ponytailCheck.installed) missing.push('Ponytail YAGNI (GitHub)');
+        if (!antiSlopCheck.installed) missing.push('Anti-Slop (GitHub)');
         if (isOmniMissing) missing.push('OmniRoute Gateway');
 
         const options = ['🤖 Ask AI (Copy Prompt)'];
+        if (!antiSlopCheck.installed) {
+            options.push('🛡️ Sync Anti-Slop GitHub');
+        }
         if (!ponytailCheck.installed) {
             options.push('🥋 Sync Ponytail GitHub');
         }
@@ -96,6 +101,8 @@ async function activate(context) {
         ).then(choice => {
             if (choice === '🤖 Ask AI (Copy Prompt)') {
                 vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
+            } else if (choice === '🛡️ Sync Anti-Slop GitHub') {
+                vscode.commands.executeCommand('tokenSaver.syncAntiSlop');
             } else if (choice === '🥋 Sync Ponytail GitHub') {
                 vscode.commands.executeCommand('tokenSaver.syncPonytail');
             } else if (choice === '⚡ Auto-Run in Terminal') {
@@ -142,11 +149,13 @@ async function activate(context) {
         checkWeeklyAutoSync(context);
     }, 30000);
 
-    // Listen to configuration changes (e.g. tokenPricePerMillion, statusMetricDisplay, ponytailMode, headroomEnabled, omniRouteEnabled)
+    // Listen to configuration changes (e.g. tokenPricePerMillion, statusMetricDisplay, ponytailMode, antiSlopEnabled, antiSlopMode, headroomEnabled, omniRouteEnabled)
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(async (e) => {
             if (e.affectsConfiguration('tokenSaver')) {
                 if (e.affectsConfiguration('tokenSaver.ponytailMode') ||
+                    e.affectsConfiguration('tokenSaver.antiSlopEnabled') ||
+                    e.affectsConfiguration('tokenSaver.antiSlopMode') ||
                     e.affectsConfiguration('tokenSaver.terseAgentMode') ||
                     e.affectsConfiguration('tokenSaver.compactDiffContext') ||
                     e.affectsConfiguration('tokenSaver.astOutlineContext') ||
@@ -242,11 +251,61 @@ async function activate(context) {
             const results = SkillInstaller.installAllSkills();
             const dests = results.map(r => r.destination).join(' and ');
             vscode.window.showInformationMessage(
-                `🧠 Successfully installed all 21 AI Agent skills (/rtk-*, /ponytail) to: ${dests}!`
+                `🧠 Successfully installed all 27 AI Agent skills (/rtk-*, /ponytail-*, /antislop-*) to: ${dests}!`
             );
         } catch (err) {
             vscode.window.showErrorMessage(`Failed to install skills: ${err.message}`);
         }
+    });
+
+    const uninstallSkillsCmd = vscode.commands.registerCommand('tokenSaver.uninstallSkills', async () => {
+        const skillSets = [
+            { label: '🗑️ All Skills (All 27 Chat Commands)', description: 'RTK, Ponytail & Anti-Slop skills', value: 'all' },
+            { label: '⚡ RTK Core Skills (15 Skills)', description: '/rtk-gain, /rtk-run, /rtk-tree, /rtk-outline, etc.', value: 'rtk' },
+            { label: '🥋 Ponytail Skills (6 Skills)', description: '/ponytail, /ponytail-audit, /ponytail-gain, etc.', value: 'ponytail' },
+            { label: '🛡️ Anti-Slop Skills (6 Skills)', description: '/antislop, /antislop-ui, /antislop-code, etc.', value: 'antislop' }
+        ];
+
+        const selectedSet = await vscode.window.showQuickPick(skillSets, {
+            placeHolder: 'Select the skill set you want to uninstall:'
+        });
+        if (!selectedSet) return;
+
+        const scopes = [
+            { label: '🌐 Global & Workspace (All Targets)', description: 'Clean both ~/.gemini/config and .agents', value: 'all' },
+            { label: '🏠 Global Config Only', description: 'Remove from ~/.gemini/config/skills/', value: 'global' },
+            { label: '📁 Workspace Only', description: 'Remove from current workspace .agents/skills/', value: 'workspace' }
+        ];
+
+        const selectedScope = await vscode.window.showQuickPick(scopes, {
+            placeHolder: `Uninstall ${selectedSet.label} from which scope?`
+        });
+        if (!selectedScope) return;
+
+        try {
+            const res = SkillInstaller.uninstallSkillSet(selectedSet.value, selectedScope.value);
+            vscode.window.showInformationMessage(
+                `🗑️ Successfully uninstalled ${res.total.length} skill(s) (${selectedSet.label}) from ${selectedScope.label}.`
+            );
+            await refreshStatus(context);
+        } catch (err) {
+            vscode.window.showErrorMessage(`Failed to uninstall skills: ${err.message}`);
+        }
+    });
+
+    const togglePonytailCmd = vscode.commands.registerCommand('tokenSaver.togglePonytail', async () => {
+        const cfg = vscode.workspace.getConfiguration('tokenSaver');
+        const currentMode = cfg.get('ponytailMode', 'full');
+        const newMode = (currentMode === 'off') ? 'full' : 'off';
+        await cfg.update('ponytailMode', newMode, vscode.ConfigurationTarget.Global);
+        const scope = cfg.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        vscode.window.showInformationMessage(
+            newMode !== 'off'
+                ? `🥋 Ponytail YAGNI mode ENABLED (${newMode.toUpperCase()}).`
+                : '⚪ Ponytail YAGNI mode DISABLED.'
+        );
+        await refreshStatus(context);
     });
 
     const syncGlobalRulesCmd = vscode.commands.registerCommand('tokenSaver.syncGlobalRules', async () => {
@@ -287,8 +346,9 @@ async function activate(context) {
         const check = await RtkService.checkInstalled();
         const headroomCheck = await RtkService.checkHeadroomInstalled();
         const ponytailCheck = await RtkService.checkPonytailInstalled();
+        const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
 
-        const prompt = RtkService.generateAiInstallPrompt(isWindows, isMac, !check.installed, !headroomCheck.installed, !ponytailCheck.installed);
+        const prompt = RtkService.generateAiInstallPrompt(isWindows, isMac, !check.installed, !headroomCheck.installed, !ponytailCheck.installed, true, !antiSlopCheck.installed);
         await vscode.env.clipboard.writeText(prompt);
 
         vscode.window.showInformationMessage(
@@ -299,6 +359,53 @@ async function activate(context) {
 
     const syncPonytailCmd = vscode.commands.registerCommand('tokenSaver.syncPonytail', async () => {
         await RtkUpdater.performPonytailSync();
+        await refreshStatus(context);
+    });
+
+    const syncAntiSlopCmd = vscode.commands.registerCommand('tokenSaver.syncAntiSlop', async () => {
+        await RtkUpdater.performAntiSlopSync();
+        await refreshStatus(context);
+    });
+
+    const toggleAntiSlopCmd = vscode.commands.registerCommand('tokenSaver.toggleAntiSlop', async () => {
+        const cfg = vscode.workspace.getConfiguration('tokenSaver');
+        const current = cfg.get('antiSlopEnabled', true);
+        await cfg.update('antiSlopEnabled', !current, vscode.ConfigurationTarget.Global);
+        const scope = cfg.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        vscode.window.showInformationMessage(
+            !current
+                ? '🛡️ Anti-Slop protection is now ENABLED.'
+                : '⚪ Anti-Slop protection is now DISABLED.'
+        );
+        await refreshStatus(context);
+    });
+
+    const setAntiSlopModeCmd = vscode.commands.registerCommand('tokenSaver.setAntiSlopMode', async (modeArg) => {
+        let chosenMode = modeArg;
+        if (!chosenMode) {
+            const currentMode = vscode.workspace.getConfiguration('tokenSaver').get('antiSlopMode', 'during');
+            const picks = [
+                { label: 'During (Default)', description: 'Direct clean execution in each response without extra turns', value: 'during' },
+                { label: 'After', description: 'Two-phase execution (deliver solution first, then self-audit)', value: 'after' },
+                { label: 'Ask', description: 'Ask user before running Anti-Slop audit or fixes', value: 'ask' },
+                { label: 'Off', description: 'Disable Anti-Slop framework rules', value: 'off' }
+            ];
+            const sel = await vscode.window.showQuickPick(picks, { placeHolder: `Current Anti-Slop mode: ${currentMode.toUpperCase()}` });
+            if (!sel) return;
+            chosenMode = sel.value;
+        }
+
+        const cfg = vscode.workspace.getConfiguration('tokenSaver');
+        await cfg.update('antiSlopMode', chosenMode, vscode.ConfigurationTarget.Global);
+        const scope = cfg.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        vscode.window.showInformationMessage(`🛡️ Anti-Slop mode set to: ${chosenMode.toUpperCase()}`);
+        await refreshStatus(context);
+    });
+
+    const uninstallAntiSlopCmd = vscode.commands.registerCommand('tokenSaver.uninstallAntiSlop', async () => {
+        await RtkUpdater.performLayerUninstall('antislop');
         await refreshStatus(context);
     });
 
@@ -478,7 +585,12 @@ async function activate(context) {
         checkUpdatesCmd,
         updateRtkCmd,
         syncPonytailCmd,
+        syncAntiSlopCmd,
+        toggleAntiSlopCmd,
+        setAntiSlopModeCmd,
+        uninstallAntiSlopCmd,
         installSkillsCmd,
+        uninstallSkillsCmd,
         syncGlobalRulesCmd,
         refreshCmd,
         showSavingsCmd,
@@ -486,6 +598,7 @@ async function activate(context) {
         copyAiInstallPromptCmd,
         copyInstallCommandsCmd,
         setPonytailModeCmd,
+        togglePonytailCmd,
         runCompactDiffCmd,
         generateAstOutlineCmd,
         startOmniRouteCmd,
@@ -501,6 +614,7 @@ async function activate(context) {
         uninstallRtkCmd,
         uninstallHeadroomCmd,
         uninstallPonytailCmd,
+        uninstallAntiSlopCmd,
         uninstallOmniRouteCmd,
         uninstallAllUpstreamCmd
     );

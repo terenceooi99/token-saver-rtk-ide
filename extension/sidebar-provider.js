@@ -16,7 +16,9 @@ class SidebarProvider {
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [
-                vscode.Uri.joinPath(this.extensionUri, 'extension', 'webview')
+                this.extensionUri,
+                vscode.Uri.joinPath(this.extensionUri, 'extension', 'webview'),
+                vscode.Uri.joinPath(this.extensionUri, 'resources')
             ]
         };
 

@@ -23,7 +23,9 @@ class DashboardPanel {
             {
                 enableScripts: true,
                 localResourceRoots: [
-                    vscode.Uri.joinPath(extensionUri, 'extension', 'webview')
+                    extensionUri,
+                    vscode.Uri.joinPath(extensionUri, 'extension', 'webview'),
+                    vscode.Uri.joinPath(extensionUri, 'resources')
                 ],
                 retainContextWhenHidden: true
             }

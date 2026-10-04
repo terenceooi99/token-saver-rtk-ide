@@ -7,6 +7,8 @@ const statusPill = document.getElementById('statusPill');
 const statusText = document.getElementById('statusText');
 const toggleModeBtn = document.getElementById('toggleModeBtn');
 const toggleHeadroomBtn = document.getElementById('toggleHeadroomBtn');
+const togglePonytailBtn = document.getElementById('togglePonytailBtn');
+const toggleAntiSlopBtn = document.getElementById('toggleAntiSlopBtn');
 const toggleOmniRouteBtn = document.getElementById('toggleOmniRouteBtn');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
@@ -43,6 +45,7 @@ const chartContainer = document.getElementById('chartContainer');
 const rawOutputText = document.getElementById('rawOutputText');
 
 const syncSkillsBtn = document.getElementById('syncSkillsBtn');
+const quickUninstallSkillsBtn = document.getElementById('quickUninstallSkillsBtn');
 const skillsStatusBadge = document.getElementById('skillsStatusBadge');
 const skillsSubText = document.getElementById('skillsSubText');
 
@@ -68,6 +71,10 @@ const diagCliStatus = document.getElementById('diagCliStatus');
 const diagHeadroomStatus = document.getElementById('diagHeadroomStatus');
 const diagPonytailStatus = document.getElementById('diagPonytailStatus');
 const diagVersion = document.getElementById('diagVersion');
+const diagVersionToggleBtn = document.getElementById('diagVersionToggleBtn');
+const diagVersionSummary = document.getElementById('diagVersionSummary');
+const diagVersionDropdown = document.getElementById('diagVersionDropdown');
+const diagVersionChevron = document.getElementById('diagVersionChevron');
 const diagBinaryPath = document.getElementById('diagBinaryPath');
 const diagScope = document.getElementById('diagScope');
 const diagActiveTargets = document.getElementById('diagActiveTargets');
@@ -81,6 +88,17 @@ const ponytailInlineSyncBtn = document.getElementById('ponytailInlineSyncBtn');
 const ponytailDiagActions = document.getElementById('ponytailDiagActions');
 const ponytailDiagAiBtn = document.getElementById('ponytailDiagAiBtn');
 const ponytailDiagSyncBtn = document.getElementById('ponytailDiagSyncBtn');
+
+// Anti-Slop Elements
+const antiSlopActiveBadge = document.getElementById('antiSlopActiveBadge');
+const antiSlopSegmentGroup = document.getElementById('antiSlopSegmentGroup');
+const antiSlopInlineSyncBtn = document.getElementById('antiSlopInlineSyncBtn');
+const antiSlopCheckbox = document.getElementById('antiSlopCheckbox');
+const diagAntiSlopStatus = document.getElementById('diagAntiSlopStatus');
+const antiSlopDiagActions = document.getElementById('antiSlopDiagActions');
+const antiSlopDiagAiBtn = document.getElementById('antiSlopDiagAiBtn');
+const antiSlopDiagSyncBtn = document.getElementById('antiSlopDiagSyncBtn');
+const antiSlopDiagUninstallBtn = document.getElementById('antiSlopDiagUninstallBtn');
 
 // Setup Hub Elements
 const setupBanner = document.getElementById('setupBanner');
@@ -617,6 +635,18 @@ if (toggleHeadroomBtn) {
     });
 }
 
+if (togglePonytailBtn) {
+    togglePonytailBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'togglePonytail' });
+    });
+}
+
+if (toggleAntiSlopBtn) {
+    toggleAntiSlopBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'toggleAntiSlop' });
+    });
+}
+
 if (toggleOmniRouteBtn) {
     toggleOmniRouteBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'toggleOmniRoute' });
@@ -634,6 +664,30 @@ syncAllIdesBtn.addEventListener('click', () => {
 syncSkillsBtn.addEventListener('click', () => {
     vscode.postMessage({ command: 'installSkills' });
 });
+
+if (quickUninstallSkillsBtn) {
+    quickUninstallSkillsBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'uninstallSkills' });
+    });
+}
+
+if (diagVersionToggleBtn && diagVersionDropdown) {
+    diagVersionToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = diagVersionDropdown.style.display === 'none' || !diagVersionDropdown.style.display;
+        diagVersionDropdown.style.display = isHidden ? 'block' : 'none';
+        if (diagVersionChevron) {
+            diagVersionChevron.textContent = isHidden ? '▴' : '▾';
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#diagVersionRow')) {
+            diagVersionDropdown.style.display = 'none';
+            if (diagVersionChevron) diagVersionChevron.textContent = '▾';
+        }
+    });
+}
 
 if (checkUpdatesBtn) {
     checkUpdatesBtn.addEventListener('click', () => {
@@ -798,6 +852,50 @@ if (ponytailDiagSyncBtn) {
     });
 }
 
+// Anti-Slop Listeners
+if (antiSlopSegmentGroup) {
+    const btns = antiSlopSegmentGroup.querySelectorAll('.segment-btn');
+    btns.forEach(b => {
+        b.addEventListener('click', () => {
+            const mode = b.dataset.mode;
+            vscode.postMessage({ command: 'setAntiSlopMode', mode });
+        });
+    });
+}
+
+if (antiSlopInlineSyncBtn) {
+    antiSlopInlineSyncBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        antiSlopInlineSyncBtn.textContent = '🔄 Syncing...';
+        vscode.postMessage({ command: 'syncAntiSlop' });
+        setTimeout(() => { antiSlopInlineSyncBtn.textContent = '🔄 Sync from GitHub'; }, 3000);
+    });
+}
+
+if (antiSlopCheckbox) {
+    antiSlopCheckbox.addEventListener('change', () => {
+        vscode.postMessage({ command: 'toggleAntiSlop', enabled: antiSlopCheckbox.checked });
+    });
+}
+
+if (antiSlopDiagAiBtn) {
+    antiSlopDiagAiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'copyAiInstallPrompt' });
+        antiSlopDiagAiBtn.textContent = '✓ Copied';
+        setTimeout(() => { antiSlopDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+    });
+}
+
+if (antiSlopDiagSyncBtn) {
+    antiSlopDiagSyncBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        antiSlopDiagSyncBtn.textContent = '🛡️ Syncing...';
+        vscode.postMessage({ command: 'syncAntiSlop' });
+        setTimeout(() => { antiSlopDiagSyncBtn.textContent = '🛡️ Sync'; }, 3000);
+    });
+}
+
 // OmniRoute Listeners
 if (omniStartBtn) {
     omniStartBtn.addEventListener('click', () => {
@@ -900,6 +998,12 @@ if (ponytailDiagUninstallBtn) {
         vscode.postMessage({ command: 'uninstallLayer', layerKey: 'ponytail' });
     });
 }
+if (antiSlopDiagUninstallBtn) {
+    antiSlopDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'antislop' });
+    });
+}
 
 // Handle incoming messages from extension host
 window.addEventListener('message', (event) => {
@@ -936,6 +1040,9 @@ window.addEventListener('message', (event) => {
                 if (message.data.ponytail && message.data.ponytail.hasUpdate) {
                     parts.push(`Ponytail (${(message.data.ponytail.release && message.data.ponytail.release.tag) || 'GitHub'})`);
                 }
+                if (message.data.antislop && message.data.antislop.hasUpdate) {
+                    parts.push(`Anti-Slop (${(message.data.antislop.release && message.data.antislop.release.tag) || 'GitHub'})`);
+                }
                 if (message.data.omniroute && message.data.omniroute.hasUpdate && message.data.omniroute.release) {
                     parts.push(`OmniRoute ${message.data.omniroute.release.tag}`);
                 }
@@ -964,6 +1071,7 @@ function renderDashboardState(data) {
 
     isSidebarMode = !!isSidebar;
     dashboardContainer.classList.toggle('is-sidebar', isSidebarMode);
+    document.body.classList.toggle('is-sidebar', isSidebarMode);
 
     // Adjust button titles and icons according to environment
     if (!isSidebarMode) {
@@ -1015,6 +1123,30 @@ function renderDashboardState(data) {
         } else {
             toggleHeadroomBtn.textContent = 'Turn Headroom ON';
             toggleHeadroomBtn.className = 'btn btn-primary';
+        }
+    }
+
+    // Ponytail Button in Header
+    if (togglePonytailBtn) {
+        const isPonytail = (data.ponytailMode || 'full') !== 'off';
+        if (isPonytail) {
+            togglePonytailBtn.textContent = 'Turn Ponytail OFF';
+            togglePonytailBtn.className = 'btn btn-ghost';
+        } else {
+            togglePonytailBtn.textContent = 'Turn Ponytail ON';
+            togglePonytailBtn.className = 'btn btn-primary';
+        }
+    }
+
+    // Anti-Slop Button in Header
+    if (toggleAntiSlopBtn) {
+        const isAntiSlop = Boolean(data.antiSlopEnabled !== false && (data.antiSlopMode || 'during') !== 'off');
+        if (isAntiSlop) {
+            toggleAntiSlopBtn.textContent = 'Turn Anti-Slop OFF';
+            toggleAntiSlopBtn.className = 'btn btn-ghost';
+        } else {
+            toggleAntiSlopBtn.textContent = 'Turn Anti-Slop ON';
+            toggleAntiSlopBtn.className = 'btn btn-primary';
         }
     }
 
@@ -1098,8 +1230,9 @@ function renderDashboardState(data) {
     const isRtkMissing = !installed;
     const isHeadroomMissing = !data.headroomInstalled;
     const isPonytailMissing = !data.ponytailInstalled;
+    const isAntiSlopMissing = !data.antiSlopInstalled;
     const isOmniMissing = !data.omniRouteInstalled && !data.omniRouteRunning;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isOmniMissing;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
@@ -1118,6 +1251,9 @@ function renderDashboardState(data) {
                 if (isPonytailMissing) {
                     chips.push('<span class="missing-chip chip-cyan">🥋 Ponytail GitHub Missing</span>');
                 }
+                if (isAntiSlopMissing) {
+                    chips.push('<span class="missing-chip chip-cyan" style="background: rgba(48, 209, 88, 0.15); color: #30d158; border: 1px solid rgba(48, 209, 88, 0.3);">🛡️ Anti-Slop Missing</span>');
+                }
                 setupMissingTags.innerHTML = chips.join('');
             }
             if (setupBannerDesc) {
@@ -1126,7 +1262,8 @@ function renderDashboardState(data) {
                 if (isRtkMissing) missingNames.push('RTK CLI');
                 if (isHeadroomMissing) missingNames.push('Headroom');
                 if (isPonytailMissing) missingNames.push('Ponytail YAGNI');
-                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption and route multi-model traffic with auto-fallback.`;
+                if (isAntiSlopMissing) missingNames.push('Anti-Slop');
+                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, and route multi-model traffic.`;
             }
         } else {
             setupBanner.style.display = 'none';
@@ -1299,6 +1436,29 @@ function renderDashboardState(data) {
         if (ponytailDiagUninstallBtn) ponytailDiagUninstallBtn.style.display = pInstalled ? 'inline-block' : 'none';
     }
 
+    if (diagAntiSlopStatus) {
+        const aInstalled = data.antiSlopInstalled;
+        const aMode = data.antiSlopMode || 'during';
+        const aEnabled = data.antiSlopEnabled !== false;
+        if (aInstalled && aEnabled && aMode !== 'off') {
+            diagAntiSlopStatus.textContent = `Active (${data.antiSlopSkillsCount || 6}/6 skills)`;
+            diagAntiSlopStatus.style.color = 'var(--accent-green)';
+        } else if (aInstalled && (!aEnabled || aMode === 'off')) {
+            diagAntiSlopStatus.textContent = 'Inactive (Mode Off)';
+            diagAntiSlopStatus.style.color = 'var(--text-muted)';
+        } else {
+            diagAntiSlopStatus.textContent = 'Inactive (Not Synced)';
+            diagAntiSlopStatus.style.color = 'var(--accent-amber)';
+        }
+    }
+    if (antiSlopDiagActions) {
+        antiSlopDiagActions.style.display = 'inline-flex';
+        const aInstalled = Boolean(data.antiSlopInstalled);
+        if (antiSlopDiagAiBtn) antiSlopDiagAiBtn.style.display = aInstalled ? 'none' : 'inline-block';
+        if (antiSlopDiagSyncBtn) antiSlopDiagSyncBtn.style.display = aInstalled ? 'none' : 'inline-block';
+        if (antiSlopDiagUninstallBtn) antiSlopDiagUninstallBtn.style.display = aInstalled ? 'inline-block' : 'none';
+    }
+
     if (ponytailActionBadge) {
         if (data.ponytailInstalled) {
             ponytailActionBadge.className = 'action-status-badge synced';
@@ -1318,25 +1478,73 @@ function renderDashboardState(data) {
     }
 
     // Upstream GitHub Installed Versions breakdown
-    const verList = [];
-    if (installed) {
-        verList.push(`RTK: ${version}`);
-    }
-    if (data.headroomInstalled) {
-        verList.push(`Headroom: ${data.headroomVersion}`);
-    }
-    if (data.ponytailInstalled) {
-        verList.push(`Ponytail: ${data.ponytailVersion || 'v1.0.0'} (${data.ponytailSkillsCount || 6}/6)`);
-    }
-    if (data.omniRouteInstalled) {
-        verList.push(`OmniRoute: ${data.omniRouteVersion || 'Ready'}`);
+    const upstreamLayers = [
+        {
+            key: 'rtk',
+            name: 'RTK CLI Core',
+            icon: '⚡',
+            repo: 'rtk-ai/rtk',
+            version: installed ? version : 'Not installed',
+            isInstalled: Boolean(installed)
+        },
+        {
+            key: 'headroom',
+            name: 'Headroom (CCR)',
+            icon: '🧱',
+            repo: 'headroomlabs-ai/headroom',
+            version: data.headroomInstalled ? data.headroomVersion : 'Not installed',
+            isInstalled: Boolean(data.headroomInstalled)
+        },
+        {
+            key: 'ponytail',
+            name: 'Ponytail (YAGNI)',
+            icon: '🥋',
+            repo: 'DietrichGebert/ponytail',
+            version: data.ponytailInstalled ? `${data.ponytailVersion || 'v1.0.0'} (${data.ponytailSkillsCount || 6}/6 skills)` : 'Not synced',
+            isInstalled: Boolean(data.ponytailInstalled)
+        },
+        {
+            key: 'antislop',
+            name: 'Anti-Slop Suite',
+            icon: '🛡️',
+            repo: 'miqdadbadjuber/anti-slop',
+            version: data.antiSlopInstalled ? `${data.antiSlopVersion || 'v3.2.20'} (${data.antiSlopSkillsCount || 6}/6 skills)` : 'Not synced',
+            isInstalled: Boolean(data.antiSlopInstalled)
+        },
+        {
+            key: 'omniroute',
+            name: 'OmniRoute Gateway',
+            icon: '🌐',
+            repo: 'diegosouzapw/OmniRoute',
+            version: data.omniRouteInstalled ? `${data.omniRouteVersion || 'Ready'} (:20128)` : 'Not installed',
+            isInstalled: Boolean(data.omniRouteInstalled)
+        }
+    ];
+
+    const installedLayersCount = upstreamLayers.filter(l => l.isInstalled).length;
+
+    if (diagVersionSummary) {
+        diagVersionSummary.textContent = `${installedLayersCount}/${upstreamLayers.length} Layers Active`;
     }
 
-    if (verList.length === 0) {
-        diagVersion.textContent = 'None detected';
-        diagVersion.title = 'No upstream GitHub layers detected';
-    } else {
-        diagVersion.textContent = verList.join(' • ');
+    if (diagVersionDropdown) {
+        diagVersionDropdown.innerHTML = upstreamLayers.map(l => `
+            <div class="diag-dropdown-item ${l.isInstalled ? 'item-active' : 'item-inactive'}">
+                <div class="dropdown-item-top">
+                    <span class="dropdown-item-name">${l.icon} <strong>${l.name}</strong></span>
+                    <span class="dropdown-item-badge ${l.isInstalled ? 'badge-green' : 'badge-muted'}">${l.isInstalled ? 'Installed' : 'Missing'}</span>
+                </div>
+                <div class="dropdown-item-sub">
+                    <span class="dropdown-item-ver">${l.version}</span>
+                    <a href="https://github.com/${l.repo}" target="_blank" class="dropdown-item-repo" title="Upstream GitHub: ${l.repo}">${l.repo} ↗</a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    if (diagVersion) {
+        const verList = upstreamLayers.filter(l => l.isInstalled).map(l => `${l.name}: ${l.version}`);
+        diagVersion.textContent = verList.length > 0 ? verList.join(' • ') : 'None detected';
         diagVersion.title = verList.join('\n');
     }
 
@@ -1351,7 +1559,7 @@ function renderDashboardState(data) {
         : Boolean(data.skillsInstalled);
     const skillsTotal = (typeof data.skillsInstalled === 'object' && data.skillsInstalled !== null && data.skillsInstalled.total)
         ? data.skillsInstalled.total
-        : 21;
+        : 27;
     const skillsCount = (typeof data.skillsInstalled === 'object' && data.skillsInstalled !== null)
         ? data.skillsInstalled.count
         : (isSkillsInstalled ? skillsTotal : 0);
@@ -1362,14 +1570,14 @@ function renderDashboardState(data) {
             skillsStatusBadge.innerHTML = '<span class="badge-icon">✓</span> <span class="badge-text">Active</span>';
             skillsStatusBadge.title = `Chat skills active (${skillsCount}/${skillsTotal} skills installed in IDE)`;
             if (skillsSubText) {
-                skillsSubText.textContent = `✓ /rtk-* & /ponytail ready (${skillsCount}/${skillsTotal} active)`;
+                skillsSubText.textContent = `✓ /rtk-*, /ponytail & /antislop ready (${skillsCount}/${skillsTotal} active)`;
             }
         } else {
             skillsStatusBadge.className = 'action-status-badge install';
             skillsStatusBadge.innerHTML = '<span class="badge-text">+ Install</span>';
             skillsStatusBadge.title = `Click to install all ${skillsTotal} chat skills in IDE`;
             if (skillsSubText) {
-                skillsSubText.textContent = `Install all ${skillsTotal} chat skills (/rtk-* & /ponytail)`;
+                skillsSubText.textContent = `Install all ${skillsTotal} chat skills (/rtk-*, /ponytail, /antislop)`;
             }
         }
     }
@@ -1391,6 +1599,24 @@ function renderDashboardState(data) {
             b.classList.toggle('active', b.dataset.mode === pMode);
         });
     }
+
+    // Anti-Slop Framework State
+    const aMode = data.antiSlopMode || 'during';
+    const aEnabled = data.antiSlopEnabled !== false;
+    if (antiSlopActiveBadge) {
+        antiSlopActiveBadge.textContent = (!aEnabled || aMode === 'off') ? 'OFF' : `${aMode.toUpperCase()} Mode`;
+        antiSlopActiveBadge.className = (!aEnabled || aMode === 'off') ? 'panel-tag' : 'panel-tag tag-cyan';
+    }
+    if (antiSlopSegmentGroup) {
+        const btns = antiSlopSegmentGroup.querySelectorAll('.segment-btn');
+        btns.forEach(b => {
+            b.classList.toggle('active', b.dataset.mode === (aEnabled ? aMode : 'off'));
+        });
+    }
+    if (antiSlopCheckbox && data.antiSlopEnabled !== undefined) {
+        antiSlopCheckbox.checked = Boolean(data.antiSlopEnabled);
+    }
+
     if (terseAgentCheckbox && data.terseAgentMode !== undefined) {
         terseAgentCheckbox.checked = Boolean(data.terseAgentMode);
     }

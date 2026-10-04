@@ -8,7 +8,7 @@
 [![Windsurf](https://img.shields.io/badge/Windsurf%20IDE-Compatible-00E5FF.svg)](https://codeium.com/windsurf)
 [![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-rtk-ide)
 
-**Token Saver (RTK, Headroom, Ponytail & OmniRoute)** is an all-in-one token optimization suite and CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), and [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), it slashes AI context window token consumption by **60% - 90%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.) and code generation across **all major Agentic AI IDEs and coding assistants**.
+**Token Saver (RTK, Headroom, Ponytail, Anti-Slop & OmniRoute)** is an all-in-one token optimization and AI quality suite with CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), [Anti-Slop AI Quality Framework](https://github.com/miqdadbadjuber/anti-slop), and [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), it slashes AI context window token consumption by **60% - 90%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.) and enforces production-grade anti-slop quality across **all major Agentic AI IDEs and coding assistants**.
 
 <p align="center">
   <img src="resources/dashboard-preview.png" alt="Token Saver Interactive Glassmorphic Dashboard" width="100%" />
@@ -18,7 +18,7 @@
 
 ## 🏗️ Architectural Flowchart
 
-The following flowchart illustrates how **Token Saver** bridges multiple AI IDEs, coordinates four specialized token reduction engines, and optimizes terminal output & prompt context before hitting LLM models:
+The following flowchart illustrates how **Token Saver** bridges multiple AI IDEs, coordinates five specialized optimization & quality engines, and optimizes terminal output & prompt context before hitting LLM models:
 
 ```mermaid
 flowchart TD
@@ -35,19 +35,20 @@ flowchart TD
         RuleSync["Multi-IDE Rule Synchronizer<br/>(Safe Delimiter System)"]
         WebviewDash["Interactive Webview Dashboard<br/>(Live Counters, Breakdown & Controls)"]
         StatusBar["Dynamic Status Bar Meter<br/>(Real-Time Savings & Cost Gauge)"]
-        SlashSkills["Chat Skills & Commands Engine<br/>(/rtk-*, /ponytail-*, /omniroute)"]
+        SlashSkills["Chat Skills & Commands Engine<br/>(/rtk-*, /ponytail-*, /antislop-*, /omniroute)"]
     end
 
-    subgraph OptimEngines ["Token Optimization & Routing Engines"]
+    subgraph OptimEngines ["Token Optimization, Quality & Routing Engines"]
         RTK["RTK (Rust Token Killer)<br/>CLI Output Compression (60-90% Reduction)"]
         Headroom["Headroom Context Compression<br/>(CCR / Large Log & JSON Compression)"]
         Ponytail["Ponytail YAGNI Engine<br/>(Terse Directives, Compact Diffs, AST Outlines)"]
+        AntiSlop["Anti-Slop AI Framework<br/>(UI, Copywriting, Code & Mobile Anti-Slop)"]
         OmniRoute["OmniRoute AI Gateway (:20128)<br/>(Multi-Model Routing & Auto-Failover)"]
     end
 
     subgraph ContextOptimization ["Context Window & Execution Flow"]
         TerminalOut["Condensed Terminal Output<br/>(git, npm, cargo, pytest, rg, etc.)"]
-        AgentPrompt["Optimized AI Prompt & Context<br/>(Zero Noise, High-Signal Tokens)"]
+        AgentPrompt["Optimized AI Prompt & Context<br/>(Zero Noise, High-Signal & Slop-Free)"]
         LLMModels["LLM Providers & Models<br/>(Claude 3.7 / GPT-4o / Gemini / DeepSeek)"]
     end
 
@@ -60,11 +61,13 @@ flowchart TD
     SlashSkills -->|"Executes Shell Commands"| RTK
     SlashSkills -->|"Compresses Large Payloads"| Headroom
     SlashSkills -->|"Enforces Terse Code Diff"| Ponytail
+    SlashSkills -->|"Enforces Quality Standards"| AntiSlop
     SlashSkills -->|"Routes AI Queries"| OmniRoute
 
     RTK -->|"Filters Verbosity"| TerminalOut
     Headroom -->|"Compresses JSON/Logs"| AgentPrompt
     Ponytail -->|"Prunes Boilerplate"| AgentPrompt
+    AntiSlop -->|"Eliminates AI Hallucinations & Generic Slop"| AgentPrompt
     OmniRoute -->|"Routes AI Requests"| LLMModels
 
     TerminalOut -->|"Feeds Condensed Signal"| AgentPrompt
@@ -130,7 +133,7 @@ flowchart TD
 | **`/rtk-doctor`** | **Runs health checks & diagnostics** for RTK, Headroom, and environment configs. |
 | **`/rtk-sync`** | **1-Click syncs RTK & Headroom rules** across all AI agent files. |
 | **`/rtk-run <cmd>`** | **Runs arbitrary shell command** through RTK output compression proxy. |
-| **`/rtk-update`** | **Checks and updates RTK, Headroom, Ponytail & OmniRoute** from upstream GitHub releases. |
+| **`/rtk-update`** | **Checks and updates RTK, Headroom, Ponytail, Anti-Slop & OmniRoute** from upstream GitHub releases. |
 | **`/rtk-omniroute`** | **Configures OmniRoute AI Gateway & Smart Router** for low-latency multi-model routing & rate-limit evasion. |
 | **`/ponytail`** | **Configures Ponytail YAGNI mode** for concise code diffs & terse generation. |
 | **`/ponytail-audit`** | **Whole-repo audit for over-engineering** and speculative code. |
@@ -138,11 +141,17 @@ flowchart TD
 | **`/ponytail-gain`** | **Displays measured-impact scoreboard** from benchmarks. |
 | **`/ponytail-help`** | **Displays Ponytail reference card** and intensity levels. |
 | **`/ponytail-review`** | **Reviews diffs exclusively for over-engineering**. |
+| **`/antislop`** | **Configures Anti-Slop AI rules** & review mode (`during`, `after`, `ask`, `off`). |
+| **`/antislop-ui`** | **Enforces Anti-Slop UI standards**: human-designed layouts, real spacing, typography & contrast. |
+| **`/antislop-copywriting`** | **Enforces Anti-Slop copywriting**: eliminates AI filler words ("delve", "testament", "tapestry"). |
+| **`/antislop-human`** | **Applies human UX principles** with automated WCAG contrast checker scripts. |
+| **`/antislop-layoutmobile`** | **Validates mobile-first constraints** and touch target compliance. |
+| **`/antislop-code`** | **Enforces clean, maintainable, anti-slop code structure** without AI bloat. |
 | **`/publishtokensaverlocal`** | **Builds local `.vsix`** for immediate internal IDE testing. |
 | **`/publishtokensavernow`** | **Automates release tagging and publishing** to Open VSX & GitHub Releases. |
 
 *(Optional Manual Re-install)*:
-- **Command Palette**: `Token Saver: 1-Click Skill Installation (/rtk-* & /ponytail)`
+- **Command Palette**: `Token Saver: 1-Click Skill Installation (/rtk-*, /ponytail, /antislop)`
 - **Windows (PowerShell)**: `.\scripts\install-skills.ps1`
 - **Linux / macOS (Bash)**: `./scripts/install-skills.sh`
 
@@ -163,16 +172,16 @@ The extension provides full graphical and automated control directly from your *
    - Live Token Savings Counter with animated visual meters.
    - Compression Efficiency Gauge (%) and Estimated Dollar Savings ($).
    - Per-tool visual savings charts (`git`, `cargo`, `npm`, `pytest`, `vitest`, `rg`, `ls`, etc.).
-   - Action center with 1-click skill sync, Ponytail GitHub sync, GitHub release update check, and proxy latency test.
+   - Action center with 1-click skill sync, Ponytail & Anti-Slop GitHub sync, GitHub release update check, and proxy latency test.
    - Diagnostics panel displaying local binary path, version, and active target counts.
 
 <p align="center">
   <img src="resources/dashboard-breakdown.png" alt="Token Saver Real-time Compression Scoreboard & Savings Breakdown" width="100%" />
 </p>
 
-4. **Upstream GitHub 3-Way Core Sync (RTK, Headroom & Ponytail)**:
-   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, & `DietrichGebert/ponytail`).
-   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail.
+4. **Upstream GitHub 4-Way Core Sync (RTK, Headroom, Ponytail & Anti-Slop)**:
+   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, & `miqdadbadjuber/anti-slop`).
+   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail and Anti-Slop.
 5. **Dynamic Live Status Bar**:
    - Shows real-time savings: `⚡ RTK: 48.2k saved (72%)` or `⚪ RTK: OFF`.
    - Rich hover tooltips with cost savings and quick access to the dashboard.
@@ -183,18 +192,20 @@ The extension provides full graphical and automated control directly from your *
    - `Token Saver: Toggle RTK Token Saving Mode`
    - `Token Saver: Enable RTK Token Saving`
    - `Token Saver: Disable RTK Token Saving`
-   - `Token Saver: Check for Upstream GitHub Updates (RTK, Headroom & Ponytail)`
-   - `Token Saver: Update from Upstream GitHub (RTK, Headroom & Ponytail)`
-   - `Token Saver: Fetch & Sync Ponytail from GitHub (Global IDE)`
+   - `Token Saver: Check for Upstream GitHub Updates`
+   - `Token Saver: Update from Upstream GitHub`
+   - `Token Saver: Fetch & Sync Ponytail from GitHub`
+   - `Token Saver: Fetch & Sync Anti-Slop from GitHub`
+   - `Token Saver: Configure Anti-Slop Mode (during / after / ask / off)`
    - `Token Saver: Toggle Headroom Context Compression`
    - `Token Saver: Configure Ponytail Mode (YAGNI & Output Token Saver)`
    - `Token Saver: Run Compact Diff (rtk git diff -U1)`
    - `Token Saver: Generate AST / Symbol Outline for Current File`
-   - `Token Saver: 1-Click Skill Installation (/rtk-* & /ponytail)`
+   - `Token Saver: 1-Click Skill Installation (/rtk-*, /ponytail, /antislop)`
    - `Token Saver: Sync Global Antigravity Rules (~/.gemini)`
    - `Token Saver: Show Token Savings Scoreboard (rtk gain)`
    - `Token Saver: Install RTK CLI Tool`
-   - `Token Saver: Copy AI Agent Install Prompt (RTK, Headroom & Ponytail)`
+   - `Token Saver: Copy AI Agent Install Prompt`
    - `Token Saver: Copy Raw Shell Install Commands`
 
 ---
@@ -205,13 +216,15 @@ The extension provides full graphical and automated control directly from your *
 | :--- | :--- | :--- |
 | `tokenSaver.enableOnStartup` | `true` | Automatically enable RTK token compression when opening a project. |
 | `tokenSaver.headroomEnabled` | `true` | Enable Headroom context compression (CCR / SmartCrusher / CodeCompressor). |
-| `tokenSaver.autoInstallSkills` | `true` | Automatically install Antigravity & Agent chat skills (`/rtk-*`) on startup. |
+| `tokenSaver.autoInstallSkills` | `true` | Automatically install Antigravity & Agent chat skills (`/rtk-*`, `/ponytail-*`, `/antislop-*`) on startup. |
 | `tokenSaver.targetScope` | `"all"` | Target IDE / Agent rule scope (`all`, `global`, `workspace`, `copilot`, `cursor`, `windsurf`, `cline`, `claude`, `agents`). |
 | `tokenSaver.checkForUpdatesOnStartup` | `true` | Check for newer RTK & Headroom releases on startup. |
 | `tokenSaver.weeklyAutoSync` | `true` | Weekly background check and sync for upstream releases. |
 | `tokenSaver.tokenPricePerMillion` | `3.00` | Estimated USD price per 1M tokens for dollar savings calculation. |
 | `tokenSaver.statusMetricDisplay` | `"compact"` | Format of live metrics in status bar (`compact`, `verbose`, `iconOnly`). |
 | `tokenSaver.ponytailMode` | `"full"` | Ponytail YAGNI mode (`full`, `lite`, `ultra`, `off`). |
+| `tokenSaver.antiSlopEnabled` | `true` | Enable Anti-Slop AI quality and slop elimination framework. |
+| `tokenSaver.antiSlopMode` | `"during"` | Anti-Slop review execution mode (`during`, `after`, `ask`, `off`). |
 | `tokenSaver.terseAgentMode` | `true` | Instruct agents to drop conversational filler to maximize output token savings. |
 | `tokenSaver.compactDiffContext` | `true` | Direct AI agents to use `-U1` compact context for git diffs. |
 | `tokenSaver.astOutlineContext` | `true` | Direct AI agents to inspect symbol outlines before reading full files. |

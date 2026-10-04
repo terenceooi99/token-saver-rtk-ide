@@ -83,6 +83,43 @@ class RtkService {
         });
     }
 
+    static checkAntiSlopInstalled() {
+        return new Promise((resolve) => {
+            const home = os.homedir();
+            const globalSkillPath = path.join(home, '.gemini', 'config', 'skills', 'antislop', 'SKILL.md');
+            const globalSkillsDir = path.join(home, '.gemini', 'config', 'skills');
+
+            let wsSkillPath = null;
+            const folders = vscode.workspace.workspaceFolders;
+            if (folders && folders.length > 0) {
+                wsSkillPath = path.join(folders[0].uri.fsPath, '.agents', 'skills', 'antislop', 'SKILL.md');
+            }
+
+            const isInstalledGlobally = fs.existsSync(globalSkillPath);
+            const isInstalledInWorkspace = wsSkillPath && fs.existsSync(wsSkillPath);
+
+            if (isInstalledGlobally || isInstalledInWorkspace) {
+                let count = 0;
+                const antiSlopSkills = ['antislop', 'antislop-ui', 'antislop-copywriting', 'antislop-human', 'antislop-layoutmobile', 'antislop-code'];
+                for (const sk of antiSlopSkills) {
+                    if (fs.existsSync(path.join(globalSkillsDir, sk, 'SKILL.md')) ||
+                        (wsSkillPath && fs.existsSync(path.join(folders[0].uri.fsPath, '.agents', 'skills', sk, 'SKILL.md')))) {
+                        count++;
+                    }
+                }
+                const installedPath = isInstalledGlobally ? globalSkillPath : wsSkillPath;
+                resolve({
+                    installed: true,
+                    version: `v3.2.20 (${count}/6 skills active)`,
+                    skillsCount: count,
+                    path: installedPath
+                });
+            } else {
+                resolve({ installed: false, version: null, skillsCount: 0, path: null });
+            }
+        });
+    }
+
     static checkOmniRouteInstalled() {
         const OmniRouteService = require('./omniroute-service');
         return OmniRouteService.checkInstalled();
@@ -340,10 +377,26 @@ class RtkService {
             });
         });
 
-        const [rtk, headroom, ponytail, omniroute] = await Promise.all([
+        const testAntiSlop = () => {
+            return new Promise((resolve) => {
+                const start = Date.now();
+                this.checkAntiSlopInstalled().then(res => {
+                    const duration = Date.now() - start;
+                    resolve({
+                        name: 'Anti-Slop',
+                        available: res.installed,
+                        latency: res.installed ? `${duration}ms (${res.skillsCount || 6}/6 skills)` : 'Not Synced',
+                        ms: duration
+                    });
+                });
+            });
+        };
+
+        const [rtk, headroom, ponytail, antislop, omniroute] = await Promise.all([
             testRtk(),
             testHeadroom(),
             testPonytail(),
+            testAntiSlop(),
             testOmniRoute()
         ]);
 
@@ -351,18 +404,20 @@ class RtkService {
         if (rtk.available) parts.push(`RTK: ${rtk.latency}`);
         if (headroom.available) parts.push(`Headroom: ${headroom.latency}`);
         if (ponytail.available) parts.push(`Ponytail: ${ponytail.latency}`);
+        if (antislop.available) parts.push(`Anti-Slop: ${antislop.latency}`);
         if (omniroute.available) parts.push(`OmniRoute: ${omniroute.latency}`);
 
         const summary = parts.length > 0 ? parts.join(' • ') : 'No upstream layers detected';
-        const anyAvailable = rtk.available || headroom.available || ponytail.available || omniroute.available;
+        const anyAvailable = rtk.available || headroom.available || ponytail.available || antislop.available || omniroute.available;
 
         return {
             available: anyAvailable,
             summary,
-            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | OmniRoute: ${omniroute.latency}`,
+            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | Anti-Slop: ${antislop.latency} | OmniRoute: ${omniroute.latency}`,
             rtk,
             headroom,
             ponytail,
+            antislop,
             omniroute
         };
     }
@@ -500,7 +555,7 @@ class RtkService {
         this.runInTerminal(cmds.headroomUninstallCmd);
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true) {
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const cmds = this.getInstallCommands(isWindows, isMac);
 
@@ -527,12 +582,17 @@ class RtkService {
             stepIdx++;
         }
 
-        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, and \`omniroute --version\`, and verify Ponytail & OmniRoute skills are available in the IDE.`);
+        if (antiSlopMissing) {
+            items.push(`${stepIdx}. **Fetch & Install Anti-Slop Framework (Upstream: miqdadbadjuber/anti-slop)**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`). Ensure skills (\`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\`) are installed.`);
+            stepIdx++;
+        }
+
+        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, and \`omniroute --version\`, and verify Ponytail, Anti-Slop & OmniRoute skills are available in the IDE.`);
         stepIdx++;
         items.push(`${stepIdx}. **Confirm Success**:\n   Report the installed version numbers and active status back to me once done.`);
 
         const prompt = [
-            `Please help me install, fetch, and configure the necessary token saving and AI routing tools (OmniRoute, RTK, Headroom, and Ponytail) for Token Saver on this ${osName} machine:`,
+            `Please help me install, fetch, and configure the necessary token saving, anti-slop, and AI routing tools (OmniRoute, RTK, Headroom, Anti-Slop, and Ponytail) for Token Saver on this ${osName} machine:`,
             '',
             items.join('\n\n'),
             '',

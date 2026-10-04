@@ -7,15 +7,13 @@ GLOBAL_SKILLS_DIR="$HOME/.gemini/config/skills"
 
 mkdir -p "$GLOBAL_SKILLS_DIR"
 
-SKILLS=("rtk-savedtokenon" "rtk-savedtokenoff" "rtk-gain" "rtk-update")
-
-for skill in "${SKILLS[@]}"; do
-    SRC="$PROJECT_ROOT/skills/$skill"
-    DEST="$GLOBAL_SKILLS_DIR/$skill"
-    if [ -d "$SRC" ]; then
+for skill_dir in "$PROJECT_ROOT/skills"/*; do
+    if [ -d "$skill_dir" ]; then
+        skill_name=$(basename "$skill_dir")
+        DEST="$GLOBAL_SKILLS_DIR/$skill_name"
         mkdir -p "$DEST"
-        cp -R "$SRC/"* "$DEST/"
-        echo "[OK] Installed skill: /$skill -> $DEST"
+        cp -R "$skill_dir/"* "$DEST/"
+        echo "[OK] Installed skill: /$skill_name -> $DEST"
     fi
 done
 
