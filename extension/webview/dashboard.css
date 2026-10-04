@@ -367,6 +367,13 @@ body.light-theme .btn-ghost:hover {
     min-width: 0;
 }
 
+.brand-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 h1 {
     font-size: 16px;
     font-weight: 600;
@@ -376,6 +383,30 @@ h1 {
     gap: 7px;
     white-space: nowrap;
     color: var(--apple-text-primary);
+}
+
+.tip-link-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #9fe870;
+    background: rgba(159, 232, 112, 0.12);
+    border: 1px solid rgba(159, 232, 112, 0.3);
+    border-radius: var(--radius-pill);
+    padding: 2px 8px;
+    text-decoration: none;
+    transition: var(--apple-spring);
+    box-shadow: 0 2px 8px rgba(159, 232, 112, 0.12);
+}
+
+.tip-link-header:hover {
+    background: rgba(159, 232, 112, 0.22);
+    border-color: rgba(159, 232, 112, 0.5);
+    color: #bdf89e;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(159, 232, 112, 0.25);
 }
 
 .badge-rtk {
@@ -1909,6 +1940,24 @@ pre#rawOutputText {
 
 .footer-links a:hover {
     color: var(--apple-cyan);
+}
+
+.footer-brand-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.footer-repo-link {
+    color: var(--apple-cyan);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--apple-fast);
+}
+
+.footer-repo-link:hover {
+    color: var(--apple-blue);
+    text-decoration: underline;
 }
 
 .footer-links a.tip-link {

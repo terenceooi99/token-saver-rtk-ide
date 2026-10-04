@@ -1,12 +1,12 @@
 # ⚡ Token Saver (RTK, Headroom & Ponytail) for VS Code & Agentic IDEs
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![OpenVSX](https://img.shields.io/badge/Open%20VSX-available-blue.svg)](https://open-vsx.org/extension/terenceooi/token-saver-rtk-ide)
+[![OpenVSX](https://img.shields.io/badge/Open%20VSX-available-blue.svg)](https://open-vsx.org/extension/terenceooi/token-saver-ide-plugin)
 [![Sponsor on Wise](https://img.shields.io/badge/Sponsor-Wise-9fe870?logo=wise&logoColor=black)](https://wise.com/pay/me/terenceooit)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Compatible-007ACC.svg)](https://code.visualstudio.com)
 [![Cursor](https://img.shields.io/badge/Cursor%20IDE-Compatible-black.svg)](https://cursor.com)
 [![Windsurf](https://img.shields.io/badge/Windsurf%20IDE-Compatible-00E5FF.svg)](https://codeium.com/windsurf)
-[![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-rtk-ide)
+[![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-ide-plugin)
 
 **Token Saver (RTK, Headroom & Ponytail)** is an all-in-one token optimization suite and CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), and [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), it slashes AI context window token consumption by **60% - 90%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.) and code generation across **all major Agentic AI IDEs and coding assistants**.
 
@@ -72,7 +72,8 @@
 | **`/rtk-doctor`** | **Runs health checks & diagnostics** for RTK, Headroom, and environment configs. |
 | **`/rtk-sync`** | **1-Click syncs RTK & Headroom rules** across all AI agent files. |
 | **`/rtk-run <cmd>`** | **Runs arbitrary shell command** through RTK output compression proxy. |
-| **`/rtk-update`** | **Checks and updates RTK, Headroom & Ponytail** from upstream GitHub releases. |
+| **`/rtk-update`** | **Checks and updates RTK, Headroom, Ponytail & OmniRoute** from upstream GitHub releases. |
+| **`/rtk-omniroute`** | **Configures OmniRoute AI Gateway & Smart Router** for low-latency multi-model routing & rate-limit evasion. |
 | **`/ponytail`** | **Configures Ponytail YAGNI mode** for concise code diffs & terse generation. |
 | **`/ponytail-audit`** | **Whole-repo audit for over-engineering** and speculative code. |
 | **`/ponytail-debt`** | **Tracks shortcut debt ledger** marked with `ponytail:` comments. |
@@ -209,7 +210,13 @@ You can also synchronize rules directly from terminal:
 
 2. **Publish to Open VSX**:
    ```bash
-   npx ovsx publish token-saver-rtk-ide-1.6.0.vsix -p <YOUR_OPENVSX_ACCESS_TOKEN>
+   npx ovsx publish token-saver-ide-plugin-<Current-Version>.vsix -p <YOUR_OPENVSX_ACCESS_TOKEN>
+   ```
+
+3. **Automated Tag & CI Release**:
+   ```bash
+   # Or trigger 1-click automated release tagging via chat:
+   /publishtokensavernow
    ```
 
 ---
@@ -227,7 +234,7 @@ If Token Saver helps you save tokens, accelerate agent development, or lower you
 ## 👤 Author & Maintainer
 
 - **Terence** — [terenceooi1688@gmail.com](mailto:terenceooi1688@gmail.com)
-- **GitHub**: [terenceooi99/token-saver-rtk-ide](https://github.com/terenceooi99/token-saver-rtk-ide)
+- **GitHub**: [terenceooi99/token-saver-ide-plugin](https://github.com/terenceooi99/token-saver-ide-plugin)
 - **Sponsor / Tip**: [Tip me @ Wise](https://wise.com/pay/me/terenceooit)
 
 ---

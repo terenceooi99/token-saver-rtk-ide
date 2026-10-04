@@ -75,7 +75,7 @@ git push origin "v$newVersion" -f
 Write-Host "`n Successfully published release tag v$newVersion!" -ForegroundColor Green
 Write-Host "=================================================================" -ForegroundColor Cyan
 Write-Host " GitHub Actions Workflow Triggered:" -ForegroundColor Cyan
-Write-Host "    https://github.com/terenceooi99/token-saver-rtk-ide/actions" -ForegroundColor White
+Write-Host "    https://github.com/terenceooi99/token-saver-ide-plugin/actions" -ForegroundColor White
 Write-Host " Open VSX Extension Listing:" -ForegroundColor Cyan
-Write-Host "    https://open-vsx.org/extension/terenceooi/token-saver-rtk-ide" -ForegroundColor White
+Write-Host "    https://open-vsx.org/extension/terenceooi/token-saver-ide-plugin" -ForegroundColor White
 Write-Host "=================================================================" -ForegroundColor Cyan

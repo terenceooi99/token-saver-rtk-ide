@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Packages the VS Code extension into a compliant .vsix file for internal distribution and replaces latestvsixfile/token-saver-rtk-ide.vsix.
+Packages the VS Code extension into a compliant .vsix file for internal distribution and replaces latestvsixfile/token-saver-ide-plugin.vsix.
 #>
 
 param (
@@ -64,11 +64,11 @@ $vsixManifestXml = @"
 			<Property Id="Microsoft.VisualStudio.Code.LocalizedLanguages" Value="" />
 			<Property Id="Microsoft.VisualStudio.Code.EnabledApiProposals" Value="" />
 			<Property Id="Microsoft.VisualStudio.Code.ExecutesCode" Value="true" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Source" Value="https://github.com/terenceooi99/token-saver-rtk-ide.git" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Getstarted" Value="https://github.com/terenceooi99/token-saver-rtk-ide.git" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.GitHub" Value="https://github.com/terenceooi99/token-saver-rtk-ide.git" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Support" Value="https://github.com/terenceooi99/token-saver-rtk-ide/issues" />
-			<Property Id="Microsoft.VisualStudio.Services.Links.Learn" Value="https://github.com/terenceooi99/token-saver-rtk-ide#readme" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Source" Value="https://github.com/terenceooi99/token-saver-ide-plugin.git" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Getstarted" Value="https://github.com/terenceooi99/token-saver-ide-plugin.git" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.GitHub" Value="https://github.com/terenceooi99/token-saver-ide-plugin.git" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Support" Value="https://github.com/terenceooi99/token-saver-ide-plugin/issues" />
+			<Property Id="Microsoft.VisualStudio.Services.Links.Learn" Value="https://github.com/terenceooi99/token-saver-ide-plugin#readme" />
 			<Property Id="Microsoft.VisualStudio.Services.GitHubFlavoredMarkdown" Value="true" />
 			<Property Id="Microsoft.VisualStudio.Services.Content.Pricing" Value="Free"/>
 		</Properties>
@@ -142,14 +142,19 @@ if (-not (Test-Path $latestVsixDir)) {
     New-Item -ItemType Directory -Path $latestVsixDir -Force | Out-Null
 }
 
-$latestVsixFile = Join-Path $latestVsixDir "token-saver-rtk-ide.vsix"
+$latestVsixFile = Join-Path $latestVsixDir "token-saver-ide-plugin.vsix"
 $versionedVsixFile = Join-Path $projectRoot "$name-$version.vsix"
 
 Copy-Item $tempZip $latestVsixFile -Force
 Move-Item $tempZip $versionedVsixFile -Force
 
+$oldVsix = Join-Path $latestVsixDir "token-saver-rtk-ide.vsix"
+if (Test-Path $oldVsix) {
+    Remove-Item -Force $oldVsix -ErrorAction SilentlyContinue
+}
+
 # Cleanup staging
-Remove-Item -Recurse -Force $stagingDir
+Remove-Item -Recurse -Force $stagingDir -ErrorAction SilentlyContinue
 
 Write-Host " [OK] Compiled VSIX Package Successfully!" -ForegroundColor Green
 Write-Host " Latest internal VSIX: $latestVsixFile" -ForegroundColor Cyan
