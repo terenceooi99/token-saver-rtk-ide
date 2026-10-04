@@ -48,3 +48,6 @@ When `/publishtokensavernow` is triggered:
    - `contributes.viewsContainers` and `contributes.views` should use SVG vector icons (`resources/activity-icon.svg`) for theme tinting and scaling.
 6. **Full Workspace Staging (`git add -A`)**:
    - Release commits must stage all workspace changes (`git add -A`) before tagging so newly added providers, resources, and webview assets are included in the published package.
+7. **Preserve Open VSX Extension Slug / Name (`token-saver-rtk-ide`)**:
+   - The root `package.json` `"name"` MUST strictly remain `"token-saver-rtk-ide"`.
+   - Never change `"name"` to any other identifier (such as `token-saver-ide-plugin`), as Open VSX uses `"publisher"/"name"` (`terenceooi/token-saver-rtk-ide`) as the immutable product URL. Changing `"name"` creates a separate disconnected listing instead of upgrading the existing extension.
