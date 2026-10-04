@@ -151,6 +151,21 @@ const rtkDiagUninstallBtn = document.getElementById('rtkDiagUninstallBtn');
 const headroomDiagUninstallBtn = document.getElementById('headroomDiagUninstallBtn');
 const ponytailDiagUninstallBtn = document.getElementById('ponytailDiagUninstallBtn');
 
+// Multi-Channel Savings Breakdown Elements
+const channelTabsBar = document.getElementById('channelTabsBar');
+const savingsBreakdownTag = document.getElementById('savingsBreakdownTag');
+const channelDistroBox = document.getElementById('channelDistroBox');
+const distroTotalTokens = document.getElementById('distroTotalTokens');
+const distroProgressTrack = document.getElementById('distroProgressTrack');
+const distroLegend = document.getElementById('distroLegend');
+const channelsGridContainer = document.getElementById('channelsGridContainer');
+const rtkCommandsSubSection = document.getElementById('rtkCommandsSubSection');
+const rtkCommandsCountTag = document.getElementById('rtkCommandsCountTag');
+
+let currentActiveChannel = 'all';
+let currentMultiChannelData = null;
+let currentCommandBreakdown = [];
+
 let currentOmniPresets = null;
 let activeOmniIde = 'cursor';
 
@@ -1220,8 +1235,10 @@ function renderDashboardState(data) {
     // Render IDE Grid (Current IDE targets only)
     renderIdeGrid(ideStatus || []);
 
-    // Command Breakdown Chart
-    renderChart(metrics.commandBreakdown);
+    // Multi-Channel Savings Breakdown & Command Chart
+    currentCommandBreakdown = (metrics && metrics.commandBreakdown) || [];
+    currentMultiChannelData = data.multiChannelBreakdown || null;
+    renderMultiChannelBreakdown(currentMultiChannelData, currentActiveChannel);
 
     // Raw Output text snippet
     rawOutputText.textContent = metrics.rawText || 'No output recorded yet.';
@@ -1694,6 +1711,244 @@ function renderIdeGrid(ideList) {
         card.appendChild(top);
         card.appendChild(actions);
         ideGridContainer.appendChild(card);
+    });
+}
+
+function renderMultiChannelBreakdown(multiChannelData, activeTab = 'all') {
+    if (!multiChannelData || !multiChannelData.channels) {
+        return;
+    }
+
+    const { totalEcosystemFormatted, channels } = multiChannelData;
+
+    // 1. Update Header Badge & Total
+    if (distroTotalTokens) {
+        distroTotalTokens.textContent = `${totalEcosystemFormatted} Tokens Saved`;
+    }
+
+    if (savingsBreakdownTag) {
+        const activeCount = channels.filter(c => c.status === 'active' || c.status === 'synced').length;
+        savingsBreakdownTag.textContent = `${activeCount} / ${channels.length} Channels Active`;
+    }
+
+    // 2. Render Proportional Multi-Channel Distribution Bar
+    if (distroProgressTrack) {
+        distroProgressTrack.innerHTML = '';
+        channels.forEach(channel => {
+            if (channel.sharePct > 0) {
+                const seg = document.createElement('div');
+                seg.className = 'channel-segment';
+                seg.style.width = `${Math.max(channel.sharePct, 2)}%`;
+                seg.style.backgroundColor = channel.color;
+                seg.title = `${channel.name}: ${channel.savedFormatted} tokens (${channel.sharePct}% share)`;
+                distroProgressTrack.appendChild(seg);
+            }
+        });
+    }
+
+    // 3. Render Distribution Legend
+    if (distroLegend) {
+        distroLegend.innerHTML = '';
+        channels.forEach(channel => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+
+            const dot = document.createElement('span');
+            dot.className = 'legend-dot';
+            dot.style.backgroundColor = channel.color;
+
+            const label = document.createElement('span');
+            label.className = 'legend-label';
+            label.textContent = channel.shortName;
+
+            const val = document.createElement('span');
+            val.className = 'legend-value';
+            val.textContent = `${channel.savedFormatted} (${channel.sharePct}%)`;
+
+            item.appendChild(dot);
+            item.appendChild(label);
+            item.appendChild(val);
+            distroLegend.appendChild(item);
+        });
+    }
+
+    // 4. Determine visible channels based on activeTab filter
+    let visibleChannels = channels;
+    if (activeTab === 'rtk') {
+        visibleChannels = channels.filter(c => c.id === 'rtk');
+    } else if (activeTab === 'headroom') {
+        visibleChannels = channels.filter(c => c.id === 'headroom');
+    } else if (activeTab === 'prompt') {
+        visibleChannels = channels.filter(c => c.id === 'ponytail' || c.id === 'antiSlop');
+    } else if (activeTab === 'omniRoute') {
+        visibleChannels = channels.filter(c => c.id === 'omniRoute');
+    }
+
+    // 5. Render Channels Grid Cards
+    if (channelsGridContainer) {
+        channelsGridContainer.innerHTML = '';
+        visibleChannels.forEach(channel => {
+            const card = document.createElement('div');
+            card.className = 'channel-card';
+
+            // Top row
+            const top = document.createElement('div');
+            top.className = 'channel-card-top';
+
+            const titleGroup = document.createElement('div');
+            titleGroup.className = 'channel-title-group';
+
+            const iconBadge = document.createElement('div');
+            iconBadge.className = 'channel-icon-badge';
+            iconBadge.style.backgroundColor = `${channel.color}22`;
+            iconBadge.style.color = channel.color;
+            iconBadge.textContent = channel.icon;
+
+            const textBlock = document.createElement('div');
+            const nameEl = document.createElement('div');
+            nameEl.className = 'channel-name';
+            nameEl.textContent = channel.name;
+
+            const layerEl = document.createElement('div');
+            layerEl.className = 'channel-layer';
+            layerEl.textContent = channel.layer;
+
+            textBlock.appendChild(nameEl);
+            textBlock.appendChild(layerEl);
+            titleGroup.appendChild(iconBadge);
+            titleGroup.appendChild(textBlock);
+
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `channel-status-badge ${channel.status === 'active' ? 'active' : (channel.status === 'synced' ? 'synced' : 'offline')}`;
+            statusBadge.textContent = channel.statusLabel;
+
+            top.appendChild(titleGroup);
+            top.appendChild(statusBadge);
+
+            // Description
+            const desc = document.createElement('div');
+            desc.className = 'channel-desc';
+            desc.textContent = channel.description;
+
+            // Metrics Row
+            const metricsRow = document.createElement('div');
+            metricsRow.className = 'channel-metrics-row';
+
+            const cellTokens = document.createElement('div');
+            cellTokens.className = 'channel-metric-cell';
+            cellTokens.innerHTML = `<span class="metric-lbl">Tokens Saved</span><span class="metric-val" style="color: ${channel.color}">${channel.savedFormatted}</span>`;
+
+            const cellEff = document.createElement('div');
+            cellEff.className = 'channel-metric-cell';
+            cellEff.innerHTML = `<span class="metric-lbl">Efficiency</span><span class="metric-val">${channel.percentage}%</span>`;
+
+            const cellDollars = document.createElement('div');
+            cellDollars.className = 'channel-metric-cell';
+            cellDollars.innerHTML = `<span class="metric-lbl">Est. ROI ($)</span><span class="metric-val" style="color: var(--apple-green)">${channel.dollarSavings}</span>`;
+
+            metricsRow.appendChild(cellTokens);
+            metricsRow.appendChild(cellEff);
+            metricsRow.appendChild(cellDollars);
+
+            card.appendChild(top);
+            card.appendChild(desc);
+            card.appendChild(metricsRow);
+
+            // If RTK card: Render Command Compression List inside dropdown
+            if (channel.id === 'rtk') {
+                const dropdownWrap = document.createElement('div');
+                dropdownWrap.className = 'channel-dropdown-wrap';
+
+                const cmds = (Array.isArray(channel.commands) && channel.commands.length > 0) ? channel.commands : currentCommandBreakdown;
+                const cmdCount = cmds ? cmds.length : 0;
+
+                const toggle = document.createElement('div');
+                toggle.className = 'channel-dropdown-toggle';
+                toggle.innerHTML = `
+                    <div class="dropdown-left">
+                        <span class="dropdown-chevron">▾</span>
+                        <span class="dropdown-title">⚡ Command Compression List</span>
+                    </div>
+                    <span class="dropdown-count">${cmdCount} Tools</span>
+                `;
+
+                const dropdownBody = document.createElement('div');
+                dropdownBody.className = 'channel-dropdown-body';
+
+                if (cmds && cmds.length > 0) {
+                    cmds.forEach(item => {
+                        const row = document.createElement('div');
+                        row.className = 'chart-bar-row';
+
+                        const info = document.createElement('div');
+                        info.className = 'chart-bar-info';
+
+                        const cmdName = document.createElement('span');
+                        cmdName.className = 'chart-bar-cmd';
+                        cmdName.textContent = item.command;
+
+                        const stats = document.createElement('span');
+                        stats.className = 'chart-bar-stats';
+                        stats.textContent = `${item.savedFormatted || (item.savedTokens + ' tokens')} (${item.percentage}%)`;
+
+                        info.appendChild(cmdName);
+                        info.appendChild(stats);
+
+                        const track = document.createElement('div');
+                        track.className = 'chart-bar-track';
+
+                        const fill = document.createElement('div');
+                        fill.className = 'chart-bar-fill';
+                        fill.style.width = `${Math.max(item.percentage, 5)}%`;
+
+                        track.appendChild(fill);
+                        row.appendChild(info);
+                        row.appendChild(track);
+                        dropdownBody.appendChild(row);
+                    });
+                } else {
+                    dropdownBody.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 6px;">Run commands with RTK to see per-tool compression here!</div>';
+                }
+
+                toggle.addEventListener('click', () => {
+                    toggle.classList.toggle('collapsed');
+                    dropdownBody.classList.toggle('collapsed');
+                });
+
+                dropdownWrap.appendChild(toggle);
+                dropdownWrap.appendChild(dropdownBody);
+                card.appendChild(dropdownWrap);
+            }
+
+            // Sub items list if present (for Headroom, Ponytail, Anti-Slop, OmniRoute)
+            if (Array.isArray(channel.subItems) && channel.subItems.length > 0) {
+                const subList = document.createElement('div');
+                subList.className = 'channel-subitems-list';
+
+                channel.subItems.forEach(sub => {
+                    const subRow = document.createElement('div');
+                    subRow.className = 'channel-subitem-row';
+                    subRow.innerHTML = `<span class="subitem-name">${sub.name}</span><span class="subitem-pct">${sub.percentage}%</span>`;
+                    subList.appendChild(subRow);
+                });
+
+                card.appendChild(subList);
+            }
+
+            channelsGridContainer.appendChild(card);
+        });
+    }
+}
+
+// Channel Tabs Click Listener Setup
+if (channelTabsBar) {
+    channelTabsBar.querySelectorAll('.channel-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            channelTabsBar.querySelectorAll('.channel-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentActiveChannel = btn.dataset.channel || 'all';
+            renderMultiChannelBreakdown(currentMultiChannelData, currentActiveChannel);
+        });
     });
 }
 

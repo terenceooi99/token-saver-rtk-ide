@@ -41,6 +41,20 @@ class WebviewHelper {
         const ideStatus = SkillInstaller.getIdeStatus();
         const omniPresets = OmniRouteService.getIdePresets(omniPort);
 
+        const pluginStatus = {
+            installed: check.installed,
+            headroomInstalled: headroomCheck.installed,
+            headroomEnabled,
+            ponytailInstalled: ponytailCheck.installed,
+            terseAgentMode: config.get('terseAgentMode', true),
+            antiSlopInstalled: antiSlopCheck.installed,
+            antiSlopEnabled: config.get('antiSlopEnabled', true),
+            omniRouteInstalled: omniStatus.installed,
+            omniRouteRunning: omniStatus.running
+        };
+
+        const multiChannelBreakdown = RtkService.getMultiChannelMetrics(metrics, pluginStatus, tokenPricePerMillion);
+
         return {
             isEnabled,
             weeklyAutoSync,
@@ -72,6 +86,7 @@ class WebviewHelper {
             version: check.version || 'Not installed',
             binaryPath: check.path || 'Not detected',
             metrics,
+            multiChannelBreakdown,
             skillsInstalled,
             scope: config.get('targetScope', 'all'),
             ideStatus,

@@ -1538,8 +1538,381 @@ h2 {
 }
 
 /* ==========================================================================
-   Savings Breakdown & Chart
+   Savings Breakdown & Multi-Channel Ecosystem
    ========================================================================== */
+
+.channel-tabs-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}
+
+.channel-tabs-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.channel-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--apple-text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.channel-tab-btn:hover {
+    color: var(--apple-text-primary);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.channel-tab-btn.active {
+    color: #ffffff;
+    background: var(--apple-blue);
+    border-color: var(--apple-blue);
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.35);
+}
+
+.channel-tab-btn .tab-icon {
+    font-size: 12px;
+}
+
+/* Proportional Multi-Channel Distribution Bar */
+.multi-channel-distro-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.distro-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 11.5px;
+}
+
+.distro-title {
+    font-weight: 600;
+    color: var(--apple-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 10px;
+}
+
+.distro-total {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--apple-green);
+}
+
+.distro-progress-track {
+    display: flex;
+    height: 10px;
+    width: 100%;
+    background: rgba(120, 120, 128, 0.15);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.channel-segment {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    position: relative;
+}
+
+.distro-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    font-size: 11px;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--apple-text-secondary);
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    font-weight: 500;
+}
+
+.legend-value {
+    font-family: var(--font-mono);
+    color: var(--apple-text-primary);
+    font-weight: 600;
+}
+
+/* Channel Grid & Cards */
+.channels-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.channel-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+
+.channel-card:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
+}
+
+.channel-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.channel-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.channel-icon-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.channel-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--apple-text-primary);
+}
+
+.channel-layer {
+    font-size: 10px;
+    color: var(--apple-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.channel-status-badge {
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.channel-status-badge.active {
+    background: rgba(48, 209, 88, 0.15);
+    color: var(--apple-green);
+    border: 1px solid rgba(48, 209, 88, 0.3);
+}
+
+.channel-status-badge.synced {
+    background: rgba(255, 149, 0, 0.15);
+    color: var(--apple-amber);
+    border: 1px solid rgba(255, 149, 0, 0.3);
+}
+
+.channel-status-badge.offline {
+    background: rgba(120, 120, 128, 0.15);
+    color: var(--apple-text-tertiary);
+    border: 1px solid var(--apple-border);
+}
+
+.channel-desc {
+    font-size: 11px;
+    color: var(--apple-text-secondary);
+    line-height: 1.4;
+}
+
+.channel-metrics-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    margin-top: 2px;
+}
+
+.channel-metric-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.channel-metric-cell .metric-lbl {
+    font-size: 9.5px;
+    color: var(--apple-text-tertiary);
+    text-transform: uppercase;
+}
+
+.channel-metric-cell .metric-val {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--apple-text-primary);
+}
+
+.channel-subitems-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 6px;
+}
+
+.channel-subitem-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10.5px;
+}
+
+.subitem-name {
+    color: var(--apple-text-secondary);
+}
+
+.subitem-pct {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--apple-text-primary);
+}
+
+/* Dropdown inside Channel Card (e.g. RTK Command Compression List) */
+.channel-dropdown-wrap {
+    margin-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 6px;
+}
+
+.channel-dropdown-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.channel-dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.dropdown-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dropdown-chevron {
+    font-size: 11px;
+    color: var(--apple-text-secondary);
+    transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+    display: inline-block;
+}
+
+.channel-dropdown-toggle.collapsed .dropdown-chevron {
+    transform: rotate(-90deg);
+}
+
+.dropdown-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--apple-text-primary);
+}
+
+.dropdown-count {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--apple-blue);
+    background: rgba(0, 113, 227, 0.15);
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(0, 113, 227, 0.3);
+}
+
+.channel-dropdown-body {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.channel-dropdown-body.collapsed {
+    display: none;
+}
+
+/* Sub-Channel RTK Commands Section */
+.sub-channel-section {
+    margin-bottom: 12px;
+}
+
+.sub-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 11.5px;
+}
+
+.sub-title {
+    font-weight: 600;
+    color: var(--apple-text-primary);
+}
+
+.sub-tag {
+    font-size: 10px;
+    color: var(--apple-text-tertiary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
 
 .chart-container {
     display: flex;
@@ -1553,18 +1926,19 @@ h2 {
     gap: 4px;
 }
 
-.chart-bar-label-line {
+.chart-bar-info {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 11.5px;
 }
 
-.chart-bar-name {
+.chart-bar-cmd {
     font-weight: 500;
     color: var(--apple-text-primary);
 }
 
-.chart-bar-stat {
+.chart-bar-stats {
     font-family: var(--font-mono);
     color: var(--apple-text-secondary);
     font-size: 11px;

@@ -34,7 +34,7 @@ description: >
 
 # RTK Token Savings Scoreboard
 
-Run \`rtk gain\` (or \`rtk gain --history\`) via terminal command and display the live token savings metrics, efficiency meter, and breakdown by command to the user.
+Run \`rtk gain\` (or \`rtk gain --history\`) via terminal command and display the live token savings metrics, efficiency meter, and breakdown across all ecosystem channels (RTK CLI, Headroom CCR, Ponytail YAGNI, Anti-Slop Hygiene, and OmniRoute Gateway) to the user.
 `,
     'rtk-savedtokenon': `---
 name: rtk-savedtokenon
@@ -429,15 +429,16 @@ description: >
 
 # RTK Token & Cost Savings ROI (/rtk-roi)
 
-Calculates the financial and token efficiency impact of RTK command and context compression.
+Calculates the financial and token efficiency impact across all Token Saver ecosystem channels (RTK CLI, Headroom CCR, Ponytail YAGNI, Anti-Slop Hygiene, and OmniRoute Gateway).
 
 ## Metrics Breakdown
-1. Run \`rtk gain --history\` (or \`rtk gain\`) to retrieve raw total tokens saved and reduction percentage.
-2. Calculate estimated cost savings across popular model price points:
+1. Run \`rtk gain --history\` (or \`rtk gain\`) to retrieve raw total tokens saved and reduction percentage from terminal command filtering.
+2. Combine live terminal savings with active engine telemetry (Headroom context compression, Ponytail terse generation, Anti-Slop comment hygiene, OmniRoute cache hits & model routing).
+3. Calculate estimated cost savings across popular model price points:
    - **Claude 3.7 Sonnet / Opus:** ~$3.00 - $15.00 per MTok
    - **GPT-4o:** ~$2.50 - $10.00 per MTok
    - **Gemini 2.5 Flash / Pro:** ~$0.10 - $2.50 per MTok
-3. Display a concise ROI scorecard with total tokens saved, % compressed, and estimated dollars saved.
+4. Display a concise multi-channel ROI scorecard with total tokens saved, % compressed, and estimated dollars saved per channel.
 `,
     'rtk-tree': `---
 name: rtk-tree

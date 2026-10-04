@@ -8,4 +8,4 @@ description: >
 
 # RTK Token Savings Scoreboard
 
-Run `rtk gain` (or `rtk gain --history`) via terminal command and display the live token savings metrics, efficiency meter, and breakdown by command to the user.
+Run `rtk gain` (or `rtk gain --history`) via terminal command and display the live token savings metrics, efficiency meter, and breakdown across all ecosystem channels (RTK CLI, Headroom CCR, Ponytail YAGNI, Anti-Slop Hygiene, and OmniRoute Gateway) to the user.

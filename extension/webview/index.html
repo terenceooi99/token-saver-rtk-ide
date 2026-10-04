@@ -438,21 +438,56 @@
                     </div>
                 </section>
 
-                <!-- Command Savings Breakdown -->
+                <!-- Multi-Channel Savings Breakdown -->
                 <section class="panel-card chart-section" id="sectionSavings">
                     <div class="panel-header collapsible" data-target="bodySavings">
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <h2>📊 Savings Breakdown</h2>
                         </div>
-                        <span class="panel-tag">Live Breakdown</span>
+                        <span class="panel-tag" id="savingsBreakdownTag">All Channels Active</span>
                     </div>
                     <div class="panel-body" id="bodySavings">
-                        <div class="chart-container" id="chartContainer">
-                            <!-- Dynamic Bars injected by JS -->
+                        <!-- Channel Filter Navigation Tabs -->
+                        <div class="channel-tabs-bar" id="channelTabsBar">
+                            <button class="channel-tab-btn active" data-channel="all" id="tabChannelAll">
+                                <span class="tab-icon">🌐</span> All Channels
+                            </button>
+                            <button class="channel-tab-btn" data-channel="rtk" id="tabChannelRtk">
+                                <span class="tab-icon">⚡</span> RTK CLI
+                            </button>
+                            <button class="channel-tab-btn" data-channel="headroom" id="tabChannelHeadroom">
+                                <span class="tab-icon">📦</span> Headroom CCR
+                            </button>
+                            <button class="channel-tab-btn" data-channel="prompt" id="tabChannelPrompt">
+                                <span class="tab-icon">🥋</span> Prompt & Hygiene
+                            </button>
+                            <button class="channel-tab-btn" data-channel="omniRoute" id="tabChannelOmni">
+                                <span class="tab-icon">🌐</span> AI Gateway
+                            </button>
                         </div>
+
+                        <!-- Proportional Multi-Channel Distribution Bar -->
+                        <div class="multi-channel-distro-box" id="channelDistroBox">
+                            <div class="distro-bar-header">
+                                <span class="distro-title">Ecosystem Savings Distribution</span>
+                                <span class="distro-total" id="distroTotalTokens">0 Tokens Saved</span>
+                            </div>
+                            <div class="distro-progress-track" id="distroProgressTrack">
+                                <!-- Injected dynamically by dashboard.js -->
+                            </div>
+                            <div class="distro-legend" id="distroLegend">
+                                <!-- Dynamic legend items -->
+                            </div>
+                        </div>
+
+                        <!-- Channels Grid / Cards Container -->
+                        <div class="channels-grid-container" id="channelsGridContainer">
+                            <!-- Injected dynamically by dashboard.js -->
+                        </div>
+
                         <div class="raw-output-box" id="rawOutputBox">
-                            <div class="raw-output-header">Terminal Scoreboard Snippet</div>
+                            <div class="raw-output-header">Terminal Scoreboard Snippet (rtk gain)</div>
                             <pre id="rawOutputText">Loading RTK statistics...</pre>
                         </div>
                     </div>
