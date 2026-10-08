@@ -3035,10 +3035,6 @@ body.light-theme .diag-dropdown-item {
 }
 
 /* JevGraph Knowledge Graph Engine Styles */
-.jevgraph-section {
-    border-left: 3px solid #30b0c7;
-}
-
 .tag-teal {
     background: rgba(48, 176, 199, 0.15) !important;
     color: #30b0c7 !important;
