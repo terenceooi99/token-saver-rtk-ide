@@ -35,6 +35,7 @@ class WebviewHelper {
         const headroomCheck = await RtkService.checkHeadroomInstalled();
         const ponytailCheck = await RtkService.checkPonytailInstalled();
         const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
+        const jevGraphCheck = await RtkService.checkJevGraphInstalled();
         const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
         const metrics = await RtkService.getParsedMetrics();
         const skillsInstalled = SkillInstaller.checkSkillsInstalled('all');
@@ -49,6 +50,8 @@ class WebviewHelper {
             terseAgentMode: config.get('terseAgentMode', true),
             antiSlopInstalled: antiSlopCheck.installed,
             antiSlopEnabled: config.get('antiSlopEnabled', true),
+            jevGraphInstalled: jevGraphCheck.installed,
+            jevGraphEnabled: config.get('jevGraphEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running
         };
@@ -71,6 +74,11 @@ class WebviewHelper {
             antiSlopInstalled: antiSlopCheck.installed,
             antiSlopVersion: antiSlopCheck.version || 'Not synced',
             antiSlopSkillsCount: antiSlopCheck.skillsCount || 0,
+            jevGraphEnabled: config.get('jevGraphEnabled', true),
+            jevGraphInstalled: jevGraphCheck.installed,
+            jevGraphVersion: jevGraphCheck.version || (jevGraphCheck.uvAvailable ? 'uv Ready' : 'Not installed'),
+            jevGraphRunner: jevGraphCheck.runner || (jevGraphCheck.uvAvailable ? 'uv' : null),
+            jevGraphProvider: config.get('jevGraphProvider', 'keyword'),
             omniRouteEnabled: config.get('omniRouteEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running,
@@ -351,6 +359,33 @@ class WebviewHelper {
             case 'installOmniRoute':
                 await vscode.commands.executeCommand('tokenSaver.installOmniRoute');
                 triggerRefresh(1000);
+                break;
+            case 'toggleJevGraph':
+                await vscode.commands.executeCommand('tokenSaver.toggleJevGraph');
+                triggerRefresh(300);
+                break;
+            case 'syncJevGraph':
+                await vscode.commands.executeCommand('tokenSaver.syncJevGraph');
+                triggerRefresh(1000);
+                break;
+            case 'manualInsertJevGraph':
+                await vscode.commands.executeCommand('tokenSaver.insertDocumentJevGraph');
+                break;
+            case 'resetJevGraph':
+                await vscode.commands.executeCommand('tokenSaver.resetJevGraph');
+                triggerRefresh(300);
+                break;
+            case 'buildJevGraph':
+                await vscode.commands.executeCommand('tokenSaver.insertDocumentJevGraph');
+                break;
+            case 'setJevGraphProvider':
+                if (message.provider) {
+                    try {
+                        const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                        await cfg.update('jevGraphProvider', message.provider, vscode.ConfigurationTarget.Global);
+                    } catch (e) {}
+                    triggerRefresh(300);
+                }
                 break;
             case 'copyOmniRoutePreset':
                 if (message.text) {

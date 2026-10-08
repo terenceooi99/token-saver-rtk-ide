@@ -3034,5 +3034,35 @@ body.light-theme .diag-dropdown-item {
     }
 }
 
+/* JevGraph Knowledge Graph Engine Styles */
+.jevgraph-section {
+    border-left: 3px solid #30b0c7;
+}
+
+.tag-teal {
+    background: rgba(48, 176, 199, 0.15) !important;
+    color: #30b0c7 !important;
+    border: 1px solid rgba(48, 176, 199, 0.3) !important;
+}
+
+.chip-teal {
+    background: rgba(48, 176, 199, 0.15);
+    color: #30b0c7;
+    border: 1px solid rgba(48, 176, 199, 0.3);
+}
+
+.jev-quick-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.light-theme .jev-quick-actions {
+    border-top-color: rgba(0, 0, 0, 0.06);
+}
+
 
 

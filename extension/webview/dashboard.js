@@ -10,6 +10,7 @@ const toggleHeadroomBtn = document.getElementById('toggleHeadroomBtn');
 const togglePonytailBtn = document.getElementById('togglePonytailBtn');
 const toggleAntiSlopBtn = document.getElementById('toggleAntiSlopBtn');
 const toggleOmniRouteBtn = document.getElementById('toggleOmniRouteBtn');
+const toggleJevGraphBtn = document.getElementById('toggleJevGraphBtn');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -145,6 +146,23 @@ const omniDiagStartBtn = document.getElementById('omniDiagStartBtn');
 const omniDiagUninstallBtn = document.getElementById('omniDiagUninstallBtn');
 
 const omniEnabledCheckbox = document.getElementById('omniEnabledCheckbox');
+
+// JevGraph Elements
+const sectionJevGraph = document.getElementById('sectionJevGraph');
+const jevStatusBadge = document.getElementById('jevStatusBadge');
+const jevInlineSyncBtn = document.getElementById('jevInlineSyncBtn');
+const jevGraphCheckbox = document.getElementById('jevGraphCheckbox');
+const jevProviderSegmentGroup = document.getElementById('jevProviderSegmentGroup');
+const jevManualInsertBtn = document.getElementById('jevManualInsertBtn');
+const jevResetBtn = document.getElementById('jevResetBtn');
+const quickJevInsertBtn = document.getElementById('quickJevInsertBtn');
+
+const diagJevGraphStatus = document.getElementById('diagJevGraphStatus');
+const jevGraphDiagActions = document.getElementById('jevGraphDiagActions');
+const jevGraphDiagAiBtn = document.getElementById('jevGraphDiagAiBtn');
+const jevGraphDiagSyncBtn = document.getElementById('jevGraphDiagSyncBtn');
+const jevGraphDiagUninstallBtn = document.getElementById('jevGraphDiagUninstallBtn');
+
 const uninstallUpstreamBtn = document.getElementById('uninstallUpstreamBtn');
 const headerUninstallBtn = document.getElementById('headerUninstallBtn');
 const rtkDiagUninstallBtn = document.getElementById('rtkDiagUninstallBtn');
@@ -668,6 +686,12 @@ if (toggleOmniRouteBtn) {
     });
 }
 
+if (toggleJevGraphBtn) {
+    toggleJevGraphBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'toggleJevGraph' });
+    });
+}
+
 syncAllIdesBtn.addEventListener('click', () => {
     syncAllIdesBtn.textContent = 'Syncing...';
     vscode.postMessage({ command: 'syncAllIdeRules' });
@@ -1020,6 +1044,75 @@ if (antiSlopDiagUninstallBtn) {
     });
 }
 
+// JevGraph Listeners
+if (jevInlineSyncBtn) {
+    jevInlineSyncBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        jevInlineSyncBtn.textContent = '🔄 Syncing...';
+        vscode.postMessage({ command: 'syncJevGraph' });
+        setTimeout(() => { jevInlineSyncBtn.textContent = '🔄 Sync from GitHub'; }, 3000);
+    });
+}
+
+if (jevGraphCheckbox) {
+    jevGraphCheckbox.addEventListener('change', () => {
+        vscode.postMessage({ command: 'toggleJevGraph', enabled: jevGraphCheckbox.checked });
+    });
+}
+
+if (jevProviderSegmentGroup) {
+    const btns = jevProviderSegmentGroup.querySelectorAll('.segment-btn');
+    btns.forEach(b => {
+        b.addEventListener('click', () => {
+            const provider = b.dataset.provider;
+            vscode.postMessage({ command: 'setJevGraphProvider', provider });
+        });
+    });
+}
+
+if (jevManualInsertBtn) {
+    jevManualInsertBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'manualInsertJevGraph' });
+    });
+}
+
+if (quickJevInsertBtn) {
+    quickJevInsertBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'manualInsertJevGraph' });
+    });
+}
+
+if (jevResetBtn) {
+    jevResetBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'resetJevGraph' });
+    });
+}
+
+if (jevGraphDiagAiBtn) {
+    jevGraphDiagAiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'copyAiInstallPrompt' });
+        jevGraphDiagAiBtn.textContent = '✓ Copied';
+        setTimeout(() => { jevGraphDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+    });
+}
+
+if (jevGraphDiagSyncBtn) {
+    jevGraphDiagSyncBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        jevGraphDiagSyncBtn.textContent = '🕸️ Syncing...';
+        vscode.postMessage({ command: 'syncJevGraph' });
+        setTimeout(() => { jevGraphDiagSyncBtn.textContent = '🕸️ Sync'; }, 3000);
+    });
+}
+
+if (jevGraphDiagUninstallBtn) {
+    jevGraphDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'jevgraph' });
+    });
+}
+
 // Handle incoming messages from extension host
 window.addEventListener('message', (event) => {
     const message = event.data;
@@ -1060,6 +1153,9 @@ window.addEventListener('message', (event) => {
                 }
                 if (message.data.omniroute && message.data.omniroute.hasUpdate && message.data.omniroute.release) {
                     parts.push(`OmniRoute ${message.data.omniroute.release.tag}`);
+                }
+                if (message.data.jevgraph && message.data.jevgraph.hasUpdate) {
+                    parts.push(`JevGraph (${(message.data.jevgraph.release && message.data.jevgraph.release.tag) || 'GitHub'})`);
                 }
                 if (checkUpdatesLabel) {
                     checkUpdatesLabel.textContent = `Update: ${parts.join(' & ')}!`;
@@ -1177,6 +1273,18 @@ function renderDashboardState(data) {
         }
     }
 
+    // JevGraph Button in Header
+    if (toggleJevGraphBtn) {
+        const isJev = Boolean(data.jevGraphEnabled);
+        if (isJev) {
+            toggleJevGraphBtn.textContent = 'Turn JevGraph OFF';
+            toggleJevGraphBtn.className = 'btn btn-ghost';
+        } else {
+            toggleJevGraphBtn.textContent = 'Turn JevGraph ON';
+            toggleJevGraphBtn.className = 'btn btn-primary';
+        }
+    }
+
     // Top Metric Cards
     currentTotalSavedTokens = (metrics && metrics.totalSavedTokens) || 0;
     totalSavedVal.textContent = metrics.totalSavedFormatted || '0';
@@ -1249,7 +1357,8 @@ function renderDashboardState(data) {
     const isPonytailMissing = !data.ponytailInstalled;
     const isAntiSlopMissing = !data.antiSlopInstalled;
     const isOmniMissing = !data.omniRouteInstalled && !data.omniRouteRunning;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing;
+    const isJevGraphMissing = !data.jevGraphInstalled;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
@@ -1271,6 +1380,9 @@ function renderDashboardState(data) {
                 if (isAntiSlopMissing) {
                     chips.push('<span class="missing-chip chip-cyan" style="background: rgba(48, 209, 88, 0.15); color: #30d158; border: 1px solid rgba(48, 209, 88, 0.3);">🛡️ Anti-Slop Missing</span>');
                 }
+                if (isJevGraphMissing) {
+                    chips.push('<span class="missing-chip chip-teal" style="background: rgba(48, 176, 199, 0.15); color: #30b0c7; border: 1px solid rgba(48, 176, 199, 0.3);">🕸️ JevGraph Missing</span>');
+                }
                 setupMissingTags.innerHTML = chips.join('');
             }
             if (setupBannerDesc) {
@@ -1280,7 +1392,8 @@ function renderDashboardState(data) {
                 if (isHeadroomMissing) missingNames.push('Headroom');
                 if (isPonytailMissing) missingNames.push('Ponytail YAGNI');
                 if (isAntiSlopMissing) missingNames.push('Anti-Slop');
-                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, and route multi-model traffic.`;
+                if (isJevGraphMissing) missingNames.push('JevGraph KG');
+                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, and build knowledge graphs from specs.`;
             }
         } else {
             setupBanner.style.display = 'none';
@@ -1476,6 +1589,45 @@ function renderDashboardState(data) {
         if (antiSlopDiagUninstallBtn) antiSlopDiagUninstallBtn.style.display = aInstalled ? 'inline-block' : 'none';
     }
 
+    if (diagJevGraphStatus) {
+        const jInstalled = data.jevGraphInstalled;
+        const jEnabled = data.jevGraphEnabled !== false;
+        const jProvider = data.jevGraphProvider || 'keyword';
+        if (jInstalled && jEnabled) {
+            diagJevGraphStatus.textContent = `Active (${jProvider})`;
+            diagJevGraphStatus.style.color = 'var(--accent-green)';
+        } else if (jInstalled && !jEnabled) {
+            diagJevGraphStatus.textContent = 'Inactive (Disabled)';
+            diagJevGraphStatus.style.color = 'var(--text-muted)';
+        } else {
+            diagJevGraphStatus.textContent = 'Inactive (Not Installed)';
+            diagJevGraphStatus.style.color = 'var(--accent-amber)';
+        }
+    }
+    if (jevGraphDiagActions) {
+        jevGraphDiagActions.style.display = 'inline-flex';
+        const jInstalled = Boolean(data.jevGraphInstalled);
+        if (jevGraphDiagAiBtn) jevGraphDiagAiBtn.style.display = jInstalled ? 'none' : 'inline-block';
+        if (jevGraphDiagSyncBtn) jevGraphDiagSyncBtn.style.display = jInstalled ? 'none' : 'inline-block';
+        if (jevGraphDiagUninstallBtn) jevGraphDiagUninstallBtn.style.display = jInstalled ? 'inline-block' : 'none';
+    }
+
+    if (jevStatusBadge) {
+        const jInstalled = data.jevGraphInstalled;
+        const jEnabled = data.jevGraphEnabled !== false;
+        const jProvider = data.jevGraphProvider || 'keyword';
+        if (jInstalled && jEnabled) {
+            jevStatusBadge.textContent = `🟢 READY (${jProvider.toUpperCase()})`;
+            jevStatusBadge.className = 'panel-tag tag-teal';
+        } else if (jInstalled && !jEnabled) {
+            jevStatusBadge.textContent = '⚪ DISABLED';
+            jevStatusBadge.className = 'panel-tag';
+        } else {
+            jevStatusBadge.textContent = '⚠️ NOT DETECTED';
+            jevStatusBadge.className = 'panel-tag tag-purple';
+        }
+    }
+
     if (ponytailActionBadge) {
         if (data.ponytailInstalled) {
             ponytailActionBadge.className = 'action-status-badge synced';
@@ -1535,6 +1687,14 @@ function renderDashboardState(data) {
             repo: 'diegosouzapw/OmniRoute',
             version: data.omniRouteInstalled ? `${data.omniRouteVersion || 'Ready'} (:20128)` : 'Not installed',
             isInstalled: Boolean(data.omniRouteInstalled)
+        },
+        {
+            key: 'jevgraph',
+            name: 'JevGraph (Doc KG)',
+            icon: '🕸️',
+            repo: 'chenmingtang830/jevgraph',
+            version: data.jevGraphInstalled ? `${data.jevGraphVersion || 'Ready'} (${data.jevGraphProvider || 'keyword'})` : 'Not installed',
+            isInstalled: Boolean(data.jevGraphInstalled)
         }
     ];
 
@@ -1645,6 +1805,18 @@ function renderDashboardState(data) {
     }
     if (compactDiffCheckbox && data.compactDiffContext !== undefined) {
         compactDiffCheckbox.checked = Boolean(data.compactDiffContext);
+    }
+
+    // JevGraph Knowledge Graph State
+    if (jevGraphCheckbox && data.jevGraphEnabled !== undefined) {
+        jevGraphCheckbox.checked = Boolean(data.jevGraphEnabled);
+    }
+    const jProvider = data.jevGraphProvider || 'keyword';
+    if (jevProviderSegmentGroup) {
+        const btns = jevProviderSegmentGroup.querySelectorAll('.segment-btn');
+        btns.forEach(b => {
+            b.classList.toggle('active', b.dataset.provider === jProvider);
+        });
     }
 }
 
@@ -1782,6 +1954,8 @@ function renderMultiChannelBreakdown(multiChannelData, activeTab = 'all') {
         visibleChannels = channels.filter(c => c.id === 'ponytail' || c.id === 'antiSlop');
     } else if (activeTab === 'omniRoute') {
         visibleChannels = channels.filter(c => c.id === 'omniRoute');
+    } else if (activeTab === 'jevgraph') {
+        visibleChannels = channels.filter(c => c.id === 'jevgraph');
     }
 
     // 5. Render Channels Grid Cards

@@ -8,7 +8,7 @@
 [![Windsurf](https://img.shields.io/badge/Windsurf%20IDE-Compatible-00E5FF.svg)](https://codeium.com/windsurf)
 [![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-rtk-ide)
 
-**Token Saver (RTK, Headroom, Ponytail, Anti-Slop & OmniRoute)** is an all-in-one token optimization and AI quality suite with CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), [Anti-Slop AI Quality Framework](https://github.com/miqdadbadjuber/anti-slop), and [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), it slashes AI context window token consumption by **60% - 90%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.) and enforces production-grade anti-slop quality across **all major Agentic AI IDEs and coding assistants**.
+**Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph)** is an all-in-one token optimization, knowledge graph extraction, and AI quality suite with CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), [Anti-Slop AI Quality Framework](https://github.com/miqdadbadjuber/anti-slop), [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), and [JevGraph Knowledge Graph Engine](https://github.com/chenmingtang830/jevgraph), it slashes AI context window token consumption by **60% - 95%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.), document ingestion (PDF, DOCX, PPTX), and enforces production-grade anti-slop quality across **all major Agentic AI IDEs and coding assistants**.
 
 <p align="center">
   <img src="resources/dashboard-preview.png" alt="Token Saver Interactive Glassmorphic Dashboard" width="100%" />
@@ -18,7 +18,7 @@
 
 ## 🏗️ Architectural Flowchart
 
-The following flowchart illustrates how **Token Saver** bridges multiple AI IDEs, coordinates five specialized optimization & quality engines, and optimizes terminal output & prompt context before hitting LLM models:
+The following flowchart illustrates how **Token Saver** bridges multiple AI IDEs, coordinates six specialized optimization & quality engines, and optimizes terminal output, document context & prompt context before hitting LLM models:
 
 ```mermaid
 flowchart TD
@@ -35,7 +35,7 @@ flowchart TD
         RuleSync["Multi-IDE Rule Synchronizer<br/>(Safe Delimiter System)"]
         WebviewDash["Interactive Webview Dashboard<br/>(Live Counters, Breakdown & Controls)"]
         StatusBar["Dynamic Status Bar Meter<br/>(Real-Time Savings & Cost Gauge)"]
-        SlashSkills["Chat Skills & Commands Engine<br/>(/rtk-*, /ponytail-*, /antislop-*, /omniroute)"]
+        SlashSkills["Chat Skills & Commands Engine<br/>(/rtk-*, /ponytail-*, /antislop-*, /omniroute, /jevgraph-*)"]
     end
 
     subgraph OptimEngines ["Token Optimization, Quality & Routing Engines"]
@@ -44,10 +44,12 @@ flowchart TD
         Ponytail["Ponytail YAGNI Engine<br/>(Terse Directives, Compact Diffs, AST Outlines)"]
         AntiSlop["Anti-Slop AI Framework<br/>(UI, Copywriting, Code & Mobile Anti-Slop)"]
         OmniRoute["OmniRoute AI Gateway (:20128)<br/>(Multi-Model Routing & Auto-Failover)"]
+        JevGraph["JevGraph Knowledge Graph Engine<br/>(Doc Spec Candidate Graphs, 80-95% Reduction)"]
     end
 
     subgraph ContextOptimization ["Context Window & Execution Flow"]
         TerminalOut["Condensed Terminal Output<br/>(git, npm, cargo, pytest, rg, etc.)"]
+        DocGraphs["Schema-Guided Knowledge Graphs<br/>(Bounded Subgraphs with Page Evidence)"]
         AgentPrompt["Optimized AI Prompt & Context<br/>(Zero Noise, High-Signal & Slop-Free)"]
         LLMModels["LLM Providers & Models<br/>(Claude 3.7 / GPT-4o / Gemini / DeepSeek)"]
     end
@@ -63,15 +65,18 @@ flowchart TD
     SlashSkills -->|"Enforces Terse Code Diff"| Ponytail
     SlashSkills -->|"Enforces Quality Standards"| AntiSlop
     SlashSkills -->|"Routes AI Queries"| OmniRoute
+    SlashSkills -->|"Builds Knowledge Graphs"| JevGraph
 
     RTK -->|"Filters Verbosity"| TerminalOut
+    JevGraph -->|"Converts Raw Docs to Graphs"| DocGraphs
     Headroom -->|"Compresses JSON/Logs"| AgentPrompt
     Ponytail -->|"Prunes Boilerplate"| AgentPrompt
     AntiSlop -->|"Eliminates AI Hallucinations & Generic Slop"| AgentPrompt
     OmniRoute -->|"Routes AI Requests"| LLMModels
 
     TerminalOut -->|"Feeds Condensed Signal"| AgentPrompt
-    AgentPrompt -->|"Consumes 60-90% Fewer Tokens"| LLMModels
+    DocGraphs -->|"Feeds Bounded Evidence Graphs"| AgentPrompt
+    AgentPrompt -->|"Consumes 60-95% Fewer Tokens"| LLMModels
     LLMModels -.->|"Telemetry & Savings Data"| WebviewDash
 ```
 
@@ -133,8 +138,10 @@ flowchart TD
 | **`/rtk-doctor`** | **Runs health checks & diagnostics** for RTK, Headroom, and environment configs. |
 | **`/rtk-sync`** | **1-Click syncs RTK & Headroom rules** across all AI agent files. |
 | **`/rtk-run <cmd>`** | **Runs arbitrary shell command** through RTK output compression proxy. |
-| **`/rtk-update`** | **Checks and updates RTK, Headroom, Ponytail, Anti-Slop & OmniRoute** from upstream GitHub releases. |
+| **`/rtk-update`** | **Checks and updates RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph** from upstream GitHub releases. |
 | **`/rtk-omniroute`** | **Configures OmniRoute AI Gateway & Smart Router** for low-latency multi-model routing & rate-limit evasion. |
+| **`/jevgraph-build`** | **Builds schema-guided candidate knowledge graphs** from documents, specs, and PDFs (80–95% token savings). |
+| **`/jevgraph-query`** | **Extracts bounded subgraphs & evidence spans** by entity or query for precise LLM context injection. |
 | **`/ponytail`** | **Configures Ponytail YAGNI mode** for concise code diffs & terse generation. |
 | **`/ponytail-audit`** | **Whole-repo audit for over-engineering** and speculative code. |
 | **`/ponytail-debt`** | **Tracks shortcut debt ledger** marked with `ponytail:` comments. |
@@ -151,7 +158,7 @@ flowchart TD
 | **`/publishtokensavernow`** | **Automates release tagging and publishing** to Open VSX & GitHub Releases. |
 
 *(Optional Manual Re-install)*:
-- **Command Palette**: `Token Saver: 1-Click Skill Installation (/rtk-*, /ponytail, /antislop)`
+- **Command Palette**: `Token Saver: 1-Click Skill Installation (/rtk-*, /ponytail, /antislop, /jevgraph)`
 - **Windows (PowerShell)**: `.\scripts\install-skills.ps1`
 - **Linux / macOS (Bash)**: `./scripts/install-skills.sh`
 
@@ -179,9 +186,9 @@ The extension provides full graphical and automated control directly from your *
   <img src="resources/dashboard-breakdown.png" alt="Token Saver Real-time Compression Scoreboard & Savings Breakdown" width="100%" />
 </p>
 
-4. **Upstream GitHub 5-Way Core Sync (RTK, Headroom, Ponytail, Anti-Slop & OmniRoute)**:
-   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, & `diegosouzapw/OmniRoute`).
-   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail and Anti-Slop.
+4. **Upstream GitHub 6-Way Core Sync (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph)**:
+   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, `diegosouzapw/OmniRoute` & `chenmingtang830/jevgraph`).
+   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail, Anti-Slop, and JevGraph.
 5. **Dynamic Live Status Bar**:
    - Shows real-time savings: `⚡ RTK: 48.2k saved (72%)` or `⚪ RTK: OFF`.
    - Rich hover tooltips with cost savings and quick access to the dashboard.
@@ -196,6 +203,10 @@ The extension provides full graphical and automated control directly from your *
    - `Token Saver: Update from Upstream GitHub`
    - `Token Saver: Fetch & Sync Ponytail from GitHub`
    - `Token Saver: Fetch & Sync Anti-Slop from GitHub`
+   - `Token Saver: Fetch & Sync JevGraph from GitHub`
+   - `Token Saver: Build Knowledge Graph with JevGraph`
+   - `Token Saver: Toggle JevGraph Context Optimization`
+   - `Token Saver: Uninstall JevGraph Engine`
    - `Token Saver: Configure Anti-Slop Mode (during / after / ask / off)`
    - `Token Saver: Toggle Headroom Context Compression`
    - `Token Saver: Configure Ponytail Mode (YAGNI & Output Token Saver)`
@@ -205,7 +216,7 @@ The extension provides full graphical and automated control directly from your *
    - `Token Saver: Stop OmniRoute AI Gateway`
    - `Token Saver: Open OmniRoute Web Dashboard`
    - `Token Saver: Toggle OmniRoute AI Gateway Integration`
-   - `Token Saver: 1-Click Skill Installation (/rtk-*, /ponytail, /antislop)`
+   - `Token Saver: 1-Click Skill Installation (/rtk-*, /ponytail, /antislop, /jevgraph)`
    - `Token Saver: Sync Global Antigravity Rules (~/.gemini)`
    - `Token Saver: Show Token Savings Scoreboard (rtk gain)`
    - `Token Saver: Install RTK CLI Tool`
@@ -226,7 +237,9 @@ The extension provides full graphical and automated control directly from your *
 | `tokenSaver.omniRoutePort` | `20128` | Local port for OmniRoute AI Gateway proxy server. |
 | `tokenSaver.omniRouteAutoStart` | `false` | Automatically start OmniRoute AI Gateway on IDE startup. |
 | `tokenSaver.omniRouteEndpoint` | `"http://localhost:20128/v1"` | OpenAI-compatible endpoint URL for OmniRoute local proxy. |
-| `tokenSaver.autoInstallSkills` | `true` | Automatically install Antigravity & Agent chat skills (`/rtk-*`, `/ponytail-*`, `/antislop-*`) on startup. |
+| `tokenSaver.jevGraphEnabled` | `true` | Enable JevGraph evidence-backed knowledge graph context compression. |
+| `tokenSaver.jevGraphProvider` | `"keyword"` | JevGraph relation extraction pipeline provider (`keyword`, `jev`, `local`). |
+| `tokenSaver.autoInstallSkills` | `true` | Automatically install Antigravity & Agent chat skills (`/rtk-*`, `/ponytail-*`, `/antislop-*`, `/jevgraph-*`) on startup. |
 | `tokenSaver.targetScope` | `"all"` | Target IDE / Agent rule scope (`all`, `global`, `workspace`, `copilot`, `cursor`, `windsurf`, `cline`, `claude`, `agents`). |
 | `tokenSaver.checkForUpdatesOnStartup` | `true` | Check for newer RTK & Headroom releases on startup. |
 | `tokenSaver.weeklyAutoSync` | `true` | Weekly background check and sync for upstream releases. |

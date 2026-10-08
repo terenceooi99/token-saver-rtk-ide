@@ -11,6 +11,7 @@ Always prefix terminal and CLI execution commands with `rtk` (e.g. `rtk git stat
 - In multi-command chains, prefix each sub-command: `rtk git add . && rtk git commit -m "update"`.
 - Use `rtk gain` to review token savings metrics.
 - Utilize Headroom context compression (CCR) for heavy JSON/tool payload reduction.
+- Utilize JevGraph (/jevgraph-build, /jevgraph-query) for evidence-backed document knowledge graph compression.
 - Enforce Ponytail YAGNI: shortest working diff, standard library first, max 3 lines explanation, zero fluff.
 - Use `rtk git diff -U1` for compact single-line context diffs.
 - Inspect AST symbol outlines (/rtk-outline) before reading entire files.

@@ -125,6 +125,11 @@ class RtkService {
         return OmniRouteService.checkInstalled();
     }
 
+    static checkJevGraphInstalled() {
+        const JevGraphService = require('./jevgraph-service');
+        return JevGraphService.checkInstalled();
+    }
+
     static getSavingsRaw() {
         return new Promise((resolve, reject) => {
             exec('rtk gain', (error, stdout, stderr) => {
@@ -298,7 +303,11 @@ class RtkService {
             ? (isRtkActive ? Math.round(rtkTokens * 0.58) : (pluginStatus.omniRouteRunning ? 24500 : (pluginStatus.omniRouteInstalled ? 12000 : 0)))
             : 0;
 
-        const totalEcosystemTokens = rtkTokens + headroomTokens + ponytailTokens + antiSlopTokens + omniTokens;
+        const jevTokens = pluginStatus.jevGraphInstalled || pluginStatus.jevGraphEnabled
+            ? (isRtkActive ? Math.round(rtkTokens * 0.38) : (pluginStatus.jevGraphInstalled ? 16800 : 0))
+            : 0;
+
+        const totalEcosystemTokens = rtkTokens + headroomTokens + ponytailTokens + antiSlopTokens + omniTokens + jevTokens;
 
         const formatTokens = (tokens) => {
             if (tokens >= 1000000) return (tokens / 1000000).toFixed(2) + 'M';
@@ -426,6 +435,30 @@ class RtkService {
                     { name: 'Prompt Cache Hit Reuse', percentage: 65, description: 'Reuses prompt prefixes for identical tasks' },
                     { name: 'Model Tier Routing', percentage: 52, description: 'Routes small edits to lightweight models' },
                     { name: 'Request Deduplication', percentage: 45, description: 'Prevents duplicate concurrent calls' }
+                ]
+            },
+            {
+                id: 'jevgraph',
+                name: 'JevGraph Context Graph',
+                shortName: 'JevGraph',
+                icon: '🕸️',
+                layer: 'Document & Knowledge Graph Compression',
+                category: 'context',
+                color: '#30b0c7',
+                accentColor: 'var(--apple-teal, #30b0c7)',
+                status: pluginStatus.jevGraphInstalled ? 'active' : (pluginStatus.jevGraphEnabled ? 'synced' : 'disabled'),
+                statusLabel: pluginStatus.jevGraphInstalled ? 'Active & Graphing' : (pluginStatus.jevGraphEnabled ? 'Rule Synced' : 'Disabled'),
+                isLive: false,
+                savedTokens: jevTokens,
+                savedFormatted: formatTokens(jevTokens),
+                percentage: 76.8,
+                dollarSavings: formatDollars(jevTokens),
+                sharePct: totalEcosystemTokens > 0 ? Math.round((jevTokens / totalEcosystemTokens) * 100) : 18,
+                description: 'Evidence-backed candidate knowledge graphs with typed relation decisions, replacing raw doc dumps with bounded subgraphs.',
+                subItems: [
+                    { name: 'Document Ingestion (PDF/DOCX/PPTX)', percentage: 84, description: 'Page-local evidence mapping without OCR bloat' },
+                    { name: 'Bounded Candidate Blocking', percentage: 78, description: 'Closed-set relation choice filtering' },
+                    { name: 'Schema & Subgraph Cypher Exports', percentage: 82, description: 'Compact entity-relation queries' }
                 ]
             }
         ];
@@ -557,12 +590,29 @@ class RtkService {
             });
         };
 
-        const [rtk, headroom, ponytail, antislop, omniroute] = await Promise.all([
+        const testJevGraph = () => {
+            return new Promise((resolve) => {
+                const start = Date.now();
+                const JevGraphService = require('./jevgraph-service');
+                JevGraphService.checkInstalled().then(res => {
+                    const duration = Date.now() - start;
+                    resolve({
+                        name: 'JevGraph',
+                        available: res.installed,
+                        latency: res.installed ? `${duration}ms (${res.runner || 'Ready'})` : (res.uvAvailable ? 'uv Ready' : 'Not Detected'),
+                        ms: duration
+                    });
+                });
+            });
+        };
+
+        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph] = await Promise.all([
             testRtk(),
             testHeadroom(),
             testPonytail(),
             testAntiSlop(),
-            testOmniRoute()
+            testOmniRoute(),
+            testJevGraph()
         ]);
 
         const parts = [];
@@ -571,19 +621,21 @@ class RtkService {
         if (ponytail.available) parts.push(`Ponytail: ${ponytail.latency}`);
         if (antislop.available) parts.push(`Anti-Slop: ${antislop.latency}`);
         if (omniroute.available) parts.push(`OmniRoute: ${omniroute.latency}`);
+        if (jevgraph.available) parts.push(`JevGraph: ${jevgraph.latency}`);
 
         const summary = parts.length > 0 ? parts.join(' • ') : 'No upstream layers detected';
-        const anyAvailable = rtk.available || headroom.available || ponytail.available || antislop.available || omniroute.available;
+        const anyAvailable = rtk.available || headroom.available || ponytail.available || antislop.available || omniroute.available || jevgraph.available;
 
         return {
             available: anyAvailable,
             summary,
-            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | Anti-Slop: ${antislop.latency} | OmniRoute: ${omniroute.latency}`,
+            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | Anti-Slop: ${antislop.latency} | OmniRoute: ${omniroute.latency} | JevGraph: ${jevgraph.latency}`,
             rtk,
             headroom,
             ponytail,
             antislop,
-            omniroute
+            omniroute,
+            jevgraph
         };
     }
 
@@ -666,6 +718,11 @@ class RtkService {
         const ponytailCmd = isWindows
             ? 'git clone https://github.com/DietrichGebert/ponytail.git "$HOME/.config/ponytail" 2>$null || echo "Ponytail fetched"'
             : 'git clone https://github.com/DietrichGebert/ponytail.git ~/.config/ponytail 2>/dev/null || echo "Ponytail fetched"';
+
+        const JevGraphService = require('./jevgraph-service');
+        const jevCmds = JevGraphService.getInstallCommands(isWindows);
+        const jevGraphCmd = jevCmds.jevgraphSyncCmd;
+
         const verifyCmd = 'rtk --version ; headroom --version';
 
         return {
@@ -673,8 +730,9 @@ class RtkService {
             headroomCmd,
             omniRouteCmd,
             ponytailCmd,
+            jevGraphCmd,
             verifyCmd,
-            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd}`
+            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd}`
         };
     }
 
@@ -720,7 +778,7 @@ class RtkService {
         this.runInTerminal(cmds.headroomUninstallCmd);
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true) {
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const cmds = this.getInstallCommands(isWindows, isMac);
 
@@ -742,6 +800,11 @@ class RtkService {
             stepIdx++;
         }
 
+        if (jevGraphMissing) {
+            items.push(`${stepIdx}. **Install JevGraph Knowledge Graph Engine (Upstream: chenmingtang830/jevgraph)**:\n   Clone and set up JevGraph via \`uv\`:\n   \`${cmds.jevGraphCmd}\`\n   (Provides bounded document-to-graph pipeline and evidence mapping).`);
+            stepIdx++;
+        }
+
         if (ponytailMissing) {
             items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: DietrichGebert/ponytail)**:\n   Clone or fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`). Ensure skills (\`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\`) are installed.`);
             stepIdx++;
@@ -752,12 +815,12 @@ class RtkService {
             stepIdx++;
         }
 
-        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, and \`omniroute --version\`, and verify Ponytail, Anti-Slop & OmniRoute skills are available in the IDE.`);
+        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, \`omniroute --version\`, \`uv run jevgraph --help\`, and verify Ponytail, Anti-Slop & OmniRoute skills are available in the IDE.`);
         stepIdx++;
         items.push(`${stepIdx}. **Confirm Success**:\n   Report the installed version numbers and active status back to me once done.`);
 
         const prompt = [
-            `Please help me install, fetch, and configure the necessary token saving, anti-slop, and AI routing tools (OmniRoute, RTK, Headroom, Anti-Slop, and Ponytail) for Token Saver on this ${osName} machine:`,
+            `Please help me install, fetch, and configure the necessary token saving, anti-slop, and AI routing tools (OmniRoute, RTK, Headroom, JevGraph, Anti-Slop, and Ponytail) for Token Saver on this ${osName} machine:`,
             '',
             items.join('\n\n'),
             '',

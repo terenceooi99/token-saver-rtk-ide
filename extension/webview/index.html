@@ -34,6 +34,7 @@
                 <button class="btn btn-primary" id="togglePonytailBtn">Turn Ponytail ON</button>
                 <button class="btn btn-primary" id="toggleAntiSlopBtn">Turn Anti-Slop ON</button>
                 <button class="btn btn-primary" id="toggleOmniRouteBtn">Turn OmniRoute ON</button>
+                <button class="btn btn-primary" id="toggleJevGraphBtn">Turn JevGraph ON</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
@@ -341,6 +342,55 @@
                     </div>
                 </section>
 
+                <!-- JevGraph Evidence-Backed Knowledge Graph -->
+                <section class="panel-card jevgraph-section" id="sectionJevGraph">
+                    <div class="panel-header collapsible" data-target="bodyJevGraph">
+                        <div class="panel-header-left">
+                            <span class="collapse-chevron">▾</span>
+                            <div>
+                                <h2>🕸️ JevGraph Knowledge Graph Engine</h2>
+                                <p class="panel-subtitle">Evidence-backed candidate graphs with typed relation decisions from docs & specs</p>
+                            </div>
+                        </div>
+                        <div class="header-tags-group">
+                            <a href="https://github.com/chenmingtang830/jevgraph" target="_blank" class="repo-badge-link" title="Upstream GitHub: chenmingtang830/jevgraph">GitHub: chenmingtang830/jevgraph ↗</a>
+                            <span class="panel-tag tag-teal" id="jevStatusBadge">Active & Ready</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="bodyJevGraph">
+                        <!-- JevGraph Engine & Sync -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <div class="opt-title-line">
+                                    <span class="opt-title">Document Knowledge Graph Engine:</span>
+                                    <button class="btn-mini-sync" id="jevInlineSyncBtn" title="Fetch & sync latest JevGraph engine from GitHub via uv">🔄 Sync from GitHub</button>
+                                </div>
+                                <span class="opt-desc">Converts raw specs, PRDs, and PDFs to bounded knowledge graphs with character-level page evidence, cutting prompt tokens by 80–95%.</span>
+                            </div>
+                        </div>
+
+                        <!-- Relation Extraction Provider Selector -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <span class="opt-title">Relation Extraction Provider:</span>
+                                <span class="opt-desc">Select pipeline decision engine: <strong>Keyword</strong> (100% offline, zero token spend), <strong>Jev</strong> (routes via OmniRoute / OpenAI Gateway for deep semantic relations), or <strong>Local</strong> (on-device local LLM embeddings).</span>
+                            </div>
+                            <div class="mode-segment-group" id="jevProviderSegmentGroup">
+                                <button class="segment-btn active" data-provider="keyword">Keyword (Offline)</button>
+                                <button class="segment-btn" data-provider="jev">Jev (Gateway)</button>
+                                <button class="segment-btn" data-provider="local">Local</button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Grid -->
+                        <div class="jev-quick-actions">
+                            <button class="btn btn-sm btn-primary" id="jevManualInsertBtn" title="Search for local documents (PDF, DOCX, PPTX, TXT, MD) or enter web link to link into JevGraph">📁 Manual Insert Documents</button>
+                            <button class="btn btn-sm btn-ghost" id="jevResetBtn" title="Reset and wipe knowledge graph for this active repository">🗑️ Reset Repo Graph</button>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- OmniRoute AI Gateway & Router (For Vibe Coders) -->
                 <section class="panel-card omniroute-section" id="sectionOmniRoute">
                     <div class="panel-header collapsible" data-target="bodyOmniRoute">
@@ -465,6 +515,9 @@
                             <button class="channel-tab-btn" data-channel="omniRoute" id="tabChannelOmni">
                                 <span class="tab-icon">🌐</span> AI Gateway
                             </button>
+                            <button class="channel-tab-btn" data-channel="jevgraph" id="tabChannelJev">
+                                <span class="tab-icon">🕸️</span> JevGraph KG
+                            </button>
                         </div>
 
                         <!-- Proportional Multi-Channel Distribution Bar -->
@@ -516,6 +569,19 @@
                                 </div>
                                 <span class="action-status-badge" id="quickOmniBadge">
                                     <span class="badge-text">Launch</span>
+                                </span>
+                            </button>
+
+                            <button class="btn btn-action" id="quickJevInsertBtn" title="Manually search for documents (PDF, DOCX, PPTX, TXT, MD) or enter web link to link into repo JevGraph">
+                                <div class="btn-action-left">
+                                    <span class="btn-icon">📁</span>
+                                    <div class="btn-text-block">
+                                        <span class="btn-label" id="quickJevLabel">Insert Docs to JevGraph</span>
+                                        <span class="btn-sub" id="quickJevSub">File Explorer or Web Link (Per Repo)</span>
+                                    </div>
+                                </div>
+                                <span class="action-status-badge" id="quickJevBadge">
+                                    <span class="badge-text">+ Insert</span>
                                 </span>
                             </button>
 
@@ -673,6 +739,17 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="diag-row">
+                                <span class="diag-key">JevGraph (GitHub):</span>
+                                <div class="diag-val-wrapper">
+                                    <span class="diag-val" id="diagJevGraphStatus">Checking...</span>
+                                    <span class="diag-action-btns" id="jevGraphDiagActions" style="display: none;">
+                                        <button class="btn-diag-mini btn-diag-ai" id="jevGraphDiagAiBtn" title="Copy AI install prompt for JevGraph">🤖 Ask AI</button>
+                                        <button class="btn-diag-mini btn-diag-sync" id="jevGraphDiagSyncBtn" title="Fetch JevGraph from GitHub via uv">🕸️ Sync</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="jevGraphDiagUninstallBtn" title="Uninstall JevGraph Engine">🗑️</button>
+                                    </span>
+                                </div>
+                            </div>
                             <div class="diag-row diag-row-dropdown" id="diagVersionRow">
                                 <span class="diag-key">Upstream Versions:</span>
                                 <div class="diag-dropdown-wrapper">
@@ -705,13 +782,14 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <span class="footer-brand-title">⚡ Token Saver (RTK, Headroom, Anti-Slop & OmniRoute) • <a href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link" title="Token Saver GitHub Repository">GitHub</a></span>
+            <span class="footer-brand-title">⚡ Token Saver (RTK, Headroom, Anti-Slop, OmniRoute & JevGraph) • <a href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link" title="Token Saver GitHub Repository">GitHub</a></span>
             <span class="footer-links">
                 <a href="https://github.com/rtk-ai/rtk" target="_blank">RTK Core</a> • 
                 <a href="https://github.com/headroomlabs-ai/headroom" target="_blank">Headroom</a> • 
                 <a href="https://github.com/DietrichGebert/ponytail" target="_blank">Ponytail (YAGNI)</a> • 
                 <a href="https://github.com/miqdadbadjuber/anti-slop" target="_blank">Anti-Slop</a> • 
-                <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a>
+                <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a> • 
+                <a href="https://github.com/chenmingtang830/jevgraph" target="_blank">JevGraph</a>
             </span>
         </footer>
     </div>

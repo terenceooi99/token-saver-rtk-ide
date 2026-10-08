@@ -21,6 +21,9 @@ Command output is condensed to save 60-90% LLM context window tokens while prese
 ## Headroom Context Compression (Upstream: headroomlabs-ai/headroom)
 - Utilize Headroom context compression and Compress-Cache-Retrieve (CCR) for heavy JSON structures, file reads, and tool payloads to minimize prompt tokens.
 
+## JevGraph Knowledge Graph Context Optimization (Upstream: chenmingtang830/jevgraph)
+- When ingesting large specs, PRDs, PDFs, or architectural documentation, build or query bounded evidence-backed knowledge graphs (/jevgraph-build, /jevgraph-query) with character-level page maps instead of loading raw long documents into prompt context.
+
 
 ## Output & Generation Token Saver Rule (Ponytail Mode: FULL)
 - **YAGNI & Shortest Diff:** Only write code that must exist. Reach for standard library before custom code or new dependencies. Shortest working diff wins.

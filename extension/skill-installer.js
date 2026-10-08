@@ -570,6 +570,47 @@ description: "Anti Slop: Code comment cleaner. Strips repetitive AI box-drawing 
 Cleans AI commentary noise:
 - Strips ASCII box-drawing banners, robotic comments that just restate variable names, and excessive docstring filler.
 - Leaves code logic untouched.
+`,
+    'jevgraph-build': `---
+name: jevgraph-build
+description: >
+  Build evidence-backed candidate knowledge graphs with typed relation decisions from documents, specs, PRDs, or PDFs.
+  Activate when the user types /jevgraph-build, /jevgraph, "build knowledge graph", "document graph",
+  or asks to extract structured entity relations from specifications or documents.
+argument-hint: "<input_file_or_doc> [--ontology <path>] [--entities <path>] [--provider keyword|jev]"
+license: MIT
+---
+
+# JevGraph Candidate Knowledge Graph Builder (/jevgraph-build)
+
+Builds an evidence-backed candidate knowledge graph from documents (PDF, DOCX, PPTX, TXT, or markdown architectural specs) using bounded candidate blocking and typed relation decisions.
+
+## Quick Execution
+- Build graph using 100% offline keyword baseline:
+  \`uv run jevgraph build path/to/spec.md --provider keyword --out runs/spec_graph.json\`
+- Export to Cypher queries:
+  \`uv run jevgraph export runs/spec_graph.json --format neo4j --out runs/spec.cypher\`
+- Export to CSV table:
+  \`uv run jevgraph export runs/spec_graph.json --format csv --out runs/spec_csv\`
+`,
+    'jevgraph-query': `---
+name: jevgraph-query
+description: >
+  Inspect, query, or outline evidence-backed relations from a generated JevGraph knowledge graph or Cypher export.
+  Saves 85-95% of prompt tokens vs reading raw 50-100 page document specs into LLM context.
+  Activate when the user types /jevgraph-query, /jevgraph-inspect, "query graph", "inspect architecture graph",
+  or asks to verify entity relations and page evidence.
+argument-hint: "<graph_json_or_cypher_file>"
+license: MIT
+---
+
+# JevGraph Knowledge Graph Inspector (/jevgraph-query)
+
+Queries and inspects compact entity-relation subgraphs, page mappings, and character-level evidence windows from generated JevGraph runs.
+
+- Query relations by entity name or predicate.
+- Review proposed vs review vs rejected edges with page-local evidence offsets.
+- Inspect Cypher graph definitions instead of full document text.
 `
 };
 
@@ -647,6 +688,7 @@ class SkillInstaller {
         let headroomEnabled = true;
         let antiSlopEnabled = true;
         let antiSlopMode = 'during';
+        let jevGraphEnabled = true;
 
         try {
             const config = vscode.workspace.getConfiguration('tokenSaver');
@@ -657,6 +699,7 @@ class SkillInstaller {
             headroomEnabled = config.get('headroomEnabled', true);
             antiSlopEnabled = config.get('antiSlopEnabled', true);
             antiSlopMode = config.get('antiSlopMode', 'during');
+            jevGraphEnabled = config.get('jevGraphEnabled', true);
         } catch (e) {
             // Use defaults if config is inaccessible
         }
@@ -666,6 +709,11 @@ class SkillInstaller {
         if (headroomEnabled) {
             text += `\n\n## Headroom Context Compression (Upstream: headroomlabs-ai/headroom)\n`;
             text += `- Utilize Headroom context compression and Compress-Cache-Retrieve (CCR) for heavy JSON structures, file reads, and tool payloads to minimize prompt tokens.\n`;
+        }
+
+        if (jevGraphEnabled) {
+            text += `\n\n## JevGraph Knowledge Graph Context Optimization (Upstream: chenmingtang830/jevgraph)\n`;
+            text += `- When ingesting large specs, PRDs, PDFs, or architectural documentation, build or query bounded evidence-backed knowledge graphs (/jevgraph-build, /jevgraph-query) with character-level page maps instead of loading raw long documents into prompt context.\n`;
         }
 
         if (antiSlopEnabled && antiSlopMode !== 'off') {
@@ -1090,6 +1138,28 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
+     * Install JevGraph skills specifically (chenmingtang830/jevgraph)
+     */
+    static installJevGraphSkills(targetScope = 'all') {
+        const jevSkills = ['jevgraph-build', 'jevgraph-query'];
+        return this.installSpecificSkills(jevSkills, targetScope);
+    }
+
+    /**
+     * Uninstall JevGraph skills specifically (chenmingtang830/jevgraph)
+     */
+    static uninstallJevGraphSkills() {
+        const jevSkills = ['jevgraph-build', 'jevgraph-query'];
+        const removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), jevSkills);
+        const removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), jevSkills);
+        return {
+            global: removedGlobal,
+            workspace: removedWs,
+            total: [...new Set([...removedGlobal, ...removedWs])]
+        };
+    }
+
+    /**
      * Uninstall all Token Saver / RTK / Ponytail / Anti-Slop skills
      */
     static uninstallAllSkills() {
@@ -1123,14 +1193,20 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             'antislop-layoutmobile',
             'antislop-code'
         ];
+        const jevSkills = [
+            'jevgraph-build',
+            'jevgraph-query'
+        ];
 
         let targetSkills = [];
         if (skillSetType === 'ponytail') {
             targetSkills = ponytailSkills;
         } else if (skillSetType === 'antislop') {
             targetSkills = antiSlopSkills;
+        } else if (skillSetType === 'jevgraph') {
+            targetSkills = jevSkills;
         } else if (skillSetType === 'rtk') {
-            const excluded = new Set([...ponytailSkills, ...antiSlopSkills]);
+            const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills]);
             targetSkills = Object.keys(SKILLS_MAP).filter(s => !excluded.has(s));
         } else {
             targetSkills = Object.keys(SKILLS_MAP);

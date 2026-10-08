@@ -2,7 +2,7 @@
   "name": "token-saver-rtk-ide",
   "displayName": "Token Saver for VS Code & Agentic IDEs",
   "description": "Smart token optimization & CLI compression proxy for VS Code, Cursor, Windsurf, Cline, Roo Code, Claude Code & Antigravity IDE using matured upstream open-sourced solutions.",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "publisher": "terenceooi",
   "author": {
     "name": "Terence",
@@ -33,7 +33,9 @@
     "ai-agents",
     "context-window",
     "llm",
-    "compression"
+    "compression",
+    "jevgraph",
+    "knowledge-graph"
   ],
   "engines": {
     "vscode": "^1.74.0"
@@ -136,6 +138,36 @@
         "title": "Fetch & Sync Anti-Slop from GitHub (miqdadbadjuber/anti-slop)",
         "category": "Token Saver",
         "icon": "$(sync)"
+      },
+      {
+        "command": "tokenSaver.syncJevGraph",
+        "title": "Fetch & Sync JevGraph from GitHub (chenmingtang830/jevgraph)",
+        "category": "Token Saver",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "tokenSaver.insertDocumentJevGraph",
+        "title": "Manual Insert Documents to JevGraph (File Explorer & Web Link)",
+        "category": "Token Saver",
+        "icon": "$(file-directory)"
+      },
+      {
+        "command": "tokenSaver.resetJevGraph",
+        "title": "Reset / Clear JevGraph Knowledge for Current Repository",
+        "category": "Token Saver",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "tokenSaver.buildJevGraph",
+        "title": "Build Document Knowledge Graph (JevGraph)",
+        "category": "Token Saver",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "tokenSaver.toggleJevGraph",
+        "title": "Toggle JevGraph Knowledge Graph Optimization",
+        "category": "Token Saver",
+        "icon": "$(type-hierarchy)"
       },
       {
         "command": "tokenSaver.toggleAntiSlop",
@@ -301,13 +333,18 @@
         "category": "Token Saver"
       },
       {
+        "command": "tokenSaver.uninstallJevGraph",
+        "title": "Uninstall JevGraph Knowledge Graph Engine (chenmingtang830/jevgraph)",
+        "category": "Token Saver"
+      },
+      {
         "command": "tokenSaver.uninstallAllUpstream",
         "title": "Uninstall All Upstream GitHub Layers (Full Clean Purge)",
         "category": "Token Saver"
       }
     ],
     "configuration": {
-      "title": "Token Saver (RTK, Headroom, Ponytail, OmniRoute & Anti-Slop)",
+      "title": "Token Saver (RTK, Headroom, Ponytail, OmniRoute, Anti-Slop & JevGraph)",
       "properties": {
         "tokenSaver.enableOnStartup": {
           "type": "boolean",
@@ -334,6 +371,31 @@
           "type": "boolean",
           "default": true,
           "description": "Enable Headroom context compression (CCR / SmartCrusher / CodeCompressor) from upstream headroomlabs-ai/headroom."
+        },
+        "tokenSaver.jevGraphEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable JevGraph evidence-backed knowledge graph context optimization from upstream chenmingtang830/jevgraph."
+        },
+        "tokenSaver.jevGraphAutoBuild": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically build initial repository knowledge graph from existing documents on workspace startup."
+        },
+        "tokenSaver.jevGraphAutoWatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically watch repository and AI chat documents to auto-combine new or modified documents into JevGraph."
+        },
+        "tokenSaver.jevGraphProvider": {
+          "type": "string",
+          "enum": [
+            "keyword",
+            "jev",
+            "local"
+          ],
+          "default": "keyword",
+          "description": "Relation extraction provider for JevGraph: 'keyword' (100% offline, 0 external tokens), 'jev' (AI Gateway), or 'local'."
         },
         "tokenSaver.omniRouteEnabled": {
           "type": "boolean",

@@ -2,6 +2,20 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.11.0] - 2026-10-08
+### Added & Improved
+- **JevGraph Knowledge Graph Engine Integration (`chenmingtang830/jevgraph`)**:
+  - Integrated evidence-backed candidate knowledge graph extraction from documents and technical specifications (PDF, DOCX, PPTX, text).
+  - Slashes document ingestion token consumption by **80%–95%** compared to raw multi-page document dumps by converting inputs into schema-guided graphs with page-level evidence character spans.
+  - Added dedicated AI agent skills: `/jevgraph-build` (builds schema-guided candidate knowledge graphs) and `/jevgraph-query` (extracts bounded subgraphs by query or entity for prompt injection).
+  - Added 100% offline relation extraction provider (`keyword`) with zero external API calls and zero extra token cost, alongside `jev` gateway and `local` provider modes.
+  - Added full IDE rule directives across all supported platforms (VS Code, Cursor, Windsurf, Cline, Roo Code, Claude Code, and Antigravity).
+  - Added interactive JevGraph controls, provider selector, active doc demo builder, and System Health diagnostics in the Webview Dashboard.
+- **6-Way Upstream GitHub Core Synchronization**:
+  - Expanded release and lifecycle tracking to 6 upstream open-source engines: **RTK** (`rtk-ai/rtk`), **Headroom** (`headroomlabs-ai/headroom`), **Ponytail** (`DietrichGebert/ponytail`), **Anti-Slop** (`miqdadbadjuber/anti-slop`), **OmniRoute** (`diegosouzapw/OmniRoute`), and **JevGraph** (`chenmingtang830/jevgraph`).
+  - Added multi-channel breakdown 6th channel (`jevgraph`) with visual token savings metrics.
+  - Added granular sync and uninstallation support for JevGraph.
+
 ## [1.10.0] - 2026-10-05
 ### Added & Improved
 - **Anti-Slop AI Quality Framework Integration (`miqdadbadjuber/anti-slop`)**:

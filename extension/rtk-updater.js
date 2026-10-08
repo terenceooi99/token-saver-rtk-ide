@@ -114,17 +114,19 @@ class RtkUpdater {
 
     static async checkForUpdates(silent = false) {
         try {
-            const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease] = await Promise.all([
+            const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease] = await Promise.all([
                 RtkService.checkInstalled(),
                 RtkService.checkHeadroomInstalled(),
                 RtkService.checkPonytailInstalled(),
                 RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : require('./omniroute-service').checkInstalled(),
                 RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
+                RtkService.checkJevGraphInstalled ? RtkService.checkJevGraphInstalled() : { installed: false },
                 this.getLatestRelease('rtk-ai/rtk'),
                 this.getLatestRelease('headroomlabs-ai/headroom'),
                 this.getLatestRelease('DietrichGebert/ponytail'),
                 this.getLatestRelease('diegosouzapw/OmniRoute'),
-                this.getLatestRelease('miqdadbadjuber/anti-slop')
+                this.getLatestRelease('miqdadbadjuber/anti-slop'),
+                this.getLatestRelease('chenmingtang830/jevgraph')
             ]);
 
             const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
@@ -132,7 +134,8 @@ class RtkUpdater {
             const ponytailHasUpdate = ponytailRelease.success && (!ponytailCheck.installed || (ponytailCheck.skillsCount && ponytailCheck.skillsCount < 6));
             const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
             const antiSlopHasUpdate = antiSlopRelease.success && (!antiSlopCheck.installed || (antiSlopCheck.skillsCount && antiSlopCheck.skillsCount < 6));
-            const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || omniHasUpdate || antiSlopHasUpdate;
+            const jevHasUpdate = jevRelease.success && (!jevCheck.installed);
+            const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || omniHasUpdate || antiSlopHasUpdate || jevHasUpdate;
 
             if (hasAnyUpdate) {
                 const updatesList = [];
@@ -141,10 +144,12 @@ class RtkUpdater {
                 if (ponytailHasUpdate) updatesList.push(`Ponytail (${ponytailRelease.tag || 'Latest'})`);
                 if (omniHasUpdate) updatesList.push(`OmniRoute ${omniRelease.tag}`);
                 if (antiSlopHasUpdate) updatesList.push(`Anti-Slop (${antiSlopRelease.tag || 'Latest'})`);
+                if (jevHasUpdate) updatesList.push(`JevGraph (${jevRelease.tag || 'Latest'})`);
 
                 const choice = await vscode.window.showInformationMessage(
                     `🚀 Upstream updates available: ${updatesList.join(' & ')}`,
                     'Update / Sync All',
+                    'Sync JevGraph GitHub',
                     'Sync Anti-Slop GitHub',
                     'Sync Ponytail GitHub',
                     'Update RTK',
@@ -155,6 +160,8 @@ class RtkUpdater {
 
                 if (choice === 'Update / Sync All') {
                     this.performAllUpdates();
+                } else if (choice === 'Sync JevGraph GitHub') {
+                    await this.performJevGraphSync();
                 } else if (choice === 'Sync Anti-Slop GitHub') {
                     await this.performAntiSlopSync();
                 } else if (choice === 'Sync Ponytail GitHub') {
@@ -166,54 +173,17 @@ class RtkUpdater {
                 } else if (choice === 'Update OmniRoute') {
                     this.performOmniRouteUpdate();
                 } else if (choice === 'Release Notes') {
-                    if (rtkHasUpdate && rtkRelease.htmlUrl) {
-                        vscode.env.openExternal(vscode.Uri.parse(rtkRelease.htmlUrl));
-                    }
-                    if (headroomHasUpdate && headroomRelease.htmlUrl) {
-                        vscode.env.openExternal(vscode.Uri.parse(headroomRelease.htmlUrl));
-                    }
-                    if (ponytailRelease.htmlUrl) {
-                        vscode.env.openExternal(vscode.Uri.parse(ponytailRelease.htmlUrl));
-                    }
-                    if (omniHasUpdate && omniRelease.htmlUrl) {
-                        vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
-                    }
-                    if (antiSlopRelease.htmlUrl) {
-                        vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
-                    }
+                    if (rtkRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(rtkRelease.htmlUrl));
+                    if (headroomRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(headroomRelease.htmlUrl));
+                    if (ponytailRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(ponytailRelease.htmlUrl));
+                    if (antiSlopRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
+                    if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
+                    if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
                 }
             } else if (!silent) {
-                const parts = [];
-                if (rtkCheck.installed) {
-                    parts.push(`RTK: ${rtkCheck.version}`);
-                }
-                if (headroomCheck.installed) {
-                    parts.push(`Headroom: ${headroomCheck.version}`);
-                }
-                if (ponytailCheck.installed) {
-                    parts.push(`Ponytail: Active`);
-                }
-                if (antiSlopCheck.installed) {
-                    parts.push(`Anti-Slop: Active`);
-                }
-                if (omniCheck.installed) {
-                    parts.push(`OmniRoute: ${omniCheck.version}`);
-                }
-
                 vscode.window.showInformationMessage(
-                    `✨ Upstream GitHub Sync Status: ${parts.join(' | ')} (All up-to-date)`,
-                    'Sync Anti-Slop GitHub',
-                    'Sync Ponytail GitHub',
-                    'Install/Update CLI Tools'
-                ).then(c => {
-                    if (c === 'Sync Anti-Slop GitHub') {
-                        this.performAntiSlopSync();
-                    } else if (c === 'Sync Ponytail GitHub') {
-                        this.performPonytailSync();
-                    } else if (c === 'Install/Update CLI Tools') {
-                        this.performAllUpdates();
-                    }
-                });
+                    `✓ All upstream layers (RTK ${rtkCheck.version || 'installed'}, Headroom ${headroomCheck.version || 'installed'}, Ponytail, Anti-Slop, OmniRoute & JevGraph) are up-to-date!`
+                );
             }
 
             return {
@@ -249,13 +219,19 @@ class RtkUpdater {
                     release: omniRelease,
                     installed: omniCheck.installed,
                     currentVersion: omniCheck.version
+                },
+                jevgraph: {
+                    hasUpdate: jevHasUpdate,
+                    release: jevRelease,
+                    installed: jevCheck.installed,
+                    currentVersion: jevCheck.version || 'Ready'
                 }
             };
-        } catch (e) {
+        } catch (err) {
             if (!silent) {
-                vscode.window.showErrorMessage(`Upstream GitHub update check failed: ${e.message}`);
+                vscode.window.showErrorMessage(`Failed to check for upstream updates: ${err.message}`);
             }
-            return { hasUpdate: false, error: e.message };
+            return { hasUpdate: false, error: err.message };
         }
     }
 
@@ -358,6 +334,24 @@ class RtkUpdater {
         RtkService.runInTerminal(fullCmd);
         this.performPonytailSync();
         this.performAntiSlopSync();
+        this.performJevGraphSync();
+    }
+
+    static async performJevGraphSync() {
+        const JevGraphService = require('./jevgraph-service');
+        const isWindows = process.platform === 'win32';
+        const cmds = JevGraphService.getInstallCommands(isWindows);
+
+        try {
+            vscode.window.showInformationMessage('🕸️ Syncing JevGraph knowledge graph engine from GitHub (chenmingtang830/jevgraph)...');
+            JevGraphService.runInTerminal(cmds.combinedCmd);
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            SkillInstaller.installJevGraphSkills(scope);
+            SkillInstaller.syncRules(true, scope);
+            vscode.window.showInformationMessage('✓ JevGraph skills & directives synced across IDE.');
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to sync JevGraph: ${e.message}`);
+        }
     }
 
     static async performLayerUninstall(layerKey) {
@@ -397,6 +391,23 @@ class RtkUpdater {
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Anti-Slop skills: ${e.message}`);
+                }
+                break;
+            case 'jevgraph':
+                try {
+                    const JevGraphService = require('./jevgraph-service');
+                    const isWindows = process.platform === 'win32';
+                    const cmds = JevGraphService.getUninstallCommands(isWindows);
+                    JevGraphService.runInTerminal(cmds.combinedUninstallCmd);
+                    const res = SkillInstaller.uninstallJevGraphSkills();
+                    await config.update('jevGraphEnabled', false, vscode.ConfigurationTarget.Global);
+                    const scope = config.get('targetScope', 'all');
+                    SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    vscode.window.showInformationMessage(
+                        `🕸️ Uninstalled JevGraph engine & removed ${res.total.length} skills. JevGraph optimization disabled.`
+                    );
+                } catch (e) {
+                    vscode.window.showErrorMessage(`Failed to uninstall JevGraph: ${e.message}`);
                 }
                 break;
             case 'omniroute':
@@ -507,6 +518,11 @@ class RtkUpdater {
                 layerKey: 'omniroute'
             },
             {
+                label: '$(type-hierarchy) JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
+                description: 'Remove ~/.config/jevgraph, remove /jevgraph-* skills, and disable feature',
+                layerKey: 'jevgraph'
+            },
+            {
                 label: '$(clear-all) Injected Multi-IDE Rules & Skills',
                 description: 'Strip all rule blocks from AGENTS.md, .cursorrules, etc. and remove .agents/skills',
                 layerKey: 'rules_skills'
@@ -526,22 +542,24 @@ class RtkUpdater {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop & OmniRoute)...',
+                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph)...',
                 cancellable: false
             },
             async () => {
                 const OmniRouteService = require('./omniroute-service');
-                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease] = await Promise.all([
+                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease] = await Promise.all([
                     RtkService.checkInstalled(),
                     RtkService.checkHeadroomInstalled(),
                     RtkService.checkPonytailInstalled(),
                     RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : OmniRouteService.checkInstalled(),
                     RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
+                    RtkService.checkJevGraphInstalled ? RtkService.checkJevGraphInstalled() : { installed: false },
                     this.getLatestRelease('rtk-ai/rtk'),
                     this.getLatestRelease('headroomlabs-ai/headroom'),
                     this.getLatestRelease('DietrichGebert/ponytail'),
                     this.getLatestRelease('diegosouzapw/OmniRoute'),
-                    this.getLatestRelease('miqdadbadjuber/anti-slop')
+                    this.getLatestRelease('miqdadbadjuber/anti-slop'),
+                    this.getLatestRelease('chenmingtang830/jevgraph')
                 ]);
 
                 const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
@@ -549,14 +567,23 @@ class RtkUpdater {
                 const ponytailHasUpdate = ponytailRelease.success && (!ponytailCheck.installed || (ponytailCheck.skillsCount && ponytailCheck.skillsCount < 6));
                 const antiSlopHasUpdate = antiSlopRelease.success && (!antiSlopCheck.installed || (antiSlopCheck.skillsCount && antiSlopCheck.skillsCount < 6));
                 const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
-                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate;
+                const jevHasUpdate = jevRelease.success && (!jevCheck.installed);
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate;
 
                 const picks = [
                     {
                         label: hasAnyUpdate ? '$(cloud-download) Update / Sync All Upstream GitHub Layers' : '$(sync) Sync All Upstream GitHub Layers',
-                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop and OmniRoute',
+                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute and JevGraph',
                         detail: hasAnyUpdate ? '🚀 Updates available for one or more layers - Click to update all' : '✓ All components up-to-date - Click to force re-sync',
                         actionKey: 'all'
+                    },
+                    {
+                        label: '$(type-hierarchy) JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
+                        description: `Installed: ${jevCheck.installed ? (jevCheck.runner || 'Ready') : (jevCheck.uvAvailable ? 'uv Ready' : 'Not Installed')} | GitHub: ${jevRelease.tag || 'Latest'}`,
+                        detail: jevHasUpdate
+                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
+                            : (jevCheck.installed ? '✓ Synced & ready for document graph builds - Click to re-fetch' : '⚡ Click to clone and sync chenmingtang830/jevgraph via uv'),
+                        actionKey: 'jevgraph'
                     },
                     {
                         label: '$(shield) Anti-Slop Framework (miqdadbadjuber/anti-slop)',
@@ -601,7 +628,7 @@ class RtkUpdater {
                     {
                         label: '$(link-external) View Upstream GitHub Release Notes & Compare',
                         description: 'Open release notes and commit history on GitHub',
-                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop & omniroute in your browser',
+                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute & jevgraph in your browser',
                         actionKey: 'notes'
                     }
                 ];
@@ -614,6 +641,8 @@ class RtkUpdater {
 
                 if (sel.actionKey === 'all') {
                     this.performAllUpdates();
+                } else if (sel.actionKey === 'jevgraph') {
+                    await this.performJevGraphSync();
                 } else if (sel.actionKey === 'antislop') {
                     await this.performAntiSlopSync();
                 } else if (sel.actionKey === 'ponytail') {
@@ -630,6 +659,7 @@ class RtkUpdater {
                     if (ponytailRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(ponytailRelease.htmlUrl));
                     if (antiSlopRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
                     if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
+                    if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
                 }
             }
         );

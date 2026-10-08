@@ -4,6 +4,7 @@ const RtkService = require('./rtk-service');
 const RtkUpdater = require('./rtk-updater');
 const SkillInstaller = require('./skill-installer');
 const OmniRouteService = require('./omniroute-service');
+const JevGraphService = require('./jevgraph-service');
 const DashboardPanel = require('./dashboard-panel');
 const SidebarProvider = require('./sidebar-provider');
 
@@ -75,18 +76,23 @@ async function activate(context) {
     const headroomCheck = await RtkService.checkHeadroomInstalled();
     const ponytailCheck = await RtkService.checkPonytailInstalled();
     const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
+    const jevGraphCheck = await RtkService.checkJevGraphInstalled();
     const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
     const isOmniMissing = omniRouteEnabled && !omniStatus.installed;
-    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || isOmniMissing) {
+    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || !jevGraphCheck.installed || isOmniMissing) {
         const missing = [];
         if (!check.installed) missing.push('RTK CLI');
         if (!headroomCheck.installed) missing.push('Headroom CCR');
         if (!ponytailCheck.installed) missing.push('Ponytail YAGNI (GitHub)');
         if (!antiSlopCheck.installed) missing.push('Anti-Slop (GitHub)');
+        if (!jevGraphCheck.installed) missing.push('JevGraph Knowledge Graph');
         if (isOmniMissing) missing.push('OmniRoute Gateway');
 
         const options = ['🤖 Ask AI (Copy Prompt)'];
+        if (!jevGraphCheck.installed) {
+            options.push('🕸️ Sync JevGraph GitHub');
+        }
         if (!antiSlopCheck.installed) {
             options.push('🛡️ Sync Anti-Slop GitHub');
         }
@@ -101,6 +107,8 @@ async function activate(context) {
         ).then(choice => {
             if (choice === '🤖 Ask AI (Copy Prompt)') {
                 vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
+            } else if (choice === '🕸️ Sync JevGraph GitHub') {
+                vscode.commands.executeCommand('tokenSaver.syncJevGraph');
             } else if (choice === '🛡️ Sync Anti-Slop GitHub') {
                 vscode.commands.executeCommand('tokenSaver.syncAntiSlop');
             } else if (choice === '🥋 Sync Ponytail GitHub') {
@@ -142,6 +150,36 @@ async function activate(context) {
     setTimeout(() => {
         checkWeeklyAutoSync(context);
     }, 6000);
+
+    // Auto-build JevGraph from existing repo docs and start auto-watcher
+    setTimeout(() => {
+        try {
+            JevGraphService.autoInitialBuild(outputChannel);
+            JevGraphService.setupDocumentWatcher(context, outputChannel);
+        } catch (e) {
+            outputChannel.appendLine(`[Token Saver] JevGraph startup error: ${e.message}`);
+        }
+    }, 3500);
+
+    // Watch for project / repository changes to reset and auto-build per repo
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders(async (e) => {
+            if (e.added.length > 0) {
+                const newRepo = e.added[0];
+                const root = newRepo.uri.fsPath;
+                const check = JevGraphService.hasRepoKnowledgeGraph(root);
+                if (outputChannel) {
+                    if (check.exists) {
+                        outputChannel.appendLine(`[Token Saver] Workspace switched to '${newRepo.name}'. Detected existing knowledge graph (${check.entityCount} entities, ${check.relationCount} relations). Preserved.`);
+                    } else {
+                        outputChannel.appendLine(`[Token Saver] Workspace switched to '${newRepo.name}'. No existing graph found. Checking for repo documents to build initial graph...`);
+                    }
+                }
+                await JevGraphService.autoInitialBuild(outputChannel);
+                await refreshStatus(context);
+            }
+        })
+    );
 
     // Periodic metrics refresher & weekly auto sync check
     metricsInterval = setInterval(() => {
@@ -569,6 +607,43 @@ async function activate(context) {
         await refreshStatus(context);
     });
 
+    const syncJevGraphCmd = vscode.commands.registerCommand('tokenSaver.syncJevGraph', async () => {
+        await RtkUpdater.performJevGraphSync();
+        await refreshStatus(context);
+    });
+
+    const insertDocumentJevGraphCmd = vscode.commands.registerCommand('tokenSaver.insertDocumentJevGraph', async () => {
+        await JevGraphService.insertDocumentsInteractive(outputChannel);
+    });
+
+    const buildJevGraphCmd = vscode.commands.registerCommand('tokenSaver.buildJevGraph', async () => {
+        await JevGraphService.insertDocumentsInteractive(outputChannel);
+    });
+
+    const resetJevGraphCmd = vscode.commands.registerCommand('tokenSaver.resetJevGraph', async () => {
+        await JevGraphService.resetRepoKnowledgeGraph(outputChannel, true);
+        await refreshStatus(context);
+    });
+
+    const toggleJevGraphCmd = vscode.commands.registerCommand('tokenSaver.toggleJevGraph', async () => {
+        const cfg = vscode.workspace.getConfiguration('tokenSaver');
+        const current = cfg.get('jevGraphEnabled', true);
+        await cfg.update('jevGraphEnabled', !current, vscode.ConfigurationTarget.Global);
+        const scope = cfg.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        vscode.window.showInformationMessage(
+            !current
+                ? '🕸️ JevGraph Knowledge Graph optimization is now ENABLED.'
+                : '⚪ JevGraph Knowledge Graph optimization is now DISABLED.'
+        );
+        await refreshStatus(context);
+    });
+
+    const uninstallJevGraphCmd = vscode.commands.registerCommand('tokenSaver.uninstallJevGraph', async () => {
+        await RtkUpdater.performLayerUninstall('jevgraph');
+        await refreshStatus(context);
+    });
+
     const uninstallAllUpstreamCmd = vscode.commands.registerCommand('tokenSaver.uninstallAllUpstream', async () => {
         await RtkUpdater.performAllUninstall();
         await refreshStatus(context);
@@ -586,6 +661,12 @@ async function activate(context) {
         updateRtkCmd,
         syncPonytailCmd,
         syncAntiSlopCmd,
+        syncJevGraphCmd,
+        insertDocumentJevGraphCmd,
+        resetJevGraphCmd,
+        buildJevGraphCmd,
+        toggleJevGraphCmd,
+        uninstallJevGraphCmd,
         toggleAntiSlopCmd,
         setAntiSlopModeCmd,
         uninstallAntiSlopCmd,
