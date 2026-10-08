@@ -1,6 +1,6 @@
-# Contributing to Token Saver (RTK & Headroom)
+# Contributing to Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph)
 
-Thank you for your interest in contributing to **Token Saver (RTK & Headroom) for VS Code & Agentic IDEs**! This project brings intelligent terminal token optimization, CLI output compression, Headroom context compression, and Ponytail YAGNI mode across all modern AI coding assistants and IDEs.
+Thank you for your interest in contributing to **Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph) for VS Code & Agentic IDEs**! This project brings intelligent terminal token optimization, CLI output compression, Headroom context compression, Ponytail YAGNI mode, Anti-Slop AI quality hygiene, OmniRoute AI Gateway, and JevGraph evidence-backed knowledge graph extraction across all modern AI coding assistants and IDEs.
 
 We welcome contributions of all kinds: bug fixes, new IDE/agent integrations, performance improvements, documentation enhancements, and UI polish.
 
@@ -15,13 +15,16 @@ token-saver-ide-plugin/
 ├── extension/                 # VS Code & OpenVSX Extension Core
 │   ├── extension.js           # Extension entry point & command registrations
 │   ├── rtk-service.js         # RTK CLI telemetry, execution proxy & metrics parser
-│   ├── rtk-updater.js         # Dual upstream GitHub release checker & updater (RTK + Headroom)
+│   ├── rtk-updater.js         # 6-way upstream GitHub release checker & updater
+│   ├── jevgraph-service.js    # JevGraph knowledge graph engine coordinator & doc ingestion
+│   ├── omniroute-service.js   # OmniRoute AI gateway process manager & router
+│   ├── skill-installer.js     # Universal chat skill installer & IDE rule sync
 │   ├── statusbar.js           # Real-time status bar metric widget
 │   ├── sidebar-provider.js    # Activity Bar Primary Sidebar Webview Provider
 │   ├── dashboard-panel.js     # Pop-out Editor Tab Webview Panel coordinator
 │   ├── webview-helper.js      # Unified webview message bridge, state & HTML generator
 │   └── webview/               # Interactive glassmorphic dashboard (HTML/CSS/JS)
-├── skills/                    # Global Antigravity agent skills (/rtk-*, /ponytail, etc.)
+├── skills/                    # Global Antigravity agent skills (/rtk-*, /ponytail, /antislop, /jevgraph)
 ├── .agents/                   # Workspace Antigravity skills & rules configuration
 ├── rules/                     # System prompt & token-saving behavior rules
 ├── scripts/                   # Cross-platform installation, sync & packaging scripts (.ps1 / .sh)
