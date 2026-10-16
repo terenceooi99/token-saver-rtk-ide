@@ -306,34 +306,102 @@ async function activate(context) {
     });
 
     const uninstallSkillsCmd = vscode.commands.registerCommand('tokenSaver.uninstallSkills', async () => {
-        const skillSets = [
-            { label: '🗑️ All Skills (All 27 Chat Commands)', description: 'RTK, Ponytail & Anti-Slop skills', value: 'all' },
-            { label: '⚡ RTK Core Skills (15 Skills)', description: '/rtk-gain, /rtk-run, /rtk-tree, /rtk-outline, etc.', value: 'rtk' },
-            { label: '🥋 Ponytail Skills (6 Skills)', description: '/ponytail, /ponytail-audit, /ponytail-gain, etc.', value: 'ponytail' },
-            { label: '🛡️ Anti-Slop Skills (6 Skills)', description: '/antislop, /antislop-ui, /antislop-code, etc.', value: 'antislop' }
-        ];
-
-        const selectedSet = await vscode.window.showQuickPick(skillSets, {
-            placeHolder: 'Select the skill set you want to uninstall:'
-        });
-        if (!selectedSet) return;
-
+        // Step 1: Choose Scope (Global preinstalled or Project workspace)
         const scopes = [
-            { label: '🌐 Global & Workspace (All Targets)', description: 'Clean both ~/.gemini/config and .agents', value: 'all' },
-            { label: '🏠 Global Config Only', description: 'Remove from ~/.gemini/config/skills/', value: 'global' },
-            { label: '📁 Workspace Only', description: 'Remove from current workspace .agents/skills/', value: 'workspace' }
+            { label: '🏠 Global Config Only', description: 'Preinstalled in user IDE: ~/.gemini/config/skills/', value: 'global' },
+            { label: '📁 Workspace Only', description: 'Based within current project: .agents/skills/', value: 'workspace' },
+            { label: '🌐 Global & Workspace (All Targets)', description: 'Clean both ~/.gemini/config and .agents', value: 'all' }
         ];
 
         const selectedScope = await vscode.window.showQuickPick(scopes, {
-            placeHolder: `Uninstall ${selectedSet.label} from which scope?`
+            placeHolder: 'Select where to uninstall skills from (Global IDE vs Project Workspace):'
         });
         if (!selectedScope) return;
 
+        // Step 2: Choose Method (Pick Individual Skills vs Preset Set)
+        const installedSkills = SkillInstaller.listInstalledSkills(selectedScope.value);
+        const uniqueSkillNames = [...new Set(installedSkills.map(s => s.name))].sort();
+
+        const methodOptions = [
+            {
+                label: `🎯 Choose Individual Skills to Uninstall (${uniqueSkillNames.length} detected)`,
+                description: 'Select one or more specific skills from list',
+                value: 'individual'
+            },
+            {
+                label: '📦 Uninstall by Skill Set (Presets)',
+                description: 'RTK Core, Ponytail, Anti-Slop, JevGraph, or All',
+                value: 'set'
+            }
+        ];
+
+        const selectedMethod = await vscode.window.showQuickPick(methodOptions, {
+            placeHolder: 'How would you like to select skills for uninstallation?'
+        });
+        if (!selectedMethod) return;
+
         try {
-            const res = SkillInstaller.uninstallSkillSet(selectedSet.value, selectedScope.value);
-            vscode.window.showInformationMessage(
-                `🗑️ Successfully uninstalled ${res.total.length} skill(s) (${selectedSet.label}) from ${selectedScope.label}.`
-            );
+            if (selectedMethod.value === 'individual') {
+                if (uniqueSkillNames.length === 0) {
+                    vscode.window.showInformationMessage(`No installed skills found in ${selectedScope.label}.`);
+                    return;
+                }
+
+                const skillQuickPickItems = uniqueSkillNames.map(name => {
+                    const found = installedSkills.find(s => s.name === name);
+                    const scopesFound = installedSkills.filter(s => s.name === name).map(s => s.scope);
+                    return {
+                        label: `🧠 ${name}`,
+                        description: `[${scopesFound.join(', ')}] ${found?.description || ''}`,
+                        value: name,
+                        picked: false
+                    };
+                });
+
+                const pickedSkills = await vscode.window.showQuickPick(skillQuickPickItems, {
+                    placeHolder: 'Select individual skill(s) to uninstall into Recycle Bin (Spacebar to toggle):',
+                    canPickMany: true
+                });
+                if (!pickedSkills || pickedSkills.length === 0) return;
+
+                const toRemove = pickedSkills.map(p => p.value);
+                const confirm = await vscode.window.showWarningMessage(
+                    `Are you sure you want to uninstall ${toRemove.length} skill(s) from ${selectedScope.label}? They will be safely moved to your Recycle Bin.`,
+                    { modal: true },
+                    'Move to Recycle Bin'
+                );
+                if (confirm !== 'Move to Recycle Bin') return;
+
+                const res = await SkillInstaller.uninstallSelectedSkills(toRemove, selectedScope.value);
+                vscode.window.showInformationMessage(
+                    `🗑️ Moved ${res.total.length} skill(s) to Recycle Bin from ${selectedScope.label}: ${res.total.join(', ')}.`
+                );
+            } else {
+                const skillSets = [
+                    { label: '🗑️ All Skills (All 27 Chat Commands)', description: 'RTK, Ponytail, Anti-Slop & JevGraph skills', value: 'all' },
+                    { label: '⚡ RTK Core Skills (15 Skills)', description: '/rtk-gain, /rtk-run, /rtk-tree, /rtk-outline, etc.', value: 'rtk' },
+                    { label: '🥋 Ponytail Skills (6 Skills)', description: '/ponytail, /ponytail-audit, /ponytail-gain, etc.', value: 'ponytail' },
+                    { label: '🛡️ Anti-Slop Skills (6 Skills)', description: '/antislop, /antislop-ui, /antislop-code, etc.', value: 'antislop' },
+                    { label: '🕸️ JevGraph Skills (2 Skills)', description: '/jevgraph-build, /jevgraph-query', value: 'jevgraph' }
+                ];
+
+                const selectedSet = await vscode.window.showQuickPick(skillSets, {
+                    placeHolder: 'Select the preset skill set you want to uninstall:'
+                });
+                if (!selectedSet) return;
+
+                const confirm = await vscode.window.showWarningMessage(
+                    `Uninstall ${selectedSet.label} from ${selectedScope.label}? Skills will be moved to the Recycle Bin.`,
+                    { modal: true },
+                    'Move to Recycle Bin'
+                );
+                if (confirm !== 'Move to Recycle Bin') return;
+
+                const res = await SkillInstaller.uninstallSkillSet(selectedSet.value, selectedScope.value);
+                vscode.window.showInformationMessage(
+                    `🗑️ Successfully moved ${res.total.length} skill(s) (${selectedSet.label}) from ${selectedScope.label} to Recycle Bin.`
+                );
+            }
             await refreshStatus(context);
         } catch (err) {
             vscode.window.showErrorMessage(`Failed to uninstall skills: ${err.message}`);

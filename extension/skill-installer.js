@@ -1154,19 +1154,59 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
-     * Delete specified skill directories from a base directory
+     * Safely move a file or directory to the OS Recycle Bin / Trash
      */
-    static removeSkillsFromDir(baseDir, skillNames) {
+    static async moveToTrash(targetPath) {
+        if (!targetPath || !fs.existsSync(targetPath)) return false;
+        try {
+            if (vscode && vscode.workspace && vscode.workspace.fs && vscode.Uri) {
+                const targetUri = vscode.Uri.file(targetPath);
+                await vscode.workspace.fs.delete(targetUri, { recursive: true, useTrash: true });
+                return true;
+            }
+        } catch (vscodeErr) {
+            console.warn(`vscode.workspace.fs.delete failed for ${targetPath}, attempting OS fallback:`, vscodeErr);
+        }
+
+        // Fallback for Windows via PowerShell / VisualBasic FileIO RecycleBin
+        if (process.platform === 'win32') {
+            try {
+                const { execSync } = require('child_process');
+                const escapedPath = targetPath.replace(/'/g, "''");
+                const psCmd = `powershell -NoProfile -Command "Add-Type -AssemblyName 'Microsoft.VisualBasic'; [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory('${escapedPath}', [Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs, [Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)"`;
+                execSync(psCmd, { stdio: 'ignore', windowsHide: true });
+                if (!fs.existsSync(targetPath)) return true;
+            } catch (psErr) {
+                console.warn(`PowerShell Recycle Bin deletion failed for ${targetPath}:`, psErr);
+            }
+        }
+
+        // Final fallback: remove directly if trash fails
+        try {
+            fs.rmSync(targetPath, { recursive: true, force: true });
+            return true;
+        } catch (rmErr) {
+            console.error(`Final fallback deletion failed for ${targetPath}:`, rmErr);
+            return false;
+        }
+    }
+
+    /**
+     * Delete specified skill directories from a base directory, sending to Recycle Bin
+     */
+    static async removeSkillsFromDir(baseDir, skillNames) {
         if (!baseDir || !fs.existsSync(baseDir)) return [];
         const removed = [];
         for (const skill of skillNames) {
             const skillFolder = path.join(baseDir, skill);
             if (fs.existsSync(skillFolder)) {
                 try {
-                    fs.rmSync(skillFolder, { recursive: true, force: true });
-                    removed.push(skill);
+                    const success = await this.moveToTrash(skillFolder);
+                    if (success) {
+                        removed.push(skill);
+                    }
                 } catch (e) {
-                    console.error(`Failed to delete skill directory ${skillFolder}:`, e);
+                    console.error(`Failed to move skill directory ${skillFolder} to Recycle Bin:`, e);
                 }
             }
         }
@@ -1174,45 +1214,77 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
+     * Discover all skills currently present in a given scope ('global', 'workspace', or 'all')
+     */
+    static listInstalledSkillsInDir(baseDir, scopeLabel = 'workspace') {
+        if (!baseDir || !fs.existsSync(baseDir)) return [];
+        const results = [];
+        try {
+            const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    const skillName = entry.name;
+                    const skillMdPath = path.join(baseDir, skillName, 'SKILL.md');
+                    let description = '';
+                    if (fs.existsSync(skillMdPath)) {
+                        try {
+                            const raw = fs.readFileSync(skillMdPath, 'utf8');
+                            const descMatch = raw.match(/description:\s*(?:>|\|)?\s*\n?([^\n#]+)/i);
+                            if (descMatch && descMatch[1]) {
+                                description = descMatch[1].trim();
+                            }
+                        } catch (_) {}
+                    }
+                    if (!description) {
+                        description = SKILLS_MAP[skillName] ? 'Preinstalled AI Agent skill' : 'Custom installed skill';
+                    }
+                    results.push({
+                        name: skillName,
+                        scope: scopeLabel,
+                        path: path.join(baseDir, skillName),
+                        description
+                    });
+                }
+            }
+        } catch (err) {
+            console.warn(`Error scanning directory ${baseDir}:`, err);
+        }
+        return results;
+    }
+
+    /**
+     * List all installed skills across global and/or workspace scopes
+     */
+    static listInstalledSkills(targetScope = 'all') {
+        const globalDir = this.getGlobalSkillsPath();
+        const wsDir = this.getWorkspaceSkillsPath();
+        const items = [];
+
+        if (targetScope === 'all' || targetScope === 'global') {
+            if (globalDir) {
+                items.push(...this.listInstalledSkillsInDir(globalDir, 'global'));
+            }
+        }
+        if (targetScope === 'all' || targetScope === 'workspace') {
+            if (wsDir) {
+                items.push(...this.listInstalledSkillsInDir(wsDir, 'workspace'));
+            }
+        }
+        return items;
+    }
+
+    /**
      * Uninstall Ponytail skills specifically (DietrichGebert/ponytail)
      */
-    static uninstallPonytailSkills() {
-        const ponytailSkills = [
-            'ponytail',
-            'ponytail-audit',
-            'ponytail-debt',
-            'ponytail-gain',
-            'ponytail-help',
-            'ponytail-review'
-        ];
-        const removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), ponytailSkills);
-        const removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), ponytailSkills);
-        return {
-            global: removedGlobal,
-            workspace: removedWs,
-            total: [...new Set([...removedGlobal, ...removedWs])]
-        };
+    static async uninstallPonytailSkills(targetScope = 'all') {
+        return await this.uninstallSkillSet('ponytail', targetScope);
     }
 
     /**
      * Uninstall Anti-Slop skills specifically (miqdadbadjuber/anti-slop)
      */
-    static uninstallAntiSlopSkills() {
-        const antiSlopSkills = [
-            'antislop',
-            'antislop-ui',
-            'antislop-copywriting',
-            'antislop-human',
-            'antislop-layoutmobile',
-            'antislop-code'
-        ];
-        const removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), antiSlopSkills);
-        const removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), antiSlopSkills);
-        return {
-            global: removedGlobal,
-            workspace: removedWs,
-            total: [...new Set([...removedGlobal, ...removedWs])]
-        };
+    static async uninstallAntiSlopSkills(targetScope = 'all') {
+        return await this.uninstallSkillSet('antislop', targetScope);
     }
 
     /**
@@ -1226,25 +1298,34 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     /**
      * Uninstall JevGraph skills specifically (chenmingtang830/jevgraph)
      */
-    static uninstallJevGraphSkills() {
-        const jevSkills = ['jevgraph-build', 'jevgraph-query'];
-        const removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), jevSkills);
-        const removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), jevSkills);
-        return {
-            global: removedGlobal,
-            workspace: removedWs,
-            total: [...new Set([...removedGlobal, ...removedWs])]
-        };
+    static async uninstallJevGraphSkills(targetScope = 'all') {
+        return await this.uninstallSkillSet('jevgraph', targetScope);
     }
 
     /**
      * Uninstall all Token Saver / RTK / Ponytail / Anti-Slop skills
      */
-    static uninstallAllSkills() {
-        const allSkillNames = Object.keys(SKILLS_MAP);
-        const removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), allSkillNames);
-        const removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), allSkillNames);
+    static async uninstallAllSkills(targetScope = 'all') {
+        return await this.uninstallSkillSet('all', targetScope);
+    }
+
+    /**
+     * Uninstall selected specific skills by name list across a target scope
+     */
+    static async uninstallSelectedSkills(skillNames = [], targetScope = 'all') {
+        let removedGlobal = [];
+        let removedWs = [];
+
+        if (targetScope === 'all' || targetScope === 'global') {
+            removedGlobal = await this.removeSkillsFromDir(this.getGlobalSkillsPath(), skillNames);
+        }
+        if (targetScope === 'all' || targetScope === 'workspace') {
+            removedWs = await this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), skillNames);
+        }
+
         return {
+            targetScope,
+            skills: skillNames,
             global: removedGlobal,
             workspace: removedWs,
             total: [...new Set([...removedGlobal, ...removedWs])]
@@ -1252,9 +1333,9 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
-     * Uninstall a specific skill set (all, rtk, ponytail, antislop) across a target scope (all, global, workspace)
+     * Uninstall a specific skill set (all, rtk, ponytail, antislop, jevgraph) across a target scope (all, global, workspace)
      */
-    static uninstallSkillSet(skillSetType = 'all', targetScope = 'all') {
+    static async uninstallSkillSet(skillSetType = 'all', targetScope = 'all') {
         const ponytailSkills = [
             'ponytail',
             'ponytail-audit',
@@ -1294,10 +1375,10 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         let removedWs = [];
 
         if (targetScope === 'all' || targetScope === 'global') {
-            removedGlobal = this.removeSkillsFromDir(this.getGlobalSkillsPath(), targetSkills);
+            removedGlobal = await this.removeSkillsFromDir(this.getGlobalSkillsPath(), targetSkills);
         }
         if (targetScope === 'all' || targetScope === 'workspace') {
-            removedWs = this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), targetSkills);
+            removedWs = await this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), targetSkills);
         }
 
         return {

@@ -387,12 +387,12 @@ class RtkUpdater {
                 break;
             case 'ponytail':
                 try {
-                    const res = SkillInstaller.uninstallPonytailSkills();
+                    const res = await SkillInstaller.uninstallPonytailSkills();
                     await config.update('ponytailMode', 'off', vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     vscode.window.showInformationMessage(
-                        `🥋 Uninstalled Ponytail YAGNI suite (${res.total.length} skills removed). Ponytail mode set to OFF.`
+                        `🥋 Uninstalled Ponytail YAGNI suite (${res.total.length} skills moved to Recycle Bin). Ponytail mode set to OFF.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Ponytail skills: ${e.message}`);
@@ -400,12 +400,12 @@ class RtkUpdater {
                 break;
             case 'antislop':
                 try {
-                    const res = SkillInstaller.uninstallAntiSlopSkills();
+                    const res = await SkillInstaller.uninstallAntiSlopSkills();
                     await config.update('antiSlopEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     vscode.window.showInformationMessage(
-                        `🛡️ Uninstalled Anti-Slop suite (${res.total.length} skills removed). Anti-Slop disabled.`
+                        `🛡️ Uninstalled Anti-Slop suite (${res.total.length} skills moved to Recycle Bin). Anti-Slop disabled.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Anti-Slop skills: ${e.message}`);
@@ -417,12 +417,12 @@ class RtkUpdater {
                     const isWindows = process.platform === 'win32';
                     const cmds = JevGraphService.getUninstallCommands(isWindows);
                     JevGraphService.runInTerminal(cmds.combinedUninstallCmd);
-                    const res = SkillInstaller.uninstallJevGraphSkills();
+                    const res = await SkillInstaller.uninstallJevGraphSkills();
                     await config.update('jevGraphEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     vscode.window.showInformationMessage(
-                        `🕸️ Uninstalled JevGraph engine & removed ${res.total.length} skills. JevGraph optimization disabled.`
+                        `🕸️ Uninstalled JevGraph engine & moved ${res.total.length} skills to Recycle Bin. JevGraph optimization disabled.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall JevGraph: ${e.message}`);
@@ -457,9 +457,9 @@ class RtkUpdater {
             case 'rules_skills':
                 try {
                     SkillInstaller.removeAllRules();
-                    const sRes = SkillInstaller.uninstallAllSkills();
+                    const sRes = await SkillInstaller.uninstallAllSkills();
                     vscode.window.showInformationMessage(
-                        `🧹 Cleared all injected Multi-IDE rules and removed ${sRes.total.length} Antigravity/Agent skills.`
+                        `🧹 Cleared all injected Multi-IDE rules and moved ${sRes.total.length} Antigravity/Agent skills to Recycle Bin.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to clean rules/skills: ${e.message}`);
@@ -488,10 +488,10 @@ class RtkUpdater {
         const OmniRouteService = require('./omniroute-service');
         const config = vscode.workspace.getConfiguration('tokenSaver');
 
-        // 1. Remove rules & skills
+        // 1. Remove rules & skills (safely moved to Recycle Bin)
         try {
             SkillInstaller.removeAllRules();
-            SkillInstaller.uninstallAllSkills();
+            await SkillInstaller.uninstallAllSkills();
         } catch (e) {
             console.error('Error removing rules/skills:', e);
         }
