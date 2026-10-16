@@ -12,7 +12,8 @@ const toggleAntiSlopBtn = document.getElementById('toggleAntiSlopBtn');
 const toggleOmniRouteBtn = document.getElementById('toggleOmniRouteBtn');
 const toggleJevGraphBtn = document.getElementById('toggleJevGraphBtn');
 const toggleCodeGraphBtn = document.getElementById('toggleCodeGraphBtn');
-const toggleCrwBtn = document.getElementById('toggleCrwBtn');
+const toggleHybridWebBtn = document.getElementById('toggleHybridWebBtn');
+const toggleCrwBtn = toggleHybridWebBtn || document.getElementById('toggleCrwBtn');
 const footerVersionBadge = document.getElementById('footerVersionBadge');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
@@ -183,18 +184,32 @@ const codeGraphDiagAiBtn = document.getElementById('codeGraphDiagAiBtn');
 const codeGraphDiagSyncBtn = document.getElementById('codeGraphDiagSyncBtn');
 const codeGraphDiagUninstallBtn = document.getElementById('codeGraphDiagUninstallBtn');
 
-// fastCRW Elements
-const sectionCrw = document.getElementById('sectionCrw');
-const crwStatusBadge = document.getElementById('crwStatusBadge');
+// Hybrid Web (fastCRW + Lightpanda) Elements
+const sectionHybridWeb = document.getElementById('sectionHybridWeb') || document.getElementById('sectionCrw');
+const sectionCrw = sectionHybridWeb;
+const hybridWebStatusBadge = document.getElementById('hybridWebStatusBadge');
+const crwStatusBadge = hybridWebStatusBadge || document.getElementById('crwStatusBadge');
+const crwSubStatus = document.getElementById('crwSubStatus');
+const lightpandaSubStatus = document.getElementById('lightpandaSubStatus');
 const crwInlineSyncBtn = document.getElementById('crwInlineSyncBtn');
+const lightpandaInlineSyncBtn = document.getElementById('lightpandaInlineSyncBtn');
 const crwStartServerBtn = document.getElementById('crwStartServerBtn');
-const crwTestScrapeBtn = document.getElementById('crwTestScrapeBtn');
+const lightpandaStartMcpBtn = document.getElementById('lightpandaStartMcpBtn');
+const lightpandaCopyMcpConfigBtn = document.getElementById('lightpandaCopyMcpConfigBtn');
+const hybridTestScrapeBtn = document.getElementById('hybridTestScrapeBtn') || document.getElementById('crwTestScrapeBtn');
+const crwTestScrapeBtn = hybridTestScrapeBtn;
 
 const diagCrwStatus = document.getElementById('diagCrwStatus');
 const crwDiagActions = document.getElementById('crwDiagActions');
 const crwDiagAiBtn = document.getElementById('crwDiagAiBtn');
 const crwDiagSyncBtn = document.getElementById('crwDiagSyncBtn');
 const crwDiagUninstallBtn = document.getElementById('crwDiagUninstallBtn');
+
+const diagLightpandaStatus = document.getElementById('diagLightpandaStatus');
+const lightpandaDiagActions = document.getElementById('lightpandaDiagActions');
+const lightpandaDiagAiBtn = document.getElementById('lightpandaDiagAiBtn');
+const lightpandaDiagSyncBtn = document.getElementById('lightpandaDiagSyncBtn');
+const lightpandaDiagUninstallBtn = document.getElementById('lightpandaDiagUninstallBtn');
 
 const uninstallUpstreamBtn = document.getElementById('uninstallUpstreamBtn');
 const headerUninstallBtn = document.getElementById('headerUninstallBtn');
@@ -741,9 +756,10 @@ if (toggleCodeGraphBtn) {
     });
 }
 
-if (toggleCrwBtn) {
-    toggleCrwBtn.addEventListener('click', () => {
-        vscode.postMessage({ command: 'toggleCrw' });
+if (toggleHybridWebBtn || toggleCrwBtn) {
+    const btn = toggleHybridWebBtn || toggleCrwBtn;
+    btn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'toggleHybridWeb' });
     });
 }
 
@@ -1262,10 +1278,16 @@ if (codeGraphDiagUninstallBtn) {
     });
 }
 
-// fastCRW Action Handlers
+// Hybrid Web (fastCRW + Lightpanda) Action Handlers
 if (crwInlineSyncBtn) {
     crwInlineSyncBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'syncCrw' });
+    });
+}
+
+if (lightpandaInlineSyncBtn) {
+    lightpandaInlineSyncBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'syncLightpanda' });
     });
 }
 
@@ -1275,9 +1297,24 @@ if (crwStartServerBtn) {
     });
 }
 
-if (crwTestScrapeBtn) {
-    crwTestScrapeBtn.addEventListener('click', () => {
-        vscode.postMessage({ command: 'testScrapeCrw' });
+if (lightpandaStartMcpBtn) {
+    lightpandaStartMcpBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'startLightpandaMcp' });
+    });
+}
+
+if (lightpandaCopyMcpConfigBtn) {
+    lightpandaCopyMcpConfigBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'copyLightpandaMcpConfig' });
+        const orig = lightpandaCopyMcpConfigBtn.textContent;
+        lightpandaCopyMcpConfigBtn.textContent = '✓ Copied Config';
+        setTimeout(() => { lightpandaCopyMcpConfigBtn.textContent = orig; }, 2500);
+    });
+}
+
+if (hybridTestScrapeBtn) {
+    hybridTestScrapeBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'testHybridScrape' });
     });
 }
 
@@ -1303,6 +1340,31 @@ if (crwDiagUninstallBtn) {
     crwDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         vscode.postMessage({ command: 'uninstallLayer', layerKey: 'crw' });
+    });
+}
+
+if (lightpandaDiagAiBtn) {
+    lightpandaDiagAiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'copyAiInstallPrompt', elementKey: 'lightpanda', elementName: 'Lightpanda Browser' });
+        lightpandaDiagAiBtn.textContent = '✓ Copied';
+        setTimeout(() => { lightpandaDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+    });
+}
+
+if (lightpandaDiagSyncBtn) {
+    lightpandaDiagSyncBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lightpandaDiagSyncBtn.textContent = '🐼 Syncing...';
+        vscode.postMessage({ command: 'syncLightpanda' });
+        setTimeout(() => { lightpandaDiagSyncBtn.textContent = '🐼 Sync'; }, 3000);
+    });
+}
+
+if (lightpandaDiagUninstallBtn) {
+    lightpandaDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'lightpanda' });
     });
 }
 
@@ -1490,15 +1552,16 @@ function renderDashboardState(data) {
         }
     }
 
-    // fastCRW Button in Header
-    if (toggleCrwBtn) {
-        const isCrw = Boolean(data.crwEnabled);
-        if (isCrw) {
-            toggleCrwBtn.textContent = 'Turn fastCRW OFF';
-            toggleCrwBtn.className = 'btn btn-ghost';
+    // Hybrid Web Button in Header
+    const hybridBtn = toggleHybridWebBtn || toggleCrwBtn;
+    if (hybridBtn) {
+        const isHybrid = data.hybridWebEnabled !== undefined ? Boolean(data.hybridWebEnabled) : Boolean(data.crwEnabled);
+        if (isHybrid) {
+            hybridBtn.textContent = 'Turn Hybrid Web OFF';
+            hybridBtn.className = 'btn btn-ghost';
         } else {
-            toggleCrwBtn.textContent = 'Turn fastCRW ON';
-            toggleCrwBtn.className = 'btn btn-primary';
+            hybridBtn.textContent = 'Turn Hybrid Web ON';
+            hybridBtn.className = 'btn btn-primary';
         }
     }
 
@@ -1581,7 +1644,8 @@ function renderDashboardState(data) {
     const isJevGraphMissing = !data.jevGraphInstalled;
     const isCodeGraphMissing = !data.codeGraphInstalled;
     const isCrwMissing = !data.crwInstalled;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing || isCrwMissing;
+    const isLightpandaMissing = !data.lightpandaInstalled;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing || isCrwMissing || isLightpandaMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
@@ -1612,6 +1676,9 @@ function renderDashboardState(data) {
                 if (isCrwMissing) {
                     chips.push('<button type="button" class="missing-chip chip-orange" data-element="fastcrw" data-name="fastCRW" title="Click to copy AI prompt to install fastCRW"><span class="chip-content">🕷️ fastCRW Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
+                if (isLightpandaMissing) {
+                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="lightpanda" data-name="Lightpanda Browser" title="Click to copy AI prompt to install Lightpanda" style="background: rgba(255, 149, 0, 0.15); color: #ff9f0a; border: 1px solid rgba(255, 149, 0, 0.3);"><span class="chip-content">🐼 Lightpanda Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                }
                 setupMissingTags.innerHTML = chips.join('');
             }
             if (setupBannerDesc) {
@@ -1624,6 +1691,7 @@ function renderDashboardState(data) {
                 if (isJevGraphMissing) missingNames.push('JevGraph KG');
                 if (isCodeGraphMissing) missingNames.push('CodeGraphContext');
                 if (isCrwMissing) missingNames.push('fastCRW Scraper');
+                if (isLightpandaMissing) missingNames.push('Lightpanda Browser');
                 setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, build knowledge graphs from specs, and hybridize web search.`;
             }
         } else {
@@ -1889,6 +1957,29 @@ function renderDashboardState(data) {
         if (crwDiagUninstallBtn) crwDiagUninstallBtn.style.display = crwInstalled ? 'inline-block' : 'none';
     }
 
+    if (diagLightpandaStatus) {
+        const lpInstalled = Boolean(data.lightpandaInstalled);
+        const lpEnabled = data.lightpandaEnabled !== false;
+        const lpVer = data.lightpandaVersion || 'Ready';
+        if (lpInstalled && lpEnabled) {
+            diagLightpandaStatus.textContent = `Active (${lpVer})`;
+            diagLightpandaStatus.style.color = 'var(--accent-green)';
+        } else if (lpInstalled && !lpEnabled) {
+            diagLightpandaStatus.textContent = 'Inactive (Disabled)';
+            diagLightpandaStatus.style.color = 'var(--text-muted)';
+        } else {
+            diagLightpandaStatus.textContent = 'Inactive (Not Installed)';
+            diagLightpandaStatus.style.color = 'var(--accent-amber)';
+        }
+    }
+    if (lightpandaDiagActions) {
+        lightpandaDiagActions.style.display = 'inline-flex';
+        const lpInstalled = Boolean(data.lightpandaInstalled);
+        if (lightpandaDiagAiBtn) lightpandaDiagAiBtn.style.display = lpInstalled ? 'none' : 'inline-block';
+        if (lightpandaDiagSyncBtn) lightpandaDiagSyncBtn.style.display = lpInstalled ? 'none' : 'inline-block';
+        if (lightpandaDiagUninstallBtn) lightpandaDiagUninstallBtn.style.display = lpInstalled ? 'inline-block' : 'none';
+    }
+
     if (jevStatusBadge) {
         const jInstalled = data.jevGraphInstalled;
         const jEnabled = data.jevGraphEnabled !== false;
@@ -2004,6 +2095,14 @@ function renderDashboardState(data) {
             repo: 'fastcrw/crw',
             version: data.crwInstalled ? `${data.crwVersion || 'Ready'} (crw)` : 'Not installed',
             isInstalled: Boolean(data.crwInstalled)
+        },
+        {
+            key: 'lightpanda',
+            name: 'Lightpanda Browser (Dynamic JS MCP)',
+            icon: '🐼',
+            repo: 'lightpanda-io/browser',
+            version: data.lightpandaInstalled ? `${data.lightpandaVersion || 'Ready'} (lightpanda)` : 'Not installed',
+            isInstalled: Boolean(data.lightpandaInstalled)
         }
     ];
 
@@ -2137,19 +2236,42 @@ function renderDashboardState(data) {
         codeGraphStatusBadge.className = data.codeGraphStatus.installed ? 'panel-tag tag-indigo' : 'panel-tag tag-amber';
     }
 
-    // fastCRW State
-    if (crwStatusBadge) {
-        const isCrwInstalled = Boolean(data.crwInstalled);
-        const isCrwEnabled = data.crwEnabled !== false;
-        if (isCrwInstalled && isCrwEnabled) {
-            crwStatusBadge.textContent = '🟢 READY & ACTIVE';
-            crwStatusBadge.className = 'panel-tag tag-orange';
-        } else if (isCrwInstalled && !isCrwEnabled) {
-            crwStatusBadge.textContent = '⚪ DISABLED';
-            crwStatusBadge.className = 'panel-tag';
+    // Hybrid Web (fastCRW + Lightpanda) State
+    const isCrwInstalled = Boolean(data.crwInstalled);
+    const isLpInstalled = Boolean(data.lightpandaInstalled);
+    const isHybridEnabled = data.hybridWebEnabled !== undefined ? Boolean(data.hybridWebEnabled) : Boolean(data.crwEnabled);
+
+    if (hybridWebStatusBadge || crwStatusBadge) {
+        const badge = hybridWebStatusBadge || crwStatusBadge;
+        if (isHybridEnabled && (isCrwInstalled || isLpInstalled)) {
+            badge.textContent = `🟢 READY (${isCrwInstalled && isLpInstalled ? 'CRW + PANDA' : isCrwInstalled ? 'CRW ONLY' : 'PANDA ONLY'})`;
+            badge.className = 'panel-tag tag-orange';
+        } else if (!isHybridEnabled && (isCrwInstalled || isLpInstalled)) {
+            badge.textContent = '⚪ DISABLED';
+            badge.className = 'panel-tag';
         } else {
-            crwStatusBadge.textContent = '⚠️ NOT DETECTED';
-            crwStatusBadge.className = 'panel-tag tag-amber';
+            badge.textContent = '⚠️ NOT DETECTED';
+            badge.className = 'panel-tag tag-amber';
+        }
+    }
+
+    if (crwSubStatus) {
+        if (isCrwInstalled) {
+            crwSubStatus.textContent = `Active (${data.crwVersion || 'Ready'})`;
+            crwSubStatus.style.color = 'var(--accent-green)';
+        } else {
+            crwSubStatus.textContent = 'Not installed';
+            crwSubStatus.style.color = 'var(--accent-amber)';
+        }
+    }
+
+    if (lightpandaSubStatus) {
+        if (isLpInstalled) {
+            lightpandaSubStatus.textContent = `Active (${data.lightpandaVersion || 'Ready'})`;
+            lightpandaSubStatus.style.color = 'var(--accent-green)';
+        } else {
+            lightpandaSubStatus.textContent = 'Not installed';
+            lightpandaSubStatus.style.color = 'var(--accent-amber)';
         }
     }
 }
@@ -2290,8 +2412,8 @@ function renderMultiChannelBreakdown(multiChannelData, activeTab = 'all') {
         visibleChannels = channels.filter(c => c.id === 'omniRoute');
     } else if (activeTab === 'jevgraph') {
         visibleChannels = channels.filter(c => c.id === 'jevgraph');
-    } else if (activeTab === 'crw') {
-        visibleChannels = channels.filter(c => c.id === 'crw');
+    } else if (activeTab === 'crw' || activeTab === 'hybridweb') {
+        visibleChannels = channels.filter(c => c.id === 'crw' || c.id === 'hybridweb');
     }
 
     // 5. Render Channels Grid Cards

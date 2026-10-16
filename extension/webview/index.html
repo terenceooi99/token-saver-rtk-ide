@@ -43,7 +43,7 @@
                 <button class="btn btn-primary" id="toggleOmniRouteBtn">Turn OmniRoute ON</button>
                 <button class="btn btn-primary" id="toggleJevGraphBtn">Turn JevGraph ON</button>
                 <button class="btn btn-primary" id="toggleCodeGraphBtn">Turn CodeGraph ON</button>
-                <button class="btn btn-primary" id="toggleCrwBtn">Turn fastCRW ON</button>
+                <button class="btn btn-primary" id="toggleHybridWebBtn">Turn Hybrid Web ON</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
@@ -506,45 +506,68 @@
                     </div>
                 </section>
 
-                <!-- fastCRW Hybrid Web Scraper & Search Engine -->
-                <section class="panel-card crw-section" id="sectionCrw">
-                    <div class="panel-header collapsible" data-target="bodyCrw">
+                <!-- 3-Tier Hybrid Web Research & Scraping (fastCRW + Lightpanda) -->
+                <section class="panel-card hybridweb-section" id="sectionHybridWeb">
+                    <div class="panel-header collapsible" data-target="bodyHybridWeb">
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🕷️ fastCRW Web Scraper & Search Engine</h2>
-                                <p class="panel-subtitle">Rust-powered crawler, token-compressed markdown scraper, & hybrid search API</p>
+                                <h2>🌐 Hybrid Web Research & Scraping</h2>
+                                <p class="panel-subtitle">3-Tier Pipeline: Discovery ➔ fastCRW Markdown ➔ Lightpanda V8 Dynamic MCP</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
                             <a href="https://github.com/fastcrw/crw" target="_blank"
                                 class="repo-badge-link"
-                                title="Upstream GitHub: fastcrw/crw">GitHub:
-                                fastcrw/crw ↗</a>
-                            <span class="panel-tag tag-orange" id="crwStatusBadge">Checking...</span>
+                                title="Upstream GitHub: fastcrw/crw">fastcrw/crw ↗</a>
+                            <a href="https://github.com/lightpanda-io/browser" target="_blank"
+                                class="repo-badge-link"
+                                title="Upstream GitHub: lightpanda-io/browser">lightpanda-io/browser ↗</a>
+                            <span class="panel-tag tag-orange" id="hybridWebStatusBadge">Checking...</span>
                         </div>
                     </div>
 
-                    <div class="panel-body" id="bodyCrw">
-                        <!-- fastCRW Description & Sync -->
+                    <div class="panel-body" id="bodyHybridWeb">
+                        <!-- Hybrid Web Waterfall Explanation & Sync -->
                         <div class="opt-row">
                             <div class="opt-info">
                                 <div class="opt-title-line">
-                                    <span class="opt-title">Hybrid Web Search & Extraction:</span>
+                                    <span class="opt-title">3-Tier Autonomous Waterfall:</span>
                                     <button class="btn-mini-sync" id="crwInlineSyncBtn"
-                                        title="Fetch & install latest fastCRW from GitHub">⭮ Sync
-                                        from GitHub</button>
+                                        title="Fetch & install latest fastCRW from GitHub">⭮ Sync fastCRW</button>
+                                    <button class="btn-mini-sync" id="lightpandaInlineSyncBtn"
+                                        title="Fetch & install latest Lightpanda Browser">🐼 Sync Lightpanda</button>
                                 </div>
-                                <span class="opt-desc">Provides sub-second cold starts and Firecrawl-compatible APIs. Directs AI agents to read web links and search results as clean, stripped markdown without wasting prompt tokens on raw HTML or scripts.</span>
+                                <span class="opt-desc">
+                                    <strong>Tier 1:</strong> Built-in web search for target discovery. 
+                                    <strong>Tier 2:</strong> fastCRW instant markdown fetch (0-token JS overhead). 
+                                    <strong>Tier 3:</strong> Lightpanda local V8 headless browser via MCP for dynamic React/Vue SPAs, login gates & DOM trees.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Engine Status Breakdown -->
+                        <div class="hybridweb-engine-status-row">
+                            <div class="engine-status-box">
+                                <span class="engine-label">⚡ fastCRW (Static & Search):</span>
+                                <span class="engine-val" id="crwSubStatus">Checking...</span>
+                            </div>
+                            <div class="engine-status-box">
+                                <span class="engine-label">🐼 Lightpanda (Dynamic JS MCP):</span>
+                                <span class="engine-val" id="lightpandaSubStatus">Checking...</span>
                             </div>
                         </div>
 
                         <!-- Quick Actions Grid -->
                         <div class="jev-quick-actions">
                             <button class="btn btn-sm btn-primary" id="crwStartServerBtn"
-                                title="Start local fastCRW server (:3000) in terminal">⚡ Start Local Server</button>
-                            <button class="btn btn-sm btn-ghost" id="crwTestScrapeBtn"
-                                title="Scrape target website into clean markdown">🔍 Test Scrape URL</button>
+                                title="Start local fastCRW server (:3000) in terminal">⚡ Start fastCRW (:3000)</button>
+                            <button class="btn btn-sm btn-ghost" id="lightpandaStartMcpBtn"
+                                title="Start Lightpanda MCP Server in terminal">🐼 Start Lightpanda MCP</button>
+                            <button class="btn btn-sm btn-ghost" id="lightpandaCopyMcpConfigBtn"
+                                title="Copy Lightpanda MCP JSON configuration for agent">📋 Copy MCP Config</button>
+                            <button class="btn btn-sm btn-ghost" id="hybridTestScrapeBtn"
+                                title="Test 3-tier scrape with automatic fallback">🔍 Test Scrape URL</button>
                         </div>
                     </div>
                 </section>
@@ -691,7 +714,7 @@
                                 <span class="tab-icon">🕸️</span> JevGraph KG
                             </button>
                             <button class="channel-tab-btn" data-channel="crw" id="tabChannelCrw">
-                                <span class="tab-icon">🕷️</span> fastCRW Search
+                                <span class="tab-icon">🌐</span> Hybrid Web
                             </button>
                         </div>
 
@@ -983,9 +1006,23 @@
                                         <button class="btn-diag-mini btn-diag-ai" id="crwDiagAiBtn"
                                             title="Copy AI install prompt for fastCRW">🤖 Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="crwDiagSyncBtn"
-                                            title="Install fastCRW binary or cargo crate">🕷️ Sync</button>
+                                            title="Install fastCRW binary or cargo crate">⚡ Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="crwDiagUninstallBtn"
                                             title="Uninstall fastCRW Engine">🗑️</button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="diag-row">
+                                <span class="diag-key">Lightpanda (GitHub):</span>
+                                <div class="diag-val-wrapper">
+                                    <span class="diag-val" id="diagLightpandaStatus">Checking...</span>
+                                    <span class="diag-action-btns" id="lightpandaDiagActions" style="display: none;">
+                                        <button class="btn-diag-mini btn-diag-ai" id="lightpandaDiagAiBtn"
+                                            title="Copy AI install prompt for Lightpanda">🤖 Ask AI</button>
+                                        <button class="btn-diag-mini btn-diag-sync" id="lightpandaDiagSyncBtn"
+                                            title="Install Lightpanda Browser via npm">🐼 Sync</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="lightpandaDiagUninstallBtn"
+                                            title="Uninstall Lightpanda Browser">🗑️</button>
                                     </span>
                                 </div>
                             </div>
@@ -1033,7 +1070,8 @@
                 <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a> •
                 <a href="https://github.com/chenmingtang830/jevgraph" target="_blank">JevGraph</a> •
                 <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank">CodeGraphContext</a> •
-                <a href="https://github.com/fastcrw/crw" target="_blank">fastCRW</a>
+                <a href="https://github.com/fastcrw/crw" target="_blank">fastCRW</a> •
+                <a href="https://github.com/lightpanda-io/browser" target="_blank">Lightpanda Browser</a>
             </span>
         </footer>
     </div>

@@ -195,8 +195,8 @@
         "icon": "$(database)"
       },
       {
-        "command": "tokenSaver.toggleCrw",
-        "title": "Toggle fastCRW Hybrid Search & Scraper Optimization",
+        "command": "tokenSaver.toggleHybridWeb",
+        "title": "Toggle Hybrid Web Search & Scraping Optimization (fastCRW + Lightpanda)",
         "category": "Token Saver",
         "icon": "$(globe)"
       },
@@ -211,6 +211,30 @@
         "title": "Uninstall fastCRW Engine (fastcrw/crw)",
         "category": "Token Saver",
         "icon": "$(trash)"
+      },
+      {
+        "command": "tokenSaver.syncLightpanda",
+        "title": "Fetch & Sync Lightpanda Browser from GitHub (lightpanda-io/browser)",
+        "category": "Token Saver",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "tokenSaver.uninstallLightpanda",
+        "title": "Uninstall Lightpanda Browser (lightpanda-io/browser)",
+        "category": "Token Saver",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "tokenSaver.startLightpandaMcp",
+        "title": "Start Lightpanda Local MCP Server (lightpanda mcp)",
+        "category": "Token Saver",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "tokenSaver.copyLightpandaMcpConfig",
+        "title": "Copy Lightpanda MCP Server Configuration JSON",
+        "category": "Token Saver",
+        "icon": "$(copy)"
       },
       {
         "command": "tokenSaver.indexCodeGraph",
@@ -583,15 +607,30 @@
           "default": true,
           "description": "Automatically keep the semantic code graph updated in real-time when code files are saved."
         },
+        "tokenSaver.hybridWebEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable 3-tier Hybrid Web search & scraping optimization (Discovery -> fastCRW -> Lightpanda MCP)."
+        },
         "tokenSaver.crwEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable fastCRW (fastcrw/crw) hybrid scraping & web search optimization."
+          "description": "Enable fastCRW (fastcrw/crw) fast static markdown scraping & search."
         },
         "tokenSaver.crwPort": {
           "type": "number",
           "default": 3000,
           "description": "Local port for fastCRW server (default: 3000)."
+        },
+        "tokenSaver.lightpandaEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Lightpanda Browser (lightpanda-io/browser) dynamic V8 JS rendering fallback via MCP."
+        },
+        "tokenSaver.lightpandaMcpPort": {
+          "type": "number",
+          "default": 8000,
+          "description": "Local port for Lightpanda HTTP MCP server (default: 8000)."
         }
       }
     }

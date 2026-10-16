@@ -986,19 +986,25 @@ async function activate(context) {
         await refreshStatus(context);
     });
 
-    const toggleCrwCmd = vscode.commands.registerCommand('tokenSaver.toggleCrw', async () => {
+    const toggleHybridWebCmd = vscode.commands.registerCommand('tokenSaver.toggleHybridWeb', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
-        const current = config.get('crwEnabled', true);
+        const current = config.get('hybridWebEnabled', true);
+        await config.update('hybridWebEnabled', !current, vscode.ConfigurationTarget.Global);
         await config.update('crwEnabled', !current, vscode.ConfigurationTarget.Global);
+        await config.update('lightpandaEnabled', !current, vscode.ConfigurationTarget.Global);
         const scope = config.get('targetScope', 'all');
         const isEnabled = context.globalState.get('tokenSaver.enabled', config.get('enableOnStartup', true));
         SkillInstaller.syncRules(isEnabled, scope);
         vscode.window.showInformationMessage(
             !current
-                ? '🕷️ fastCRW hybrid web search optimization is now ENABLED.'
-                : '⚪ fastCRW hybrid web search optimization is now DISABLED.'
+                ? '🌐 3-Tier Hybrid Web Research & Scraping (fastCRW + Lightpanda) is now ENABLED.'
+                : '⚪ Hybrid Web Research & Scraping is now DISABLED.'
         );
         await refreshStatus(context);
+    });
+
+    const toggleCrwCmd = vscode.commands.registerCommand('tokenSaver.toggleCrw', async () => {
+        return vscode.commands.executeCommand('tokenSaver.toggleHybridWeb');
     });
 
     const syncCrwCmd = vscode.commands.registerCommand('tokenSaver.syncCrw', async () => {
@@ -1009,6 +1015,29 @@ async function activate(context) {
     const uninstallCrwCmd = vscode.commands.registerCommand('tokenSaver.uninstallCrw', async () => {
         await RtkUpdater.performLayerUninstall('crw');
         await refreshStatus(context);
+    });
+
+    const syncLightpandaCmd = vscode.commands.registerCommand('tokenSaver.syncLightpanda', async () => {
+        await RtkUpdater.performLightpandaSync();
+        await refreshStatus(context);
+    });
+
+    const uninstallLightpandaCmd = vscode.commands.registerCommand('tokenSaver.uninstallLightpanda', async () => {
+        await RtkUpdater.performLayerUninstall('lightpanda');
+        await refreshStatus(context);
+    });
+
+    const startLightpandaMcpCmd = vscode.commands.registerCommand('tokenSaver.startLightpandaMcp', async () => {
+        const { LightpandaService } = require('./lightpanda-service');
+        await LightpandaService.startMcpServer();
+    });
+
+    const copyLightpandaMcpConfigCmd = vscode.commands.registerCommand('tokenSaver.copyLightpandaMcpConfig', async () => {
+        const { LightpandaService } = require('./lightpanda-service');
+        const port = vscode.workspace.getConfiguration('tokenSaver').get('lightpandaMcpPort', 8000);
+        const snippet = LightpandaService.getMcpConfigSnippet(port);
+        await vscode.env.clipboard.writeText(snippet);
+        vscode.window.showInformationMessage('📋 Lightpanda MCP configuration JSON copied to clipboard!');
     });
 
     // Background watcher for code file saves to keep semantic graph fresh

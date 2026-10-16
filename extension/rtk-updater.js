@@ -392,6 +392,24 @@ class RtkUpdater {
         }
     }
 
+    static async performLightpandaSync() {
+        const { LightpandaService } = require('./lightpanda-service');
+        const isWindows = process.platform === 'win32';
+        const isMac = process.platform === 'darwin';
+        const cmds = LightpandaService.getInstallCommands(isWindows, isMac);
+
+        try {
+            vscode.window.showInformationMessage('🐼 Fetching & installing Lightpanda Browser from GitHub (lightpanda-io/browser)...');
+            RtkService.runInTerminal(cmds.primaryCmd);
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            SkillInstaller.installAllSkills(scope);
+            SkillInstaller.syncRules(true, scope);
+            vscode.window.showInformationMessage('✓ Lightpanda Browser & hybrid dynamic MCP directives synced across IDE.');
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to sync Lightpanda: ${e.message}`);
+        }
+    }
+
     static async performLayerUninstall(layerKey) {
         const OmniRouteService = require('./omniroute-service');
         const config = vscode.workspace.getConfiguration('tokenSaver');
@@ -463,6 +481,7 @@ class RtkUpdater {
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall CodeGraphContext: ${e.message}`);
                 }
+                break;
             case 'crw':
                 try {
                     const { CrwService } = require('./crw-service');
@@ -477,6 +496,22 @@ class RtkUpdater {
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall fastCRW: ${e.message}`);
+                }
+                break;
+            case 'lightpanda':
+                try {
+                    const { LightpandaService } = require('./lightpanda-service');
+                    const isWindows = process.platform === 'win32';
+                    const cmds = LightpandaService.getUninstallCommands(isWindows);
+                    await config.update('lightpandaEnabled', false, vscode.ConfigurationTarget.Global);
+                    const scope = config.get('targetScope', 'all');
+                    SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    RtkService.runInTerminal(cmds.primaryCmd);
+                    vscode.window.showInformationMessage(
+                        '🐼 Lightpanda Browser uninstaller started in terminal and MCP fallback disabled.'
+                    );
+                } catch (e) {
+                    vscode.window.showErrorMessage(`Failed to uninstall Lightpanda: ${e.message}`);
                 }
                 break;
             case 'omniroute':
@@ -597,9 +632,14 @@ class RtkUpdater {
                 layerKey: 'codegraph'
             },
             {
-                label: '$(globe) fastCRW Hybrid Scraper & Search (fastcrw/crw)',
-                description: 'cargo uninstall crw/crw-server and disable hybrid search feature',
+                label: '$(globe) fastCRW Static Scraper & Search (fastcrw/crw)',
+                description: 'cargo uninstall crw/crw-server and disable fastCRW markdown feature',
                 layerKey: 'crw'
+            },
+            {
+                label: '$(browser) Lightpanda Headless Browser (lightpanda-io/browser)',
+                description: 'npm uninstall -g @lightpanda/browser and remove Lightpanda dynamic MCP fallback',
+                layerKey: 'lightpanda'
             },
             {
                 label: '$(clear-all) Injected Multi-IDE Rules & Skills',
@@ -621,14 +661,15 @@ class RtkUpdater {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph & fastCRW)...',
+                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW & Lightpanda)...',
                 cancellable: false
             },
             async () => {
                 const OmniRouteService = require('./omniroute-service');
                 const { CodeGraphService } = require('./codegraph-service');
                 const { CrwService } = require('./crw-service');
-                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, crwCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease, crwRelease] = await Promise.all([
+                const { LightpandaService } = require('./lightpanda-service');
+                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, crwCheck, lightpandaCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease, crwRelease, lightpandaRelease] = await Promise.all([
                     RtkService.checkInstalled(),
                     RtkService.checkHeadroomInstalled(),
                     RtkService.checkPonytailInstalled(),
@@ -637,6 +678,7 @@ class RtkUpdater {
                     RtkService.checkJevGraphInstalled ? RtkService.checkJevGraphInstalled() : { installed: false },
                     CodeGraphService.checkInstalled(),
                     CrwService.checkInstalled(),
+                    LightpandaService.checkInstalled(),
                     this.getLatestRelease('rtk-ai/rtk'),
                     this.getLatestRelease('headroomlabs-ai/headroom'),
                     this.getLatestRelease('DietrichGebert/ponytail'),
@@ -644,7 +686,8 @@ class RtkUpdater {
                     this.getLatestRelease('miqdadbadjuber/anti-slop'),
                     this.getLatestRelease('chenmingtang830/jevgraph'),
                     this.getLatestRelease('CodeGraphContext/CodeGraphContext'),
-                    this.getLatestRelease('fastcrw/crw')
+                    this.getLatestRelease('fastcrw/crw'),
+                    this.getLatestRelease('lightpanda-io/browser')
                 ]);
 
                 const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
@@ -655,12 +698,13 @@ class RtkUpdater {
                 const jevHasUpdate = jevRelease.success && (!jevCheck.installed);
                 const codeGraphHasUpdate = codeGraphRelease.success && (!codeGraphCheck.installed);
                 const crwHasUpdate = crwRelease.success && (!crwCheck.installed);
-                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate || crwHasUpdate;
+                const lightpandaHasUpdate = lightpandaRelease.success && (!lightpandaCheck.installed);
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate || crwHasUpdate || lightpandaHasUpdate;
 
                 const picks = [
                     {
                         label: hasAnyUpdate ? '$(cloud-download) Update / Sync All Upstream GitHub Layers' : '$(sync) Sync All Upstream GitHub Layers',
-                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph & fastCRW',
+                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW & Lightpanda',
                         detail: hasAnyUpdate ? '🚀 Updates available for one or more layers - Click to update all' : '✓ All components up-to-date - Click to force re-sync',
                         actionKey: 'all'
                     },
@@ -671,6 +715,14 @@ class RtkUpdater {
                             ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
                             : (crwCheck.installed ? '✓ Synced & ready for hybrid web search - Click to re-fetch' : '⚡ Click to install fastCRW binary or cargo crate'),
                         actionKey: 'crw'
+                    },
+                    {
+                        label: '$(browser) Lightpanda Browser (lightpanda-io/browser)',
+                        description: `Installed: ${lightpandaCheck.installed ? (lightpandaCheck.runner || 'Ready') : 'Not Installed'} | GitHub: ${lightpandaRelease.tag || 'Latest'}`,
+                        detail: lightpandaHasUpdate
+                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
+                            : (lightpandaCheck.installed ? '✓ Synced & ready for dynamic JS MCP - Click to re-fetch' : '⚡ Click to install Lightpanda via npm / binary'),
+                        actionKey: 'lightpanda'
                     },
                     {
                         label: '$(database) CodeGraphContext Semantic Code Graph (CodeGraphContext/CodeGraphContext)',
@@ -731,7 +783,7 @@ class RtkUpdater {
                     {
                         label: '$(link-external) View Upstream GitHub Release Notes & Compare',
                         description: 'Open release notes and commit history on GitHub',
-                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute, jevgraph & codegraph in your browser',
+                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute, jevgraph, codegraph, crw & lightpanda in your browser',
                         actionKey: 'notes'
                     }
                 ];
@@ -746,6 +798,8 @@ class RtkUpdater {
                     this.performAllUpdates();
                 } else if (sel.actionKey === 'crw') {
                     await this.performCrwSync();
+                } else if (sel.actionKey === 'lightpanda') {
+                    await this.performLightpandaSync();
                 } else if (sel.actionKey === 'codegraph') {
                     await this.performCodeGraphSync();
                 } else if (sel.actionKey === 'jevgraph') {
@@ -769,6 +823,7 @@ class RtkUpdater {
                     if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
                     if (codeGraphRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(codeGraphRelease.htmlUrl));
                     if (crwRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(crwRelease.htmlUrl));
+                    if (lightpandaRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(lightpandaRelease.htmlUrl));
                 }
             }
         );

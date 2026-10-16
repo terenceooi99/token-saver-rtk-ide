@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Upstream Engine Integration & Latency Guardrails Rule
 
 Whenever a new upstream engine or external tool (e.g., `fastcrw/crw`, `CodeGraphContext`, `JevGraph`, `Headroom`, `Anti-Slop`, `OmniRoute`, `RTK`) is introduced or updated in the Token Saver IDE Plugin:
@@ -18,4 +22,10 @@ Every upstream engine integration must be fully reflected across all 8 related d
 - Uninstalled or optional tools that are not set up must be silently omitted/ignored so users never encounter failed pings, red error states, or visual clutter for tools they do not use.
 
 ## 3. Footer Version Number Invariant
-- The current plugin release version must **always** be rendered immediately beside "Token Saver" in front of "• GitHub" in the dashboard footer (e.g. `Token Saver v1.13.0 • GitHub`).
+- The current plugin release version must **always** be rendered immediately beside "Token Saver" in front of "• GitHub" in the dashboard footer (e.g. `Token Saver v1.13.0 • GitHub`), the plugin release version follow **latest** version on **CHANGELOG.md**.
+
+## 4. Webview State Payload Integrity & Pre-Flight Contract
+- **Atomic State Gathering Contract**: In `extension/webview-helper.js` (`getLatestStateData`), every upstream component MUST have its check resolved and defined (e.g. `check`, `headroomCheck`, `ponytailCheck`, `antiSlopCheck`, `omniStatus`, `jevGraphCheck`, `codeGraphCheck`, `crwCheck`, `lightpandaCheck`) before constructing `pluginStatus` or the return dictionary.
+- **Fail-Safe Fallbacks**: Always safeguard dictionary lookups with fallback defaults so an unhandled check never aborts the webview pipeline.
+- **Mandatory Pre-Flight Execution Test**: After adding or modifying any engine integration in `webview-helper.js` or `rtk-service.js`, agents MUST execute a headless node runner verifying that `WebviewHelper.getLatestStateData()` resolves cleanly without `ReferenceError` or uncaught rejections before declaring completion.
+

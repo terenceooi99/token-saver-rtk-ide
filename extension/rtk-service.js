@@ -140,6 +140,11 @@ class RtkService {
         return CrwService.checkInstalled();
     }
 
+    static checkLightpandaInstalled() {
+        const { LightpandaService } = require('./lightpanda-service');
+        return LightpandaService.checkInstalled();
+    }
+
     static getSavingsRaw() {
         return new Promise((resolve, reject) => {
             exec('rtk gain', (error, stdout, stderr) => {
@@ -497,26 +502,26 @@ class RtkService {
             },
             {
                 id: 'crw',
-                name: 'fastCRW Search & Scraper',
-                shortName: 'fastCRW',
-                icon: '🕷️',
-                layer: 'Web Search & Scraping Optimization',
+                name: 'Hybrid Web (fastCRW + Lightpanda)',
+                shortName: 'Hybrid Web',
+                icon: '🌐',
+                layer: '3-Tier Hybrid Web Research & Scraping',
                 category: 'web',
                 color: '#ff9500',
                 accentColor: 'var(--apple-orange, #ff9500)',
-                status: pluginStatus.crwInstalled ? 'active' : (pluginStatus.crwEnabled ? 'synced' : 'disabled'),
-                statusLabel: pluginStatus.crwInstalled ? 'Active & Ready' : (pluginStatus.crwEnabled ? 'Hybrid Search' : 'Disabled'),
+                status: (pluginStatus.crwInstalled || pluginStatus.lightpandaInstalled) ? 'active' : ((pluginStatus.crwEnabled || pluginStatus.lightpandaEnabled) ? 'synced' : 'disabled'),
+                statusLabel: (pluginStatus.crwInstalled && pluginStatus.lightpandaInstalled) ? 'Active & Ready (Dual)' : ((pluginStatus.crwInstalled || pluginStatus.lightpandaInstalled) ? 'Active & Ready' : ((pluginStatus.crwEnabled || pluginStatus.lightpandaEnabled) ? 'Hybrid Search' : 'Disabled')),
                 isLive: false,
                 savedTokens: Math.round(totalEcosystemTokens * 0.16),
                 savedFormatted: formatTokens(Math.round(totalEcosystemTokens * 0.16)),
                 percentage: 78.5,
                 dollarSavings: formatDollars(Math.round(totalEcosystemTokens * 0.16)),
                 sharePct: 16,
-                description: 'Rust-powered web crawler, scraper, and search engine. Delivers clean, LLM-ready markdown from web pages and searches, avoiding heavy browser token bloat.',
+                description: 'Unified 3-tier web pipeline: Tier 1 built-in search, Tier 2 fastCRW instant markdown for static pages, and Tier 3 Lightpanda local V8 JS execution via MCP for dynamic SPAs.',
                 subItems: [
-                    { name: 'Token-Compressed Markdown Scrapes', percentage: 86, description: 'Strips HTML boilerplate, scripts, and clutter' },
-                    { name: 'AI Hybrid Search Engine', percentage: 76, description: 'Drop-in Firecrawl-compatible /v1/search API' },
-                    { name: 'Anti-Bot & Dynamic DOM Handling', percentage: 74, description: 'Sub-second cold starts with zero memory bloat' }
+                    { name: 'fastCRW Token-Compressed Markdown', percentage: 86, description: 'Strips HTML boilerplate, scripts, and clutter on static docs' },
+                    { name: 'Lightpanda V8 Dynamic MCP Extraction', percentage: 82, description: '10x lighter headless browser executing client-side JS & SPAs' },
+                    { name: 'Tier 1 Built-in Search & Fallback', percentage: 74, description: 'Zero-failure autonomous discovery with pure markdown output' }
                 ]
             }
         ];
@@ -696,7 +701,23 @@ class RtkService {
             });
         };
 
-        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw] = await Promise.all([
+        const testLightpanda = () => {
+            return new Promise((resolve) => {
+                const start = Date.now();
+                const { LightpandaService } = require('./lightpanda-service');
+                LightpandaService.checkInstalled().then(res => {
+                    const duration = Date.now() - start;
+                    resolve({
+                        name: 'Lightpanda',
+                        available: res.installed,
+                        latency: res.installed ? `${duration}ms (${res.version || 'Ready'})` : 'Not Installed',
+                        ms: duration
+                    });
+                });
+            });
+        };
+
+        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda] = await Promise.all([
             testRtk(),
             testHeadroom(),
             testPonytail(),
@@ -704,10 +725,11 @@ class RtkService {
             testOmniRoute(),
             testJevGraph(),
             testCodeGraph(),
-            testCrw()
+            testCrw(),
+            testLightpanda()
         ]);
 
-        const allLayers = [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw];
+        const allLayers = [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda];
         // Strictly ignore any upstream that is not installed/available
         const installedLayers = allLayers.filter(l => l && l.available);
         const parts = installedLayers.map(l => `${l.name}: ${l.latency}`);
@@ -727,7 +749,8 @@ class RtkService {
             omniroute,
             jevgraph,
             codegraph,
-            crw
+            crw,
+            lightpanda
         };
     }
 
@@ -823,6 +846,10 @@ class RtkService {
         const crwCmds = CrwService.getInstallCommands(isWindows);
         const crwCmd = crwCmds.primaryCmd;
 
+        const { LightpandaService } = require('./lightpanda-service');
+        const lightpandaCmds = LightpandaService.getInstallCommands(isWindows, isMac);
+        const lightpandaCmd = lightpandaCmds.primaryCmd;
+
         const verifyCmd = 'rtk --version ; headroom --version';
 
         return {
@@ -833,8 +860,9 @@ class RtkService {
             jevGraphCmd,
             codeGraphCmd,
             crwCmd,
+            lightpandaCmd,
             verifyCmd,
-            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd} ; ${codeGraphCmd} ; ${crwCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd} && ${codeGraphCmd} && ${crwCmd}`
+            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd} ; ${codeGraphCmd} ; ${crwCmd} ; ${lightpandaCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd} && ${codeGraphCmd} && ${crwCmd} && ${lightpandaCmd}`
         };
     }
 
@@ -860,14 +888,19 @@ class RtkService {
         const crwUninstallCmds = CrwService.getUninstallCommands(isWindows);
         const crwUninstallCmd = crwUninstallCmds.primaryCmd;
 
+        const { LightpandaService } = require('./lightpanda-service');
+        const lightpandaUninstallCmds = LightpandaService.getUninstallCommands(isWindows);
+        const lightpandaUninstallCmd = lightpandaUninstallCmds.primaryCmd;
+
         return {
             rtkUninstallCmd,
             headroomUninstallCmd,
             omniRouteUninstallCmd,
             crwUninstallCmd,
+            lightpandaUninstallCmd,
             combinedUninstallCmd: isWindows
-                ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd} ; ${crwUninstallCmd}`
-                : `${rtkUninstallCmd} && ${headroomUninstallCmd} && ${omniRouteUninstallCmd} && ${crwUninstallCmd}`
+                ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd} ; ${crwUninstallCmd} ; ${lightpandaUninstallCmd}`
+                : `${rtkUninstallCmd} && ${headroomUninstallCmd} && ${omniRouteUninstallCmd} && ${crwUninstallCmd} && ${lightpandaUninstallCmd}`
         };
     }
 
@@ -885,7 +918,7 @@ class RtkService {
         this.runInTerminal(cmds.headroomUninstallCmd);
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true, crwMissing = true) {
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true, crwMissing = true, lightpandaMissing = true) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const cmds = this.getInstallCommands(isWindows, isMac);
 
@@ -922,6 +955,11 @@ class RtkService {
             stepIdx++;
         }
 
+        if (lightpandaMissing) {
+            items.push(`${stepIdx}. **Install Lightpanda Headless Browser Engine (Upstream: lightpanda-io/browser)**:\n   Run command: \`${cmds.lightpandaCmd}\`\n   (Provides ultra-lightweight V8 dynamic JS rendering and local MCP server for AI agents).`);
+            stepIdx++;
+        }
+
         if (ponytailMissing) {
             items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: DietrichGebert/ponytail)**:\n   Clone or fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`). Ensure skills (\`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\`) are installed.`);
             stepIdx++;
@@ -939,6 +977,7 @@ class RtkService {
         if (jevGraphMissing) verifyCmds.push('`uv run jevgraph --help`');
         if (codeGraphMissing) verifyCmds.push('`cgc --version`');
         if (crwMissing) verifyCmds.push('`crw --version`');
+        if (lightpandaMissing) verifyCmds.push('`lightpanda --version`');
         const verifyText = verifyCmds.length > 0 ? `Run ${verifyCmds.join(', ')} and verify active status in IDE.` : 'Verify all components are active in IDE.';
 
         items.push(`${stepIdx}. **Verify Installations**:\n   ${verifyText}`);
@@ -952,6 +991,7 @@ class RtkService {
         if (jevGraphMissing) missingLabels.push('JevGraph');
         if (codeGraphMissing) missingLabels.push('CodeGraphContext');
         if (crwMissing) missingLabels.push('fastCRW');
+        if (lightpandaMissing) missingLabels.push('Lightpanda');
         if (antiSlopMissing) missingLabels.push('Anti-Slop');
         if (ponytailMissing) missingLabels.push('Ponytail');
 
@@ -1033,11 +1073,20 @@ class RtkService {
                 );
                 break;
             case 'crw':
+            case 'fastcrw':
                 title = 'fastCRW Hybrid Scraper & Search Engine (fastcrw/crw)';
                 instructions.push(
                     `1. **Install fastCRW CLI / Server**:\n   Run command: \`${cmds.crwCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`crw --version\` or \`crw-server --version\`.`,
                     `3. **Usage**:\n   Run \`crw <url>\` to scrape websites straight into token-efficient markdown, or run \`crw-server\` on port 3000.`
+                );
+                break;
+            case 'lightpanda':
+                title = 'Lightpanda Headless Browser Engine (lightpanda-io/browser)';
+                instructions.push(
+                    `1. **Install Lightpanda Browser**:\n   Run command: \`${cmds.lightpandaCmd}\``,
+                    `2. **Verify Installation**:\n   Run: \`lightpanda --version\` or \`npx @lightpanda/browser --version\`.`,
+                    `3. **Start Local MCP Server**:\n   Run \`lightpanda mcp --port 8000\` or configure in agent's MCP settings for instant dynamic JS execution.`
                 );
                 break;
             default:

@@ -670,10 +670,42 @@ Indexes source code files into a local semantic property graph (KùzuDB / Falkor
 - Launch MCP Server for AI assistants:
   \`cgc mcp start\`
 `,
+    'hybrid-web': `---
+name: hybrid-web
+description: >
+  Unified 3-Tier Hybrid Web Research & Scraping Engine (fastCRW + Lightpanda Browser).
+  Follows a strict 3-tier routing waterfall: Tier 1 built-in search -> Tier 2 fastCRW instant markdown -> Tier 3 Lightpanda local V8 JS execution via MCP.
+  Saves 70-90% prompt tokens on web research.
+  Activate when the user types /hybrid-web, /lightpanda, /crw-search, /crw-scrape, "scrape url", "browse page", or asks to perform web research.
+argument-hint: "<url_or_query>"
+license: MIT
+---
+
+# 3-Tier Hybrid Web Research & Scraping Engine (/hybrid-web)
+
+When your IDE agent receives a task requiring web research or extraction, it follows this strict routing logic:
+
+### 1. Discovery (Tier 1 - Default Search):
+- The agent uses its built-in search tool (\`search_web\` / native search) to find target URLs or documentation links.
+
+### 2. Fast Extraction (Tier 2 - fastCRW):
+- The agent attempts to fetch the URL using fastCRW (\`crw scrape <url>\` or \`http://127.0.0.1:3000\`).
+- If the page is server-rendered (like a blog, GitHub README, or docs site), fastCRW instantly grabs clean Markdown/text, saving 70-90% context tokens without JS engine overhead.
+
+### 3. Deep Dynamic Rendering (Tier 3 - Lightpanda Local via MCP):
+- If fastCRW returns empty content, a rendering error, or hits a client-side JavaScript wall (e.g., a React/Vue SPA app or login-gated dashboard), the agent automatically falls back to Lightpanda Local via MCP (\`lightpanda mcp\`).
+- Lightpanda executes the JS via V8 and feeds a clean Accessibility Tree or Markdown back into the IDE context window using ~10x less memory than headless Chrome.
+
+### CLI & MCP Commands:
+- Scrape URL using fastCRW: \`crw scrape <url>\`
+- Start local fastCRW server: \`crw serve --port 3000\`
+- Start Lightpanda MCP Server: \`lightpanda mcp --port 8000\`
+- Run Lightpanda MCP via npx: \`npx @lightpanda/browser mcp\`
+`,
     'crw-search': `---
 name: crw-search
 description: >
-  Hybrid web search and scraping engine powered by fastCRW (Upstream: fastcrw/crw).
+  Hybrid web search and scraping engine powered by fastCRW (Upstream: fastcrw/crw) and Lightpanda Browser (Upstream: lightpanda-io/browser).
   Extracts clean, condensed Markdown from URLs and web search queries, saving 70-90% prompt tokens compared to raw browser HTML.
   Activate when the user types /crw-search, /crw-scrape, "fastcrw", "scrape url", or asks to perform hybrid web search with fastCRW.
 argument-hint: "<url_or_query>"
@@ -682,22 +714,13 @@ license: MIT
 
 # fastCRW Hybrid Web Search & Scraper (/crw-search)
 
-High-performance Rust-based web scraping, crawling, and AI search tool for AI coding agents.
+High-performance Rust-based web scraping, crawling, and AI search tool for AI coding agents. Automatically integrates with the 3-Tier Hybrid Web waterfall: Tier 1 Built-in Search ➔ Tier 2 fastCRW ➔ Tier 3 Lightpanda V8 MCP.
 
 ### Key Capabilities:
 - **Token Efficiency:** Strips CSS, JavaScript bloat, ads, and navigation boilerplate, delivering pure structured Markdown.
 - **Hybrid Search:** Combines fastCRW with the IDE's built-in web search for resilient web retrieval.
+- **Dynamic JS Fallback:** Automatically hands off to Lightpanda Local via MCP when JS execution or DOM evaluation is required.
 - **Local API Endpoint:** Runs on \`http://127.0.0.1:3000\` with sub-second extraction speeds.
-
-### CLI Commands:
-- Scrape URL to clean Markdown:
-  \`crw scrape <url>\`
-- Deep crawl a website:
-  \`crw crawl <url> --depth 2\`
-- Start local daemon server:
-  \`crw serve --port 3000\`
-- Extract structured data with CSS/XPath selectors:
-  \`crw extract <url> -s "article, main"\`
 `
 };
 
@@ -788,6 +811,8 @@ class SkillInstaller {
         let jevGraphEnabled = true;
         let codeGraphEnabled = true;
         let crwEnabled = true;
+        let lightpandaEnabled = true;
+        let hybridWebEnabled = true;
 
         try {
             const config = vscode.workspace.getConfiguration('tokenSaver');
@@ -801,17 +826,25 @@ class SkillInstaller {
             jevGraphEnabled = config.get('jevGraphEnabled', true);
             codeGraphEnabled = config.get('codeGraphEnabled', true);
             crwEnabled = config.get('crwEnabled', true);
+            lightpandaEnabled = config.get('lightpandaEnabled', true);
+            hybridWebEnabled = config.get('hybridWebEnabled', true);
         } catch (e) {
             // Use defaults if config is inaccessible
         }
 
         let text = CORE_RULE_TEXT;
 
-        if (crwEnabled) {
-            text += `\n\n## fastCRW Hybrid Web Search & Scraping Policy (Upstream: fastcrw/crw)\n`;
-            text += `- **Hybrid Search Workflow:** For web research and page reading, autonomous agents should prioritize using local fastCRW (\`crw search\`, \`crw scrape\`, or \`http://127.0.0.1:3000\`) in combination with the IDE's built-in web search.\n`;
-            text += `- **Token Optimization on Web Content:** fastCRW converts raw HTML, JS-rendered DOMs, and heavy web pages into clean, condensed Markdown before injecting into LLM context, preventing web clutter and saving 70-90% context tokens.\n`;
-            text += `- **Zero-Failure Fallback:** When a site blocks generic HTTP requests or returns Cloudflare challenges, route via fastCRW headless browser extraction.\n`;
+        if (hybridWebEnabled || crwEnabled || lightpandaEnabled) {
+            text += `\n\n## 3-Tier Hybrid Web Research & Scraping Policy (Upstream: fastcrw/crw & lightpanda-io/browser)\n`;
+            text += `When your IDE agent receives a task requiring web research or extraction, it follows this strict 3-tier routing logic:\n\n`;
+            text += `1. **Discovery (Tier 1 - Default Search)**:\n`;
+            text += `   - The agent uses its built-in search tool (\`search_web\` / native search) to find target URLs or documentation links.\n`;
+            text += `2. **Fast Extraction (Tier 2 - fastCRW)**:\n`;
+            text += `   - The agent attempts to fetch the URL using fastCRW (\`crw scrape <url>\`, \`crw_scrape\`, or \`http://127.0.0.1:3000\`).\n`;
+            text += `   - If the page is server-rendered (like a blog, GitHub README, or docs site), fastCRW instantly grabs clean Markdown/text, saving 70-90% context tokens without JS engine overhead.\n`;
+            text += `3. **Deep Dynamic Rendering (Tier 3 - Lightpanda Local via MCP)**:\n`;
+            text += `   - If fastCRW returns empty content, a rendering error, or hits a client-side JavaScript wall (e.g., a React/Vue SPA app or login-gated dashboard), the agent automatically falls back to Lightpanda Local via MCP (\`lightpanda mcp\`).\n`;
+            text += `   - Lightpanda executes the JS via V8 and feeds a clean Accessibility Tree or Markdown back into the IDE context window using ~10x less memory than headless Chrome.\n`;
         }
 
         if (codeGraphEnabled || jevGraphEnabled) {
@@ -1456,7 +1489,8 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             'codegraph-index'
         ];
         const crwSkills = [
-            'crw-search'
+            'crw-search',
+            'hybrid-web'
         ];
 
         let targetSkills = [];
@@ -1468,7 +1502,7 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             targetSkills = jevSkills;
         } else if (skillSetType === 'codegraph') {
             targetSkills = codeGraphSkills;
-        } else if (skillSetType === 'crw') {
+        } else if (skillSetType === 'crw' || skillSetType === 'hybridweb') {
             targetSkills = crwSkills;
         } else if (skillSetType === 'rtk') {
             const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills, ...codeGraphSkills, ...crwSkills]);

@@ -73,6 +73,9 @@ Whenever a new upstream engine or external tool (e.g. `fastcrw/crw`, `CodeGraphC
    - Footer upstream reference links
 2. **Zero-Noise Latency Benchmarks**: "Test Upstream Latencies" must selectively ping and display only **installed** upstream components, silently omitting/ignoring uninstalled tools so users never see failed pings or clutter for optional tools.
 3. **Footer Version Number Invariant**: The current plugin release version must always be presented beside "Token Saver" in front of "• GitHub".
+4. **Webview State Payload Integrity & Pre-Flight Contract**:
+   - Every upstream component MUST have its check resolved in `extension/webview-helper.js` (`getLatestStateData`) before constructing `pluginStatus` or the return state.
+   - Always verify state payload generation with a pre-flight execution check (`node -e "WebviewHelper.getLatestStateData(...)"`) to avoid `ReferenceError` webview starvation.
 
 <!-- RTK_TOKEN_SAVER_END -->
 

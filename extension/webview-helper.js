@@ -38,6 +38,10 @@ class WebviewHelper {
         const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
         const jevGraphCheck = await RtkService.checkJevGraphInstalled();
         const codeGraphCheck = await RtkService.checkCodeGraphInstalled();
+        const { LightpandaService } = require('./lightpanda-service');
+        const lightpandaCheck = await LightpandaService.checkInstalled();
+        const lightpandaEnabled = LightpandaService.isEnabled();
+        const hybridWebEnabled = config.get('hybridWebEnabled', true);
         const crwCheck = await CrwService.checkInstalled();
         const crwEnabled = CrwService.isEnabled();
         const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
@@ -70,8 +74,11 @@ class WebviewHelper {
             jevGraphEnabled: config.get('jevGraphEnabled', true),
             codeGraphInstalled: codeGraphCheck.installed,
             codeGraphEnabled: config.get('codeGraphEnabled', true),
+            hybridWebEnabled,
             crwInstalled: crwCheck.installed,
             crwEnabled,
+            lightpandaInstalled: lightpandaCheck.installed,
+            lightpandaEnabled,
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running
         };
@@ -105,10 +112,15 @@ class WebviewHelper {
             codeGraphInstalled: codeGraphCheck.installed,
             codeGraphVersion: codeGraphCheck.version || 'Not installed',
             codeGraphStatus: codeGraphCheck,
+            hybridWebEnabled,
             crwEnabled,
             crwInstalled: crwCheck.installed,
             crwVersion: crwCheck.version || 'Not installed',
             crwPort: config.get('crwPort', 3000),
+            lightpandaEnabled,
+            lightpandaInstalled: lightpandaCheck.installed,
+            lightpandaVersion: lightpandaCheck.version || 'Not installed',
+            lightpandaMcpPort: config.get('lightpandaMcpPort', 8000),
             omniRouteEnabled: config.get('omniRouteEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running,
@@ -449,18 +461,35 @@ class WebviewHelper {
                 triggerRefresh(300);
                 break;
             case 'toggleCrw':
-                await vscode.commands.executeCommand('tokenSaver.toggleCrw');
+            case 'toggleHybridWeb':
+                await vscode.commands.executeCommand('tokenSaver.toggleHybridWeb');
                 triggerRefresh(300);
                 break;
             case 'syncCrw':
                 await vscode.commands.executeCommand('tokenSaver.syncCrw');
                 triggerRefresh(1000);
                 break;
+            case 'syncLightpanda':
+                await vscode.commands.executeCommand('tokenSaver.syncLightpanda');
+                triggerRefresh(1000);
+                break;
             case 'startCrwServer':
                 const { CrwService } = require('./crw-service');
                 await CrwService.startServer();
                 break;
+            case 'startLightpandaMcp':
+                const { LightpandaService: LightpandaSvc } = require('./lightpanda-service');
+                await LightpandaSvc.startMcpServer();
+                break;
+            case 'copyLightpandaMcpConfig':
+                const { LightpandaService: LightpandaSvc2 } = require('./lightpanda-service');
+                const port = vscode.workspace.getConfiguration('tokenSaver').get('lightpandaMcpPort', 8000);
+                const snippet = LightpandaSvc2.getMcpConfigSnippet(port);
+                await vscode.env.clipboard.writeText(snippet);
+                webview.postMessage({ type: 'toast', message: '📋 Lightpanda MCP configuration JSON copied to clipboard!' });
+                break;
             case 'testScrapeCrw':
+            case 'testHybridScrape':
                 const { CrwService: CrwSvc } = require('./crw-service');
                 await CrwSvc.testScrapePrompt();
                 break;
