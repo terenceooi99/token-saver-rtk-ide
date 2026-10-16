@@ -293,6 +293,11 @@ async function activate(context) {
         await refreshStatus(context);
     });
 
+    const updateFromOpenVsxCmd = vscode.commands.registerCommand('tokenSaver.updateFromOpenVsx', async () => {
+        await RtkUpdater.updateFromOpenVsx(true);
+        await refreshStatus(context);
+    });
+
     const installSkillsCmd = vscode.commands.registerCommand('tokenSaver.installSkills', async () => {
         try {
             const results = SkillInstaller.installAllSkills();
@@ -984,6 +989,7 @@ async function activate(context) {
         selectIdeTargetsCmd,
         checkUpdatesCmd,
         updateRtkCmd,
+        updateFromOpenVsxCmd,
         syncPonytailCmd,
         syncAntiSlopCmd,
         syncJevGraphCmd,

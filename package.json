@@ -80,6 +80,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "tokenSaver.updateFromOpenVsx",
+          "when": "view == tokenSaver.sidebarView",
+          "group": "navigation@0"
+        },
+        {
           "command": "tokenSaver.openDashboard",
           "when": "view == tokenSaver.sidebarView",
           "group": "navigation@1"
@@ -132,6 +137,12 @@
       {
         "command": "tokenSaver.updateRtk",
         "title": "Update & Sync Upstream GitHub (RTK, Headroom, Ponytail, OmniRoute & Anti-Slop)",
+        "category": "Token Saver",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "tokenSaver.updateFromOpenVsx",
+        "title": "Update Token Saver from Open VSX (🢁)",
         "category": "Token Saver",
         "icon": "$(cloud-download)"
       },

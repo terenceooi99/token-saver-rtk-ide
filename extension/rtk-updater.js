@@ -1,4 +1,7 @@
 const https = require('https');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const vscode = require('vscode');
 const RtkService = require('./rtk-service');
 const SkillInstaller = require('./skill-installer');
@@ -715,6 +718,213 @@ class RtkUpdater {
                     if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
                     if (codeGraphRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(codeGraphRelease.htmlUrl));
                 }
+            }
+        );
+    }
+
+    static fetchOpenVsxJson(apiPath) {
+        return new Promise((resolve) => {
+            const url = `https://open-vsx.org/api${apiPath}`;
+            const req = https.get(url, { headers: { 'User-Agent': 'TokenSaver-IDE-Extension' } }, (res) => {
+                if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                    const redirectUrl = res.headers.location;
+                    https.get(redirectUrl, { headers: { 'User-Agent': 'TokenSaver-IDE-Extension' } }, (res2) => {
+                        let data2 = '';
+                        res2.on('data', chunk => data2 += chunk);
+                        res2.on('end', () => {
+                            try {
+                                resolve({ success: true, data: JSON.parse(data2) });
+                            } catch (e) {
+                                resolve({ success: false, error: 'JSON parse error' });
+                            }
+                        });
+                    }).on('error', err => resolve({ success: false, error: err.message }));
+                    return;
+                }
+
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        try {
+                            resolve({ success: true, data: JSON.parse(data) });
+                        } catch (e) {
+                            resolve({ success: false, error: 'Failed to parse JSON response' });
+                        }
+                    } else {
+                        resolve({ success: false, error: `OpenVSX returned HTTP ${res.statusCode}` });
+                    }
+                });
+            });
+
+            req.on('error', err => resolve({ success: false, error: err.message }));
+            req.setTimeout(10000, () => {
+                req.destroy();
+                resolve({ success: false, error: 'OpenVSX request timed out' });
+            });
+        });
+    }
+
+    static async getLatestOpenVsxRelease(extensionNamespace = 'terenceooi', extensionName = 'token-saver-rtk-ide') {
+        const res = await this.fetchOpenVsxJson(`/${extensionNamespace}/${extensionName}/latest`);
+        if (res.success && res.data) {
+            const pkg = res.data;
+            return {
+                success: true,
+                version: pkg.version,
+                downloadUrl: pkg.files && pkg.files.download ? pkg.files.download : null,
+                timestamp: pkg.timestamp,
+                description: pkg.description
+            };
+        }
+        return { success: false, error: res.error || 'Failed to query OpenVSX' };
+    }
+
+    static downloadVsixFile(downloadUrl, destPath, progressCallback = null) {
+        return new Promise((resolve, reject) => {
+            const downloadInternal = (url) => {
+                const req = https.get(url, { headers: { 'User-Agent': 'TokenSaver-IDE-Extension' } }, (res) => {
+                    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                        return downloadInternal(res.headers.location);
+                    }
+
+                    if (res.statusCode < 200 || res.statusCode >= 300) {
+                        return reject(new Error(`Download failed with HTTP ${res.statusCode}`));
+                    }
+
+                    const totalBytes = parseInt(res.headers['content-length'] || '0', 10);
+                    let receivedBytes = 0;
+                    const fileStream = fs.createWriteStream(destPath);
+
+                    res.on('data', (chunk) => {
+                        receivedBytes += chunk.length;
+                        if (progressCallback && totalBytes > 0) {
+                            progressCallback(Math.round((receivedBytes / totalBytes) * 100));
+                        }
+                    });
+
+                    res.pipe(fileStream);
+
+                    fileStream.on('finish', () => {
+                        fileStream.close(() => resolve(destPath));
+                    });
+
+                    fileStream.on('error', (err) => {
+                        fs.unlink(destPath, () => {});
+                        reject(err);
+                    });
+                });
+
+                req.on('error', (err) => {
+                    fs.unlink(destPath, () => {});
+                    reject(err);
+                });
+
+                req.setTimeout(30000, () => {
+                    req.destroy();
+                    fs.unlink(destPath, () => {});
+                    reject(new Error('Download timed out'));
+                });
+            };
+
+            downloadInternal(downloadUrl);
+        });
+    }
+
+    static async updateFromOpenVsx(manual = true) {
+        const ext = vscode.extensions.getExtension('terenceooi.token-saver-rtk-ide');
+        const currentVersion = ext && ext.packageJSON ? ext.packageJSON.version : '1.13.0';
+
+        return vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Checking Open VSX for Token Saver extension updates...',
+                cancellable: false
+            },
+            async (progress) => {
+                const release = await this.getLatestOpenVsxRelease('terenceooi', 'token-saver-rtk-ide');
+                if (!release.success || !release.version) {
+                    vscode.window.showErrorMessage(`Failed to check Open VSX: ${release.error}`);
+                    return;
+                }
+
+                const latestVersion = release.version;
+                const hasNewer = this.isNewer(latestVersion, currentVersion);
+
+                if (!hasNewer && manual) {
+                    const action = await vscode.window.showInformationMessage(
+                        `✓ Token Saver is up-to-date (Current: v${currentVersion}, Open VSX: v${latestVersion}).`,
+                        'Force Reinstall from Open VSX',
+                        'Open in Open VSX'
+                    );
+
+                    if (action === 'Open in Open VSX') {
+                        vscode.env.openExternal(vscode.Uri.parse('https://open-vsx.org/extension/terenceooi/token-saver-rtk-ide'));
+                        return;
+                    }
+                    if (action !== 'Force Reinstall from Open VSX') {
+                        return;
+                    }
+                } else if (hasNewer) {
+                    const confirm = await vscode.window.showInformationMessage(
+                        `🚀 Token Saver update available on Open VSX: v${currentVersion} ➔ v${latestVersion}!`,
+                        'Install Update Now',
+                        'View on Open VSX',
+                        'Later'
+                    );
+
+                    if (confirm === 'View on Open VSX') {
+                        vscode.env.openExternal(vscode.Uri.parse('https://open-vsx.org/extension/terenceooi/token-saver-rtk-ide'));
+                        return;
+                    }
+                    if (confirm !== 'Install Update Now') {
+                        return;
+                    }
+                }
+
+                if (!release.downloadUrl) {
+                    vscode.window.showErrorMessage('Open VSX release did not contain a downloadable VSIX URL.');
+                    return;
+                }
+
+                // Proceed with downloading & installing the VSIX
+                await vscode.window.withProgress(
+                    {
+                        location: vscode.ProgressLocation.Notification,
+                        title: `Downloading Token Saver v${latestVersion} from Open VSX...`,
+                        cancellable: false
+                    },
+                    async (dlProgress) => {
+                        const tempVsix = path.join(os.tmpdir(), `token-saver-rtk-ide-${latestVersion}.vsix`);
+                        try {
+                            dlProgress.report({ message: 'Fetching .vsix package...' });
+                            await this.downloadVsixFile(release.downloadUrl, tempVsix);
+                            dlProgress.report({ message: 'Installing extension package...' });
+
+                            const vsixUri = vscode.Uri.file(tempVsix);
+                            try {
+                                await vscode.commands.executeCommand('workbench.extensions.installExtension', vsixUri);
+                                const reload = await vscode.window.showInformationMessage(
+                                    `🎉 Token Saver successfully updated to v${latestVersion} from Open VSX! Please reload the IDE window to complete the update.`,
+                                    'Reload Window'
+                                );
+                                if (reload === 'Reload Window') {
+                                    vscode.commands.executeCommand('workbench.action.reloadWindow');
+                                }
+                            } catch (installErr) {
+                                // Fallback to terminal install if internal command is restricted
+                                const detected = SkillInstaller.detectCurrentIde ? SkillInstaller.detectCurrentIde() : { binaryName: 'code' };
+                                const ideBin = detected.binaryName || 'code';
+                                RtkService.runInTerminal(`${ideBin} --install-extension "${tempVsix}" --force`);
+                                vscode.window.showInformationMessage(
+                                    `⚡ Extension installation started via terminal for Token Saver v${latestVersion}.`
+                                );
+                            }
+                        } catch (err) {
+                            vscode.window.showErrorMessage(`Failed to download and install from Open VSX: ${err.message}`);
+                        }
+                    }
+                );
             }
         );
     }

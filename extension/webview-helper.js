@@ -164,6 +164,10 @@ class WebviewHelper {
                 await vscode.commands.executeCommand('tokenSaver.checkUpdates');
                 triggerRefresh(500);
                 break;
+            case 'updateFromOpenVsx':
+                await vscode.commands.executeCommand('tokenSaver.updateFromOpenVsx');
+                triggerRefresh(500);
+                break;
             case 'toggleWeeklyAutoSync':
                 const isWeekly = message.enabled !== undefined ? message.enabled : true;
                 await context.globalState.update('tokenSaver.weeklyAutoSync', isWeekly);

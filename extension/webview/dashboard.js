@@ -16,6 +16,7 @@ const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const themeIcon = document.getElementById('themeIcon');
+const openVsxUpdateBtn = document.getElementById('openVsxUpdateBtn');
 
 const refreshDropdownGroup = document.getElementById('refreshDropdownGroup');
 const refreshBtn = document.getElementById('refreshBtn');
@@ -643,6 +644,16 @@ if (minimizeBtn) {
             minimizeBtn.innerHTML = isCompact ? "🗖" : "🗕";
             persistState();
         }
+    });
+}
+
+if (openVsxUpdateBtn) {
+    openVsxUpdateBtn.addEventListener('click', () => {
+        openVsxUpdateBtn.style.opacity = '0.5';
+        vscode.postMessage({ command: 'updateFromOpenVsx' });
+        setTimeout(() => {
+            if (openVsxUpdateBtn) openVsxUpdateBtn.style.opacity = '1';
+        }, 1200);
     });
 }
 
