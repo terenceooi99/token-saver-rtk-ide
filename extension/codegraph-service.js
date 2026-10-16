@@ -1,8 +1,7 @@
-const { exec, spawn } = require('child_process');
+const { exec } = require('child_process');
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 
 class CodeGraphService {
     /**
@@ -85,31 +84,35 @@ class CodeGraphService {
         };
     }
 
+    static getWorkspacePath(targetPath) {
+        return targetPath || (vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? null);
+    }
+
+    static runInTerminal(name, cmd) {
+        const terminal = vscode.window.createTerminal(`CodeGraphContext ${name}`);
+        terminal.show();
+        terminal.sendText(cmd);
+    }
+
     /**
      * Trigger indexing on workspace directory.
      */
     static async indexWorkspace(targetPath) {
-        const workspacePath = targetPath || (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0] ? vscode.workspace.workspaceFolders[0].uri.fsPath : null);
+        const workspacePath = this.getWorkspacePath(targetPath);
         if (!workspacePath) {
             vscode.window.showErrorMessage('❌ No active workspace folder to index with CodeGraphContext.');
             return;
         }
-
-        const terminal = vscode.window.createTerminal('CodeGraphContext Index');
-        terminal.show();
-        terminal.sendText(`cgc index --path "${workspacePath}" || python -m codegraphcontext index --path "${workspacePath}"`);
+        this.runInTerminal('Index', `cgc index --path "${workspacePath}" || python -m codegraphcontext index --path "${workspacePath}"`);
     }
 
     /**
      * Start background watcher for continuous live updates.
      */
     static async startWatcher(targetPath) {
-        const workspacePath = targetPath || (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0] ? vscode.workspace.workspaceFolders[0].uri.fsPath : null);
+        const workspacePath = this.getWorkspacePath(targetPath);
         if (!workspacePath) return;
-
-        const terminal = vscode.window.createTerminal('CodeGraphContext Watch');
-        terminal.show();
-        terminal.sendText(`cgc watch --path "${workspacePath}" || python -m codegraphcontext watch --path "${workspacePath}"`);
+        this.runInTerminal('Watch', `cgc watch --path "${workspacePath}" || python -m codegraphcontext watch --path "${workspacePath}"`);
     }
 
     /**
@@ -123,17 +126,14 @@ class CodeGraphService {
         });
 
         if (!query) return;
-
-        const terminal = vscode.window.createTerminal('CodeGraphContext Query');
-        terminal.show();
-        terminal.sendText(`cgc query "${query}" || python -m codegraphcontext query "${query}"`);
+        this.runInTerminal('Query', `cgc query "${query}" || python -m codegraphcontext query "${query}"`);
     }
 
     /**
      * Reset / clear local code graph cache.
      */
     static async resetGraph(targetPath) {
-        const workspacePath = targetPath || (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0] ? vscode.workspace.workspaceFolders[0].uri.fsPath : null);
+        const workspacePath = this.getWorkspacePath(targetPath);
         if (!workspacePath) return;
 
         const graphDir = path.join(workspacePath, '.codegraphcontext');
