@@ -48,6 +48,7 @@ const rawOutputText = document.getElementById('rawOutputText');
 
 const syncSkillsBtn = document.getElementById('syncSkillsBtn');
 const quickUninstallSkillsBtn = document.getElementById('quickUninstallSkillsBtn');
+const quickDisableSkillsBtn = document.getElementById('quickDisableSkillsBtn');
 const skillsStatusBadge = document.getElementById('skillsStatusBadge');
 const skillsSubText = document.getElementById('skillsSubText');
 
@@ -723,6 +724,12 @@ syncSkillsBtn.addEventListener('click', () => {
 if (quickUninstallSkillsBtn) {
     quickUninstallSkillsBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'uninstallSkills' });
+    });
+}
+
+if (quickDisableSkillsBtn) {
+    quickDisableSkillsBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'temporaryDisableSkills' });
     });
 }
 
@@ -1704,6 +1711,22 @@ function renderDashboardState(data) {
             if (syncPonytailSub) {
                 syncPonytailSub.textContent = 'Fetch DietrichGebert/ponytail to IDE';
             }
+        }
+    }
+
+    const disabledSkillsBadge = document.getElementById('disabledSkillsBadge');
+    const disabledSkillsBadgeText = document.getElementById('disabledSkillsBadgeText');
+    const disableSkillsSub = document.getElementById('disableSkillsSub');
+    if (disabledSkillsBadge) {
+        const count = data.disabledSkillsCount || 0;
+        if (count > 0) {
+            disabledSkillsBadge.className = 'action-status-badge badge-warning';
+            if (disabledSkillsBadgeText) disabledSkillsBadgeText.textContent = `${count} Disabled`;
+            if (disableSkillsSub) disableSkillsSub.textContent = `${count} skill(s) quarantined (hidden from @ and /)`;
+        } else {
+            disabledSkillsBadge.className = 'action-status-badge';
+            if (disabledSkillsBadgeText) disabledSkillsBadgeText.textContent = 'Manage';
+            if (disableSkillsSub) disableSkillsSub.textContent = 'Agent Decide / Manual / Re-Enable';
         }
     }
 

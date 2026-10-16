@@ -237,6 +237,18 @@
         "icon": "$(trash)"
       },
       {
+        "command": "tokenSaver.temporaryDisableSkills",
+        "title": "Temporary Disable Skills (Agent-Decide, Manual, Re-Enable)",
+        "category": "Token Saver",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "tokenSaver.reEnableAllSkills",
+        "title": "Re-Enable All Temporarily Disabled Skills",
+        "category": "Token Saver",
+        "icon": "$(eye)"
+      },
+      {
         "command": "tokenSaver.togglePonytail",
         "title": "Toggle Ponytail YAGNI Mode",
         "category": "Token Saver",

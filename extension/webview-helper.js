@@ -104,6 +104,7 @@ class WebviewHelper {
             metrics,
             multiChannelBreakdown,
             skillsInstalled,
+            disabledSkillsCount: SkillInstaller.listDisabledSkills('all').length,
             scope: config.get('targetScope', 'all'),
             ideStatus,
             detectedIde: ideStatus.detectedIde,
@@ -285,6 +286,10 @@ class WebviewHelper {
                 break;
             case 'uninstallSkills':
                 await vscode.commands.executeCommand('tokenSaver.uninstallSkills');
+                triggerRefresh(300);
+                break;
+            case 'temporaryDisableSkills':
+                await vscode.commands.executeCommand('tokenSaver.temporaryDisableSkills');
                 triggerRefresh(300);
                 break;
             case 'toggleTerseMode':

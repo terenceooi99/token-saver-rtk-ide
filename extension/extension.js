@@ -408,6 +408,107 @@ async function activate(context) {
         }
     });
 
+    const temporaryDisableSkillsCmd = vscode.commands.registerCommand('tokenSaver.temporaryDisableSkills', async () => {
+        const disabledSkills = SkillInstaller.listDisabledSkills('all');
+        const disabledCount = [...new Set(disabledSkills.map(s => s.name))].length;
+
+        const actionOptions = [
+            {
+                label: '🤖 Agent Decide (AI Prompt Mode)',
+                description: 'Copy an optimized prompt for AI agent to pick & ignore irrelevant skills for current session',
+                value: 'agent_decide'
+            },
+            {
+                label: '✋ Manual Temporary Disable (Hide from @ and /)',
+                description: 'Select specific skill(s) to quarantine so they cannot be @-mentioned or shown in / lists',
+                value: 'manual'
+            },
+            {
+                label: `🔄 Re-Enable All Skills (${disabledCount} currently disabled)`,
+                description: 'Instantly restore all quarantined skills across project & global repositories',
+                value: 're_enable'
+            }
+        ];
+
+        const selectedAction = await vscode.window.showQuickPick(actionOptions, {
+            placeHolder: 'Temporary Disable Skills: Select action'
+        });
+        if (!selectedAction) return;
+
+        if (selectedAction.value === 'agent_decide') {
+            const prompt = SkillInstaller.generateAgentDecidePrompt();
+            await vscode.env.clipboard.writeText(prompt);
+            vscode.window.showInformationMessage(
+                '📋 Agent-Decide prompt copied to clipboard! Paste it into your AI assistant chat to have the AI identify and ignore irrelevant skills.',
+                'Open Chat / Dismiss'
+            );
+            return;
+        }
+
+        if (selectedAction.value === 're_enable') {
+            const res = SkillInstaller.reEnableAllSkills('all');
+            vscode.window.showInformationMessage(
+                `🔄 Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
+            );
+            await refreshStatus(context);
+            return;
+        }
+
+        if (selectedAction.value === 'manual') {
+            // Ask for scope
+            const scopes = [
+                { label: '📁 Workspace Only', description: 'Current project: .agents/skills/', value: 'workspace' },
+                { label: '🏠 Global Config Only', description: 'Preinstalled in IDE: ~/.gemini/config/skills/', value: 'global' },
+                { label: '🌐 Global & Workspace (All)', description: 'Quarantine across both ~/.gemini/config and .agents', value: 'all' }
+            ];
+
+            const selectedScope = await vscode.window.showQuickPick(scopes, {
+                placeHolder: 'From which scope do you want to temporarily disable skills?'
+            });
+            if (!selectedScope) return;
+
+            const installed = SkillInstaller.listInstalledSkills(selectedScope.value);
+            const uniqueNames = [...new Set(installed.map(s => s.name))].sort();
+
+            if (uniqueNames.length === 0) {
+                vscode.window.showInformationMessage(`No active installed skills found in ${selectedScope.label}.`);
+                return;
+            }
+
+            const items = uniqueNames.map(name => {
+                const found = installed.find(s => s.name === name);
+                const scopesFound = installed.filter(s => s.name === name).map(s => s.scope);
+                return {
+                    label: `🧠 ${name}`,
+                    description: `[${scopesFound.join(', ')}] ${found?.description || ''}`,
+                    value: name,
+                    picked: false
+                };
+            });
+
+            const picked = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select skills to temporarily quarantine (they will be hidden from @ and / lists):',
+                canPickMany: true
+            });
+            if (!picked || picked.length === 0) return;
+
+            const toDisable = picked.map(p => p.value);
+            const res = SkillInstaller.disableSkills(toDisable, selectedScope.value);
+            vscode.window.showInformationMessage(
+                `⏸️ Temporarily disabled ${res.total.length} skill(s) (${toDisable.join(', ')}). They are quarantined and will not appear in @ or / action lists.`
+            );
+            await refreshStatus(context);
+        }
+    });
+
+    const reEnableAllSkillsCmd = vscode.commands.registerCommand('tokenSaver.reEnableAllSkills', async () => {
+        const res = SkillInstaller.reEnableAllSkills('all');
+        vscode.window.showInformationMessage(
+            `🔄 Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
+        );
+        await refreshStatus(context);
+    });
+
     const togglePonytailCmd = vscode.commands.registerCommand('tokenSaver.togglePonytail', async () => {
         const cfg = vscode.workspace.getConfiguration('tokenSaver');
         const currentMode = cfg.get('ponytailMode', 'full');
@@ -811,6 +912,8 @@ async function activate(context) {
         uninstallAntiSlopCmd,
         installSkillsCmd,
         uninstallSkillsCmd,
+        temporaryDisableSkillsCmd,
+        reEnableAllSkillsCmd,
         syncGlobalRulesCmd,
         refreshCmd,
         showSavingsCmd,

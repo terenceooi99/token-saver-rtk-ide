@@ -697,6 +697,10 @@ class SkillInstaller {
         return path.join(this.getGlobalConfigPath(), 'skills');
     }
 
+    static getGlobalDisabledSkillsPath() {
+        return path.join(this.getGlobalConfigPath(), '.disabled-skills');
+    }
+
     static getWorkspaceRoot() {
         const folders = vscode.workspace.workspaceFolders;
         if (!folders || folders.length === 0) return null;
@@ -713,6 +717,12 @@ class SkillInstaller {
         const root = this.getWorkspaceRoot();
         if (!root) return null;
         return path.join(root, '.agents', 'skills');
+    }
+
+    static getWorkspaceDisabledSkillsPath() {
+        const root = this.getWorkspaceRoot();
+        if (!root) return null;
+        return path.join(root, '.agents', '.disabled-skills');
     }
 
     /**
@@ -820,6 +830,16 @@ class SkillInstaller {
             }
             if (astOutline) {
                 text += `- When exploring codebases, inspect function signatures / AST outlines (/rtk-outline) before reading entire files into context.\n`;
+            }
+        }
+
+        const disabledSkills = this.listDisabledSkills('all');
+        const disabledNames = [...new Set(disabledSkills.map(s => s.name))];
+        if (disabledNames.length > 0) {
+            text += `\n## 🚫 Temporarily Disabled Skills (MUST IGNORE)\n`;
+            text += `The following skills are temporarily deactivated for this repository/session. AI agents MUST IGNORE and NOT load, read, reference, or invoke any of these skills:\n`;
+            for (const name of disabledNames) {
+                text += `- \`${name}\`\n`;
             }
         }
 
@@ -1388,6 +1408,203 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             workspace: removedWs,
             total: [...new Set([...removedGlobal, ...removedWs])]
         };
+    }
+
+    /**
+     * Move a directory from source to destination recursively
+     */
+    static moveDir(src, dest) {
+        if (!fs.existsSync(src)) return false;
+        const parentDest = path.dirname(dest);
+        if (!fs.existsSync(parentDest)) {
+            fs.mkdirSync(parentDest, { recursive: true });
+        }
+        try {
+            fs.renameSync(src, dest);
+            return true;
+        } catch (renameErr) {
+            // Cross-device fallback: copy then remove
+            try {
+                this.copyDirRecursive(src, dest);
+                fs.rmSync(src, { recursive: true, force: true });
+                return true;
+            } catch (err) {
+                console.error(`Failed to move directory from ${src} to ${dest}:`, err);
+                return false;
+            }
+        }
+    }
+
+    /**
+     * List all temporarily disabled (quarantined) skills
+     */
+    static listDisabledSkills(targetScope = 'all') {
+        const globalDisabledDir = this.getGlobalDisabledSkillsPath();
+        const wsDisabledDir = this.getWorkspaceDisabledSkillsPath();
+        const items = [];
+
+        if (targetScope === 'all' || targetScope === 'global') {
+            if (globalDisabledDir) {
+                items.push(...this.listInstalledSkillsInDir(globalDisabledDir, 'global'));
+            }
+        }
+        if (targetScope === 'all' || targetScope === 'workspace') {
+            if (wsDisabledDir) {
+                items.push(...this.listInstalledSkillsInDir(wsDisabledDir, 'workspace'));
+            }
+        }
+        return items;
+    }
+
+    /**
+     * Temporarily disable specified skills by moving their folders into .disabled-skills
+     * This physically removes them from the IDE's skill discovery index, ensuring they
+     * cannot be @-mentioned or shown in / slash action lists.
+     */
+    static disableSkills(skillNames = [], targetScope = 'all') {
+        const globalSkillsDir = this.getGlobalSkillsPath();
+        const globalDisabledDir = this.getGlobalDisabledSkillsPath();
+        const wsSkillsDir = this.getWorkspaceSkillsPath();
+        const wsDisabledDir = this.getWorkspaceDisabledSkillsPath();
+
+        const disabledGlobal = [];
+        const disabledWs = [];
+
+        for (const skill of skillNames) {
+            // Workspace
+            if (targetScope === 'all' || targetScope === 'workspace') {
+                if (wsSkillsDir && wsDisabledDir) {
+                    const src = path.join(wsSkillsDir, skill);
+                    const dest = path.join(wsDisabledDir, skill);
+                    if (fs.existsSync(src)) {
+                        const moved = this.moveDir(src, dest);
+                        if (moved) disabledWs.push(skill);
+                    }
+                }
+            }
+            // Global
+            if (targetScope === 'all' || targetScope === 'global') {
+                if (globalSkillsDir && globalDisabledDir) {
+                    const src = path.join(globalSkillsDir, skill);
+                    const dest = path.join(globalDisabledDir, skill);
+                    if (fs.existsSync(src)) {
+                        const moved = this.moveDir(src, dest);
+                        if (moved) disabledGlobal.push(skill);
+                    }
+                }
+            }
+        }
+
+        // Re-sync rules so IDE rule files instruct agents about disabled skills
+        this.syncRules(true, targetScope);
+
+        return {
+            targetScope,
+            skills: skillNames,
+            global: disabledGlobal,
+            workspace: disabledWs,
+            total: [...new Set([...disabledGlobal, ...disabledWs])]
+        };
+    }
+
+    /**
+     * Re-enable all temporarily disabled skills by moving them back from .disabled-skills to skills/
+     */
+    static reEnableAllSkills(targetScope = 'all') {
+        const globalSkillsDir = this.getGlobalSkillsPath();
+        const globalDisabledDir = this.getGlobalDisabledSkillsPath();
+        const wsSkillsDir = this.getWorkspaceSkillsPath();
+        const wsDisabledDir = this.getWorkspaceDisabledSkillsPath();
+
+        const restoredGlobal = [];
+        const restoredWs = [];
+
+        // Restore Workspace
+        if ((targetScope === 'all' || targetScope === 'workspace') && wsDisabledDir && fs.existsSync(wsDisabledDir)) {
+            try {
+                const entries = fs.readdirSync(wsDisabledDir, { withFileTypes: true });
+                for (const entry of entries) {
+                    if (entry.isDirectory()) {
+                        const src = path.join(wsDisabledDir, entry.name);
+                        const dest = path.join(wsSkillsDir, entry.name);
+                        const moved = this.moveDir(src, dest);
+                        if (moved) restoredWs.push(entry.name);
+                    }
+                }
+                // Cleanup empty quarantine directory
+                try {
+                    const remaining = fs.readdirSync(wsDisabledDir);
+                    if (remaining.length === 0) fs.rmSync(wsDisabledDir, { recursive: true, force: true });
+                } catch (_) {}
+            } catch (err) {
+                console.warn('Error restoring workspace disabled skills:', err);
+            }
+        }
+
+        // Restore Global
+        if ((targetScope === 'all' || targetScope === 'global') && globalDisabledDir && fs.existsSync(globalDisabledDir)) {
+            try {
+                const entries = fs.readdirSync(globalDisabledDir, { withFileTypes: true });
+                for (const entry of entries) {
+                    if (entry.isDirectory()) {
+                        const src = path.join(globalDisabledDir, entry.name);
+                        const dest = path.join(globalSkillsDir, entry.name);
+                        const moved = this.moveDir(src, dest);
+                        if (moved) restoredGlobal.push(entry.name);
+                    }
+                }
+                // Cleanup empty quarantine directory
+                try {
+                    const remaining = fs.readdirSync(globalDisabledDir);
+                    if (remaining.length === 0) fs.rmSync(globalDisabledDir, { recursive: true, force: true });
+                } catch (_) {}
+            } catch (err) {
+                console.warn('Error restoring global disabled skills:', err);
+            }
+        }
+
+        // Re-sync rules to remove disabled skills notice
+        this.syncRules(true, targetScope);
+
+        return {
+            targetScope,
+            global: restoredGlobal,
+            workspace: restoredWs,
+            total: [...new Set([...restoredGlobal, ...restoredWs])]
+        };
+    }
+
+    /**
+     * Generate an optimized prompt for an AI agent to decide which skills to temporarily disable
+     */
+    static generateAgentDecidePrompt() {
+        const activeSkills = this.listInstalledSkills('all');
+        const activeNames = [...new Set(activeSkills.map(s => s.name))];
+        const disabledSkills = this.listDisabledSkills('all');
+        const disabledNames = [...new Set(disabledSkills.map(s => s.name))];
+
+        const skillDescriptions = activeNames.map(name => {
+            const item = activeSkills.find(s => s.name === name);
+            return `- **${name}**: ${item?.description || 'Custom/built-in assistant skill'}`;
+        }).join('\n');
+
+        return `### 🎯 AI Agent Skill Optimizer Directive: Temporary Disable Irrelevant Skills
+
+You are an expert AI token-saving assistant acting on behalf of the user in this repository.
+Your task is to analyze the user's current project task, tech stack, and goals, and **determine which installed skills are NOT needed right now** so they can be temporarily disabled to eliminate context window bloat and avoid extraneous prompt tokens.
+
+#### 📋 Currently Active Installed Skills (${activeNames.length}):
+${skillDescriptions || '(No active skills found)'}
+
+${disabledNames.length > 0 ? `\n#### ⏸️ Already Disabled Skills (${disabledNames.length}):\n${disabledNames.map(n => `- ${n}`).join('\n')}\n` : ''}
+#### 🛠️ Instructions for AI Agent:
+1. Examine the user's ongoing prompt/request and identify which skills from the active list are **completely irrelevant** to the current task.
+   - For example: If working strictly on backend Rust/Go code, frontend CSS/UI skills (like \`antislop-ui\`, \`antislop-layoutmobile\`) or document KG engines (\`jevgraph-*\`) may be irrelevant.
+   - If working purely on documentation/specs, code graph AST skills or low-level CLI skills may be irrelevant.
+2. Output a concise table or bullet list of:
+   - **Skills to Keep Active:** Essential for current work.
+   - **Skills to Temporarily Disable:** Irrelevant skills that should be quarantined to save context tokens.
+3. Confirm with the user, or provide the exact command/action to disable them.`;
     }
 
     /**
