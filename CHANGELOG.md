@@ -17,12 +17,15 @@ All notable changes to the **Token Saver (RTK)** project will be documented in t
   - Strict rule policy instructs AI agents to query semantic graphs first before falling back to full file reads.
 - **7-Way Upstream GitHub Core Synchronization**:
   - Unified multi-engine management across 7 upstream open-source projects: **RTK**, **Headroom**, **Ponytail**, **Anti-Slop**, **OmniRoute**, **JevGraph**, and **CodeGraphContext**.
-  - Added granular sync and uninstallation support for CodeGraphContext.
-- **Webview UI Refinement**:
-  - Removed "Terminal Scoreboard" button from Quick Actions to declutter the dashboard header.
+- **Webview Header & Footer Refinements**:
+  - Added dedicated header button to toggle CodeGraph (`Turn CodeGraph ON/OFF`).
+  - Fixed vertical position drift and aligned all header action buttons, timer dropdown, and window buttons with standardized 28px height.
+  - Added upstream GitHub repository link for CodeGraphContext beside JevGraph in the dashboard footer.
+  - Removed "Terminal Scoreboard" button from Quick Actions to declutter the dashboard.
 
-
+## [1.11.0] - 2026-10-10
 ### Added & Improved
+
 - **JevGraph Knowledge Graph Engine Integration (`chenmingtang830/jevgraph`)**:
   - Integrated evidence-backed candidate knowledge graph extraction from documents and technical specifications (PDF, DOCX, PPTX, text).
   - Slashes document ingestion token consumption by **80%–95%** compared to raw multi-page document dumps by converting inputs into schema-guided graphs with page-level evidence character spans.
