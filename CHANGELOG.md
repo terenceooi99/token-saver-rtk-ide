@@ -2,6 +2,21 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.13.0] - 2026-10-16
+### Added & Improved
+- **CodeGraphContext in System Health & Upstream Tracking**:
+  - Integrated CodeGraphContext into System Health diagnostics checklist with live status indicators and inline actions (🤖 Ask AI, 🧬 Sync, 🗑️ Uninstall).
+  - Added CodeGraphContext as the 7th layer in the interactive Upstream Versions dropdown with repository link, status badges, and version display.
+  - Included CodeGraphContext in upstream latency benchmarking (`testLatency`) and AI agent installation prompt generator (`generateAiInstallPrompt`).
+- **Uninstall Skills Pop-up Enhancements (Recycle Bin & Recovery)**:
+  - Added native OS Recycle Bin / Trash support (`shell:RecycleBinFolder` on Windows, `~/.Trash` on macOS, `trash:///` on Linux) to prevent accidental data loss.
+  - Added **"Open Recycle Bin"** action options directly inside confirmation modals and post-uninstallation notifications.
+  - Added **"Recover Uninstalled Skills"** options (Global IDE, Project Workspace, and All) directly in the quick action pop-up window to 1-click restore all 31 agent skills without manual reinstallation.
+  - Updated preset uninstallation options to cover all 31 chat commands, adding a dedicated preset for `CodeGraphContext Skills (2 Skills)`.
+- **Documentation & UI Visual Assets**:
+  - Added comprehensive guides for "Uninstall Skills" (with Recycle Bin recovery) and "Temporary Disable Skills" (Agent Quarantine Mode) in `README.md`.
+  - Added visual walkthrough screenshots `resources/dashboard-uninstalledskillwindow.png` and `resources/dashboard-disableskillwindow.png`.
+
 ## [1.12.0] - 2026-10-16
 ### Added & Improved
 - **CodeGraphContext Integration (`CodeGraphContext/CodeGraphContext`)**:
