@@ -642,32 +642,53 @@ async function activate(context) {
         RtkService.runInTerminal(cmds.combinedCmd);
     });
 
-    const copyAiInstallPromptCmd = vscode.commands.registerCommand('tokenSaver.copyAiInstallPrompt', async () => {
+    const copyAiInstallPromptCmd = vscode.commands.registerCommand('tokenSaver.copyAiInstallPrompt', async (elementKey) => {
         const isWindows = process.platform === 'win32';
         const isMac = process.platform === 'darwin';
-        const check = await RtkService.checkInstalled();
-        const headroomCheck = await RtkService.checkHeadroomInstalled();
-        const ponytailCheck = await RtkService.checkPonytailInstalled();
-        const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
-        const codeGraphCheck = await CodeGraphService.checkInstalled();
 
-        const prompt = RtkService.generateAiInstallPrompt(
-            isWindows,
-            isMac,
-            !check.installed,
-            !headroomCheck.installed,
-            !ponytailCheck.installed,
-            true,
-            !antiSlopCheck.installed,
-            true,
-            !codeGraphCheck.installed
-        );
-        await vscode.env.clipboard.writeText(prompt);
+        let prompt;
+        if (elementKey && typeof elementKey === 'string') {
+            prompt = RtkService.generateSingleElementAiPrompt(elementKey, isWindows, isMac);
+            await vscode.env.clipboard.writeText(prompt);
+            vscode.window.showInformationMessage(
+                `🤖 AI setup prompt for ${elementKey.toUpperCase()} copied to clipboard! Paste it into your AI assistant chat to install automatically.`,
+                'Open Chat'
+            );
+        } else {
+            const check = await RtkService.checkInstalled();
+            const headroomCheck = await RtkService.checkHeadroomInstalled();
+            const ponytailCheck = await RtkService.checkPonytailInstalled();
+            const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
+            const jevGraphCheck = await RtkService.checkJevGraphInstalled();
+            const codeGraphCheck = await CodeGraphService.checkInstalled();
+            const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
-        vscode.window.showInformationMessage(
-            '🤖 AI Agent setup prompt copied to clipboard! Paste it into your AI assistant chat (Antigravity, Cursor, Windsurf, Claude Code, Cline) to install & fetch tools automatically.',
-            'Open Chat'
-        );
+            const omniMissing = !omniStatus.installed && !omniStatus.running;
+            const rtkMissing = !check.installed;
+            const headroomMissing = !headroomCheck.installed;
+            const ponytailMissing = !ponytailCheck.installed;
+            const antiSlopMissing = !antiSlopCheck.installed;
+            const jevGraphMissing = !jevGraphCheck.installed;
+            const codeGraphMissing = !codeGraphCheck.installed;
+
+            prompt = RtkService.generateAiInstallPrompt(
+                isWindows,
+                isMac,
+                rtkMissing,
+                headroomMissing,
+                ponytailMissing,
+                omniMissing,
+                antiSlopMissing,
+                jevGraphMissing,
+                codeGraphMissing
+            );
+            await vscode.env.clipboard.writeText(prompt);
+
+            vscode.window.showInformationMessage(
+                '🤖 AI Agent setup prompt copied to clipboard! Paste it into your AI assistant chat (Antigravity, Cursor, Windsurf, Claude Code, Cline) to install & fetch tools automatically.',
+                'Open Chat'
+            );
+        }
     });
 
     const syncPonytailCmd = vscode.commands.registerCommand('tokenSaver.syncPonytail', async () => {

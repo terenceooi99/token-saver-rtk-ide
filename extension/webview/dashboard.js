@@ -847,6 +847,36 @@ if (setupAskAiBtn) {
     });
 }
 
+// Single missing element chip click handler (Copies prompt for that specific tool)
+if (setupMissingTags) {
+    setupMissingTags.addEventListener('click', (e) => {
+        const chipBtn = e.target.closest('.missing-chip');
+        if (!chipBtn) return;
+
+        const elementKey = chipBtn.getAttribute('data-element');
+        const elementName = chipBtn.getAttribute('data-name') || elementKey;
+
+        if (elementKey) {
+            vscode.postMessage({
+                command: 'copyAiInstallPrompt',
+                elementKey: elementKey,
+                elementName: elementName
+            });
+
+            const actionTag = chipBtn.querySelector('.chip-action-tag');
+            if (actionTag) {
+                const originalHtml = actionTag.innerHTML;
+                actionTag.innerHTML = '✓ Copied!';
+                chipBtn.classList.add('chip-copied');
+                setTimeout(() => {
+                    actionTag.innerHTML = originalHtml;
+                    chipBtn.classList.remove('chip-copied');
+                }, 2000);
+            }
+        }
+    });
+}
+
 if (setupTerminalBtn) {
     setupTerminalBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'installCli' });
@@ -1468,7 +1498,8 @@ function renderDashboardState(data) {
     const isAntiSlopMissing = !data.antiSlopInstalled;
     const isOmniMissing = !data.omniRouteInstalled && !data.omniRouteRunning;
     const isJevGraphMissing = !data.jevGraphInstalled;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing;
+    const isCodeGraphMissing = !data.codeGraphInstalled;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
@@ -1476,22 +1507,25 @@ function renderDashboardState(data) {
             if (setupMissingTags) {
                 const chips = [];
                 if (isOmniMissing) {
-                    chips.push('<span class="missing-chip chip-purple" style="background: rgba(175, 82, 222, 0.15); color: #d28cff; border: 1px solid rgba(175, 82, 222, 0.3);">🌐 OmniRoute Missing</span>');
+                    chips.push('<button type="button" class="missing-chip chip-purple" data-element="omniroute" data-name="OmniRoute" title="Click to copy AI prompt to install OmniRoute" style="background: rgba(175, 82, 222, 0.15); color: #d28cff; border: 1px solid rgba(175, 82, 222, 0.3);"><span class="chip-content">🌐 OmniRoute Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
                 if (isRtkMissing) {
-                    chips.push('<span class="missing-chip chip-rose">⚡ RTK CLI Missing</span>');
+                    chips.push('<button type="button" class="missing-chip chip-rose" data-element="rtk" data-name="RTK CLI" title="Click to copy AI prompt to install RTK CLI"><span class="chip-content">⚡ RTK CLI Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
                 if (isHeadroomMissing) {
-                    chips.push('<span class="missing-chip chip-amber">📦 Headroom Missing</span>');
+                    chips.push('<button type="button" class="missing-chip chip-amber" data-element="headroom" data-name="Headroom" title="Click to copy AI prompt to install Headroom"><span class="chip-content">📦 Headroom Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
                 if (isPonytailMissing) {
-                    chips.push('<span class="missing-chip chip-cyan">🥋 Ponytail GitHub Missing</span>');
+                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="ponytail" data-name="Ponytail" title="Click to copy AI prompt to install Ponytail"><span class="chip-content">🥋 Ponytail GitHub Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
                 if (isAntiSlopMissing) {
-                    chips.push('<span class="missing-chip chip-cyan" style="background: rgba(48, 209, 88, 0.15); color: #30d158; border: 1px solid rgba(48, 209, 88, 0.3);">🛡️ Anti-Slop Missing</span>');
+                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="antislop" data-name="Anti-Slop" title="Click to copy AI prompt to install Anti-Slop" style="background: rgba(48, 209, 88, 0.15); color: #30d158; border: 1px solid rgba(48, 209, 88, 0.3);"><span class="chip-content">🛡️ Anti-Slop Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
                 if (isJevGraphMissing) {
-                    chips.push('<span class="missing-chip chip-teal" style="background: rgba(48, 176, 199, 0.15); color: #30b0c7; border: 1px solid rgba(48, 176, 199, 0.3);">🕸️ JevGraph Missing</span>');
+                    chips.push('<button type="button" class="missing-chip chip-teal" data-element="jevgraph" data-name="JevGraph" title="Click to copy AI prompt to install JevGraph" style="background: rgba(48, 176, 199, 0.15); color: #30b0c7; border: 1px solid rgba(48, 176, 199, 0.3);"><span class="chip-content">🕸️ JevGraph Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                }
+                if (isCodeGraphMissing) {
+                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="codegraph" data-name="CodeGraphContext" title="Click to copy AI prompt to install CodeGraphContext" style="background: rgba(0, 122, 255, 0.15); color: #5ac8fa; border: 1px solid rgba(0, 122, 255, 0.3);"><span class="chip-content">🧬 CodeGraph Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
                 setupMissingTags.innerHTML = chips.join('');
             }
@@ -1503,6 +1537,7 @@ function renderDashboardState(data) {
                 if (isPonytailMissing) missingNames.push('Ponytail YAGNI');
                 if (isAntiSlopMissing) missingNames.push('Anti-Slop');
                 if (isJevGraphMissing) missingNames.push('JevGraph KG');
+                if (isCodeGraphMissing) missingNames.push('CodeGraphContext');
                 setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, and build knowledge graphs from specs.`;
             }
         } else {

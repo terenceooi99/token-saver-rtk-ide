@@ -873,12 +873,31 @@ class RtkService {
             stepIdx++;
         }
 
-        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, \`omniroute --version\`, \`uv run jevgraph --help\`, \`cgc --version\`, and verify Ponytail, Anti-Slop & OmniRoute skills are available in the IDE.`);
+        const verifyCmds = [];
+        if (rtkMissing) verifyCmds.push('`rtk --version`');
+        if (headroomMissing) verifyCmds.push('`headroom --version`');
+        if (omniMissing) verifyCmds.push('`omniroute --version`');
+        if (jevGraphMissing) verifyCmds.push('`uv run jevgraph --help`');
+        if (codeGraphMissing) verifyCmds.push('`cgc --version`');
+        const verifyText = verifyCmds.length > 0 ? `Run ${verifyCmds.join(', ')} and verify active status in IDE.` : 'Verify all components are active in IDE.';
+
+        items.push(`${stepIdx}. **Verify Installations**:\n   ${verifyText}`);
         stepIdx++;
         items.push(`${stepIdx}. **Confirm Success**:\n   Report the installed version numbers and active status back to me once done.`);
 
+        const missingLabels = [];
+        if (omniMissing) missingLabels.push('OmniRoute');
+        if (rtkMissing) missingLabels.push('RTK');
+        if (headroomMissing) missingLabels.push('Headroom');
+        if (jevGraphMissing) missingLabels.push('JevGraph');
+        if (codeGraphMissing) missingLabels.push('CodeGraphContext');
+        if (antiSlopMissing) missingLabels.push('Anti-Slop');
+        if (ponytailMissing) missingLabels.push('Ponytail');
+
+        const labelText = missingLabels.length > 0 ? missingLabels.join(', ') : 'necessary';
+
         const prompt = [
-            `Please help me install, fetch, and configure the necessary token saving, anti-slop, and AI routing tools (OmniRoute, RTK, Headroom, JevGraph, CodeGraphContext, Anti-Slop, and Ponytail) for Token Saver on this ${osName} machine:`,
+            `Please help me install, fetch, and configure the missing tools (${labelText}) for Token Saver on this ${osName} machine:`,
             '',
             items.join('\n\n'),
             '',
@@ -886,6 +905,83 @@ class RtkService {
         ].join('\n');
 
         return prompt;
+    }
+
+    static generateSingleElementAiPrompt(elementKey, isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin')) {
+        const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
+        const cmds = this.getInstallCommands(isWindows, isMac);
+
+        let title = '';
+        let instructions = [];
+
+        switch (elementKey) {
+            case 'omniroute':
+                title = 'OmniRoute AI Gateway (Smart Model Router)';
+                instructions.push(
+                    `1. **Install OmniRoute CLI**:\n   Run command: \`${cmds.omniRouteCmd}\``,
+                    `2. **Verify Installation**:\n   Run: \`omniroute --version\``,
+                    `3. **Start Gateway (Optional)**:\n   Run \`omniroute start\` or configure endpoint at \`http://localhost:20128/v1\` with fallback routing.`
+                );
+                break;
+            case 'jevgraph':
+                title = 'JevGraph Knowledge Graph Engine (chenmingtang830/jevgraph)';
+                instructions.push(
+                    `1. **Clone & Setup JevGraph via uv**:\n   Run command: \`${cmds.jevGraphCmd}\``,
+                    `2. **Verify Engine**:\n   Run: \`uv run jevgraph --help\` or verify directory at \`~/.config/jevgraph\`.`,
+                    `3. **Skills Integration**:\n   Ensure skills \`/jevgraph-build\` and \`/jevgraph-query\` are available in the IDE.`
+                );
+                break;
+            case 'rtk':
+                title = 'RTK CLI (Rust Token Killer)';
+                instructions.push(
+                    `1. **Install RTK CLI**:\n   Run command: \`${cmds.rtkCmd}\``,
+                    `2. **Verify Installation**:\n   Run: \`rtk --version\` and \`rtk gain\`.`,
+                    `3. **Usage**:\n   Commands like \`rtk git status\`, \`rtk npm test\` now condense output to save 60-90% tokens.`
+                );
+                break;
+            case 'headroom':
+                title = 'Headroom Context Compression (CCR Layer)';
+                instructions.push(
+                    `1. **Install Headroom Python Package**:\n   Run command: \`${cmds.headroomCmd}\``,
+                    `2. **Verify Installation**:\n   Run: \`headroom --version\`.`,
+                    `3. **Skills Integration**:\n   Ensure \`/rtk-compress\` and CCR compression are active.`
+                );
+                break;
+            case 'ponytail':
+                title = 'Ponytail YAGNI Suite (DietrichGebert/ponytail)';
+                instructions.push(
+                    `1. **Fetch & Install Ponytail Skills**:\n   Fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.`,
+                    `2. **Verify Skills**:\n   Ensure \`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\` are registered.`,
+                    `3. **Configure Rules**:\n   Add Ponytail YAGNI directives to AGENTS.md / .cursorrules.`
+                );
+                break;
+            case 'antislop':
+                title = 'Anti-Slop Framework (miqdadbadjuber/anti-slop)';
+                instructions.push(
+                    `1. **Fetch & Install Anti-Slop Skills**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.`,
+                    `2. **Verify Skills**:\n   Ensure \`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\` are registered.`,
+                    `3. **Configure Rules**:\n   Ensure Anti-Slop hygiene rules are active in IDE agent configuration.`
+                );
+                break;
+            case 'codegraph':
+                title = 'CodeGraphContext Code AST Engine (CodeGraphContext/CodeGraphContext)';
+                instructions.push(
+                    `1. **Install CodeGraphContext**:\n   Run command: \`${cmds.codeGraphCmd}\``,
+                    `2. **Verify Installation**:\n   Run: \`cgc --version\`.`,
+                    `3. **Index Codebase**:\n   Run \`cgc index\` or \`/codegraph-index\` to build the semantic property graph.`
+                );
+                break;
+            default:
+                return this.generateAiInstallPrompt(isWindows, isMac);
+        }
+
+        return [
+            `Please help me install, configure, and verify **${title}** for Token Saver on this ${osName} machine:`,
+            '',
+            instructions.join('\n\n'),
+            '',
+            'Please execute these terminal commands and setup steps now, then confirm once complete.'
+        ].join('\n');
     }
 
     static runInTerminal(command = 'rtk gain') {

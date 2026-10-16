@@ -203,8 +203,13 @@ class WebviewHelper {
                 vscode.commands.executeCommand('tokenSaver.installCli');
                 break;
             case 'copyAiInstallPrompt':
-                await vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
-                webview.postMessage({ type: 'toast', message: '🤖 AI Agent prompt copied to clipboard!' });
+                await vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt', message.elementKey);
+                webview.postMessage({
+                    type: 'toast',
+                    message: message.elementName
+                        ? `🤖 AI prompt for ${message.elementName} copied to clipboard!`
+                        : '🤖 AI Agent prompt copied to clipboard!'
+                });
                 break;
             case 'copyInstallCommands':
                 await vscode.commands.executeCommand('tokenSaver.copyInstallCommands');

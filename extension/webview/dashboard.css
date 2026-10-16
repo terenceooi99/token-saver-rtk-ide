@@ -903,16 +903,63 @@ h1 {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
-.setup-missing-chip {
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 3px 8px;
+.setup-missing-chip,
+.missing-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
     border-radius: var(--radius-pill);
     background: rgba(255, 69, 58, 0.2);
     border: 1px solid rgba(255, 69, 58, 0.4);
     color: #ffb4ab;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.4;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+}
+
+.missing-chip:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.18);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.missing-chip:active {
+    transform: scale(0.97);
+}
+
+.missing-chip .chip-action-tag {
+    font-size: 9.5px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.02em;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+.missing-chip:hover .chip-action-tag {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.missing-chip.chip-copied {
+    border-color: #30d158 !important;
+    background: rgba(48, 209, 88, 0.25) !important;
+    color: #30d158 !important;
+}
+
+.missing-chip.chip-copied .chip-action-tag {
+    background: #30d158;
+    color: #000;
 }
 
 .setup-banner-actions {
