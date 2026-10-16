@@ -2,6 +2,29 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.0] - 2026-10-17
+### Added & Improved
+- **fastCRW Hybrid Web Search & Scraping (`fastcrw/crw`)**:
+  - Integrated local fastCRW engine for instant static markdown web scraping and search.
+  - Converts raw HTML and JS-rendered DOMs into clean, condensed Markdown, cutting web research prompt tokens by **70%–90%**.
+  - Added dedicated `/crw-search` AI agent skill and `CrwService` integration with automatic binary & server detection (`crw`, `crw-server`, `cargo`).
+- **Lightpanda Browser Integration (`lightpanda-io/browser`)**:
+  - Integrated ultra-fast headless browser engineered for AI agents with dynamic V8 JavaScript execution.
+  - Added `LightpandaService` detecting native CLI, `@lightpanda/browser` npm package, and Docker instances.
+  - Added Model Context Protocol (MCP) server launch (`lightpanda mcp`) and 1-click MCP configuration JSON export.
+- **3-Tier Hybrid Web Routing & Architecture**:
+  - Implemented automatic 3-tier hybrid web scraping waterfall:
+    - **Tier 1 (Built-in Web Search)**: Fast discovery, URLs, and summaries.
+    - **Tier 2 (fastCRW Local Engine)**: Instant token-optimized markdown extraction and scraping.
+    - **Tier 3 (Lightpanda Browser via MCP)**: Dynamic JavaScript rendering, SPAs, and deep web extraction.
+  - Added header action button (`Turn Hybrid Web ON/OFF`), dedicated webview dashboard section, and channel settings (`tokenSaver.hybridWebEnabled`, `tokenSaver.crwEnabled`, `tokenSaver.lightpandaEnabled`).
+- **Holistic Dashboard & System Health Updates (9-Way Upstream Sync)**:
+  - Added fastCRW and Lightpanda Browser to System Health diagnostics, Upstream Versions dropdown, 1-Click AI install prompt generator, Sync picker, and Uninstall picker.
+  - Added official GitHub repository references in the dashboard footer for both fastCRW and Lightpanda.
+  - Added quick update button `tokenSaver.updateFromOpenVsx` (🢁) on the Primary Sidebar title bar for 1-click extension updates.
+- **Zero-Noise Latency Benchmarks Guardrail**:
+  - Refactored upstream latency testing to ping only **installed** engines, silently omitting uninstalled tools to eliminate error banners and visual clutter.
+
 ## [1.13.0] - 2026-10-16
 ### Added & Improved
 - **CodeGraphContext in System Health & Upstream Tracking**:

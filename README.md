@@ -8,7 +8,7 @@
 [![Windsurf](https://img.shields.io/badge/Windsurf%20IDE-Compatible-00E5FF.svg)](https://codeium.com/windsurf)
 [![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-rtk-ide)
 
-**Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraphContext)** is an all-in-one token optimization, semantic code & knowledge graph extraction, and AI quality suite with CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), [Anti-Slop AI Quality Framework](https://github.com/miqdadbadjuber/anti-slop), [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), [JevGraph Engine](https://github.com/chenmingtang830/jevgraph) (for non-code specs & docs), and [CodeGraphContext](https://github.com/CodeGraphContext/CodeGraphContext) (for semantic code graphs), it slashes AI context window token consumption by **60% - 95%** during terminal command execution, code exploration, and document ingestion across **all major Agentic AI IDEs and coding assistants**.
+**Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraphContext, fastCRW & Lightpanda Browser)** is an all-in-one token optimization, semantic code & knowledge graph extraction, hybrid web search/scraping, and AI quality suite with CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), [Anti-Slop AI Quality Framework](https://github.com/miqdadbadjuber/anti-slop), [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), [JevGraph Engine](https://github.com/chenmingtang830/jevgraph) (for non-code specs & docs), [CodeGraphContext](https://github.com/CodeGraphContext/CodeGraphContext) (for semantic code graphs), [fastCRW](https://github.com/fastcrw/crw) (fast markdown web scraper), and [Lightpanda Browser](https://github.com/lightpanda-io/browser) (headless agent browser via MCP), it slashes AI context window token consumption by **60% - 95%** during terminal command execution, code exploration, web research, and document ingestion across **all major Agentic AI IDEs and coding assistants**.
 
 <p align="center">
   <img src="resources/dashboard-preview.png" alt="Token Saver Interactive Glassmorphic Dashboard" width="100%" />
@@ -153,7 +153,9 @@ flowchart TD
 | **`/rtk-sync`** | **1-Click syncs RTK & Headroom rules** across all AI agent files. |
 | **`/rtk-run <cmd>`** | **Runs arbitrary shell command** through RTK output compression proxy. |
 | **`/rtk-update`** | **Checks and updates RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph** from upstream GitHub releases. |
-| **`/rtk-omniroute`** | **Configures OmniRoute AI Gateway & Smart Router** for low-latency multi-model routing & rate-limit evasion. |
+| **`/crw-search`** | **Hybrid web search & scraping with fastCRW** (70–90% token reduction over raw browser HTML). |
+| **`/codegraph-query`** | **Queries pre-indexed semantic code graph** (symbols, call trees, callers/callees). |
+| **`/codegraph-index`** | **Indexes workspace code into semantic AST property graph** with CodeGraphContext. |
 | **`/jevgraph-build`** | **Builds schema-guided candidate knowledge graphs** from documents, specs, and PDFs (80–95% token savings). |
 | **`/jevgraph-query`** | **Extracts bounded subgraphs & evidence spans** by entity or query for precise LLM context injection. |
 | **`/ponytail`** | **Configures Ponytail YAGNI mode** for concise code diffs & terse generation. |
@@ -186,6 +188,7 @@ The extension provides full graphical and automated control directly from your *
 1. **Primary Sidebar Interactive Dashboard**:
    - Click the **RTK Meter icon** on the Activity Bar / Primary Side Bar to instantly view and manage RTK optimization in a compact, sleek view.
    - Includes a **Pop Out to Editor Tab** button (`⤢`) to expand into a full-width dashboard at any time.
+   - Includes an **Update from Open VSX** button (`🢁`) right in the sidebar title bar for 1-click extension updates.
 2. **Multi-IDE & AI Agent Synchronization Hub**:
    - 1-Click sync to `.github/copilot-instructions.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `CLAUDE.md`, `AGENTS.md`, and `~/.gemini/config/`.
    - **Safe Delimiter System**: Preserves existing project instructions using `<!-- RTK_TOKEN_SAVER_START -->` blocks.
@@ -219,9 +222,9 @@ The extension provides full graphical and automated control directly from your *
   <img src="resources/dashboard-disableskillwindow.png" alt="Token Saver Temporary Disable Skills Pop-up Window" width="100%" />
 </p>
 
-6. **Upstream GitHub 7-Way Core Sync (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraphContext)**:
-   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, `diegosouzapw/OmniRoute`, `chenmingtang830/jevgraph` & `CodeGraphContext/CodeGraphContext`).
-   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail, Anti-Slop, JevGraph, and CodeGraph.
+6. **Upstream GitHub 9-Way Core Sync (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraphContext, fastCRW & Lightpanda)**:
+   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, `diegosouzapw/OmniRoute`, `chenmingtang830/jevgraph`, `CodeGraphContext/CodeGraphContext`, `fastcrw/crw` & `lightpanda-io/browser`).
+   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail, Anti-Slop, JevGraph, CodeGraph, fastCRW, and Lightpanda.
 7. **Dynamic Live Status Bar**:
    - Shows real-time savings: `⚡ RTK: 48.2k saved (72%)` or `⚪ RTK: OFF`.
    - Rich hover tooltips with cost savings and quick access to the dashboard.

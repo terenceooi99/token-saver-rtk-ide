@@ -50,7 +50,7 @@ class WebviewHelper {
         const ideStatus = SkillInstaller.getIdeStatus();
         const omniPresets = OmniRouteService.getIdePresets(omniPort);
 
-        let extensionVersion = '1.13.0';
+        let extensionVersion = '1.14.0';
         try {
             if (context.extension && context.extension.packageJSON && context.extension.packageJSON.version) {
                 extensionVersion = context.extension.packageJSON.version;
