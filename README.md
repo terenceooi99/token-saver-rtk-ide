@@ -88,6 +88,10 @@ flowchart TD
     LLMModels -.->|"Telemetry & Savings Data"| WebviewDash
 ```
 
+<p align="center">
+  <img src="resources/flowchart-architecture.png" alt="Token Saver Architectural Flowchart" width="100%" />
+</p>
+
 
 
 ---
