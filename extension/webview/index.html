@@ -800,7 +800,7 @@
                             </button>
 
                             <button class="btn btn-action" id="testLatencyBtn"
-                                title="Test Upstream GitHub Layer Latencies (RTK, Headroom, Ponytail & OmniRoute)">
+                                title="Test Upstream GitHub Layer Latencies (RTK, Headroom, Ponytail, OmniRoute, JevGraph & CodeGraphContext)">
                                 <div class="btn-action-left">
                                     <span class="btn-icon">⏱️</span>
                                     <div class="btn-text-block">
@@ -907,6 +907,20 @@
                                             title="Fetch JevGraph from GitHub via uv">🕸️ Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="jevGraphDiagUninstallBtn"
                                             title="Uninstall JevGraph Engine">🗑️</button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="diag-row">
+                                <span class="diag-key">CodeGraph (GitHub):</span>
+                                <div class="diag-val-wrapper">
+                                    <span class="diag-val" id="diagCodeGraphStatus">Checking...</span>
+                                    <span class="diag-action-btns" id="codeGraphDiagActions" style="display: none;">
+                                        <button class="btn-diag-mini btn-diag-ai" id="codeGraphDiagAiBtn"
+                                            title="Copy AI install prompt for CodeGraphContext">🤖 Ask AI</button>
+                                        <button class="btn-diag-mini btn-diag-sync" id="codeGraphDiagSyncBtn"
+                                            title="Install CodeGraphContext from GitHub via pip">🧬 Sync</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="codeGraphDiagUninstallBtn"
+                                            title="Uninstall CodeGraphContext">🗑️</button>
                                     </span>
                                 </div>
                             </div>

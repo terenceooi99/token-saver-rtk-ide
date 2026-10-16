@@ -174,6 +174,12 @@ const codeGraphIndexBtn = document.getElementById('codeGraphIndexBtn');
 const codeGraphQueryBtn = document.getElementById('codeGraphQueryBtn');
 const codeGraphResetBtn = document.getElementById('codeGraphResetBtn');
 
+const diagCodeGraphStatus = document.getElementById('diagCodeGraphStatus');
+const codeGraphDiagActions = document.getElementById('codeGraphDiagActions');
+const codeGraphDiagAiBtn = document.getElementById('codeGraphDiagAiBtn');
+const codeGraphDiagSyncBtn = document.getElementById('codeGraphDiagSyncBtn');
+const codeGraphDiagUninstallBtn = document.getElementById('codeGraphDiagUninstallBtn');
+
 const uninstallUpstreamBtn = document.getElementById('uninstallUpstreamBtn');
 const headerUninstallBtn = document.getElementById('headerUninstallBtn');
 const rtkDiagUninstallBtn = document.getElementById('rtkDiagUninstallBtn');
@@ -1169,6 +1175,31 @@ if (jevGraphDiagUninstallBtn) {
     });
 }
 
+if (codeGraphDiagAiBtn) {
+    codeGraphDiagAiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'copyAiInstallPrompt' });
+        codeGraphDiagAiBtn.textContent = '✓ Copied';
+        setTimeout(() => { codeGraphDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+    });
+}
+
+if (codeGraphDiagSyncBtn) {
+    codeGraphDiagSyncBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        codeGraphDiagSyncBtn.textContent = '🧬 Syncing...';
+        vscode.postMessage({ command: 'syncCodeGraph' });
+        setTimeout(() => { codeGraphDiagSyncBtn.textContent = '🧬 Sync'; }, 3000);
+    });
+}
+
+if (codeGraphDiagUninstallBtn) {
+    codeGraphDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'codegraph' });
+    });
+}
+
 // Handle incoming messages from extension host
 window.addEventListener('message', (event) => {
     const message = event.data;
@@ -1680,6 +1711,29 @@ function renderDashboardState(data) {
         if (jevGraphDiagUninstallBtn) jevGraphDiagUninstallBtn.style.display = jInstalled ? 'inline-block' : 'none';
     }
 
+    if (diagCodeGraphStatus) {
+        const cgInstalled = Boolean(data.codeGraphInstalled);
+        const cgEnabled = data.codeGraphEnabled !== false;
+        const cgVer = data.codeGraphVersion || 'Ready';
+        if (cgInstalled && cgEnabled) {
+            diagCodeGraphStatus.textContent = `Active (${cgVer})`;
+            diagCodeGraphStatus.style.color = 'var(--accent-green)';
+        } else if (cgInstalled && !cgEnabled) {
+            diagCodeGraphStatus.textContent = 'Inactive (Disabled)';
+            diagCodeGraphStatus.style.color = 'var(--text-muted)';
+        } else {
+            diagCodeGraphStatus.textContent = 'Inactive (Not Installed)';
+            diagCodeGraphStatus.style.color = 'var(--accent-amber)';
+        }
+    }
+    if (codeGraphDiagActions) {
+        codeGraphDiagActions.style.display = 'inline-flex';
+        const cgInstalled = Boolean(data.codeGraphInstalled);
+        if (codeGraphDiagAiBtn) codeGraphDiagAiBtn.style.display = cgInstalled ? 'none' : 'inline-block';
+        if (codeGraphDiagSyncBtn) codeGraphDiagSyncBtn.style.display = cgInstalled ? 'none' : 'inline-block';
+        if (codeGraphDiagUninstallBtn) codeGraphDiagUninstallBtn.style.display = cgInstalled ? 'inline-block' : 'none';
+    }
+
     if (jevStatusBadge) {
         const jInstalled = data.jevGraphInstalled;
         const jEnabled = data.jevGraphEnabled !== false;
@@ -1779,6 +1833,14 @@ function renderDashboardState(data) {
             repo: 'chenmingtang830/jevgraph',
             version: data.jevGraphInstalled ? `${data.jevGraphVersion || 'Ready'} (${data.jevGraphProvider || 'keyword'})` : 'Not installed',
             isInstalled: Boolean(data.jevGraphInstalled)
+        },
+        {
+            key: 'codegraph',
+            name: 'CodeGraphContext (Code AST)',
+            icon: '🧬',
+            repo: 'CodeGraphContext/CodeGraphContext',
+            version: data.codeGraphInstalled ? `${data.codeGraphVersion || 'Ready'} (cgc)` : 'Not installed',
+            isInstalled: Boolean(data.codeGraphInstalled)
         }
     ];
 

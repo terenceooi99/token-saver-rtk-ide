@@ -306,17 +306,45 @@ async function activate(context) {
     });
 
     const uninstallSkillsCmd = vscode.commands.registerCommand('tokenSaver.uninstallSkills', async () => {
-        // Step 1: Choose Scope (Global preinstalled or Project workspace)
+        // Step 1: Choose Action & Scope
         const scopes = [
             { label: '🏠 Global Config Only', description: 'Preinstalled in user IDE: ~/.gemini/config/skills/', value: 'global' },
             { label: '📁 Workspace Only', description: 'Based within current project: .agents/skills/', value: 'workspace' },
-            { label: '🌐 Global & Workspace (All Targets)', description: 'Clean both ~/.gemini/config and .agents', value: 'all' }
+            { label: '🌐 Global & Workspace (All Targets)', description: 'Clean both ~/.gemini/config and .agents', value: 'all' },
+            { label: '♻️ Recover Uninstalled Skills (Global IDE)', description: 'Restore / Re-install all preinstalled agent skills to ~/.gemini/config/skills/', value: 'recover_global' },
+            { label: '♻️ Recover Uninstalled Skills (Project Workspace)', description: 'Restore / Re-install all preinstalled agent skills to .agents/skills/', value: 'recover_workspace' },
+            { label: '♻️ Recover Uninstalled Skills (All - Global & Project)', description: 'Restore / Re-install all agent skills to both Global IDE and Workspace', value: 'recover_all' },
+            { label: '🗑️ Open OS Recycle Bin / Trash', description: 'Inspect or restore deleted skill folders directly in OS file manager', value: 'open_recycle_bin' }
         ];
 
         const selectedScope = await vscode.window.showQuickPick(scopes, {
-            placeHolder: 'Select where to uninstall skills from (Global IDE vs Project Workspace):'
+            placeHolder: 'Uninstall or Recover Skills (Global IDE vs Project Workspace):'
         });
         if (!selectedScope) return;
+
+        // Handle direct recovery or opening recycle bin
+        if (selectedScope.value === 'open_recycle_bin') {
+            SkillInstaller.openRecycleBin();
+            return;
+        }
+
+        if (selectedScope.value === 'recover_global' || selectedScope.value === 'recover_workspace' || selectedScope.value === 'recover_all') {
+            const target = selectedScope.value === 'recover_global' ? 'global' : (selectedScope.value === 'recover_workspace' ? 'workspace' : 'all');
+            try {
+                const results = SkillInstaller.installSkills(target);
+                const dests = results.map(r => r.destination).join(' and ');
+                vscode.window.showInformationMessage(
+                    `♻️ Successfully recovered and restored all 31 AI Agent skills to: ${dests}!`,
+                    'Open Recycle Bin'
+                ).then(sel => {
+                    if (sel === 'Open Recycle Bin') SkillInstaller.openRecycleBin();
+                });
+                await refreshStatus(context);
+            } catch (recErr) {
+                vscode.window.showErrorMessage(`Failed to recover uninstalled skills: ${recErr.message}`);
+            }
+            return;
+        }
 
         // Step 2: Choose Method (Pick Individual Skills vs Preset Set)
         const installedSkills = SkillInstaller.listInstalledSkills(selectedScope.value);
@@ -330,15 +358,37 @@ async function activate(context) {
             },
             {
                 label: '📦 Uninstall by Skill Set (Presets)',
-                description: 'RTK Core, Ponytail, Anti-Slop, JevGraph, or All',
+                description: 'RTK Core, Ponytail, Anti-Slop, JevGraph, CodeGraph, or All',
                 value: 'set'
+            },
+            {
+                label: '♻️ Recover Uninstalled Skills to this Scope',
+                description: `Restore / Re-install all preinstalled agent skills to ${selectedScope.label}`,
+                value: 'recover'
             }
         ];
 
         const selectedMethod = await vscode.window.showQuickPick(methodOptions, {
-            placeHolder: 'How would you like to select skills for uninstallation?'
+            placeHolder: 'How would you like to select skills for uninstallation or recovery?'
         });
         if (!selectedMethod) return;
+
+        if (selectedMethod.value === 'recover') {
+            try {
+                const results = SkillInstaller.installSkills(selectedScope.value);
+                const dests = results.map(r => r.destination).join(' and ');
+                vscode.window.showInformationMessage(
+                    `♻️ Successfully recovered and restored all 31 AI Agent skills to: ${dests}!`,
+                    'Open Recycle Bin'
+                ).then(sel => {
+                    if (sel === 'Open Recycle Bin') SkillInstaller.openRecycleBin();
+                });
+                await refreshStatus(context);
+            } catch (recErr) {
+                vscode.window.showErrorMessage(`Failed to recover uninstalled skills: ${recErr.message}`);
+            }
+            return;
+        }
 
         try {
             if (selectedMethod.value === 'individual') {
@@ -365,24 +415,40 @@ async function activate(context) {
                 if (!pickedSkills || pickedSkills.length === 0) return;
 
                 const toRemove = pickedSkills.map(p => p.value);
-                const confirm = await vscode.window.showWarningMessage(
-                    `Are you sure you want to uninstall ${toRemove.length} skill(s) from ${selectedScope.label}? They will be safely moved to your Recycle Bin.`,
-                    { modal: true },
-                    'Move to Recycle Bin'
-                );
-                if (confirm !== 'Move to Recycle Bin') return;
+                let confirmed = false;
+                while (!confirmed) {
+                    const confirm = await vscode.window.showWarningMessage(
+                        `Are you sure you want to uninstall ${toRemove.length} skill(s) from ${selectedScope.label}? They will be safely moved to your Recycle Bin.`,
+                        { modal: true },
+                        'Move to Recycle Bin',
+                        'Open Recycle Bin'
+                    );
+                    if (!confirm) return;
+                    if (confirm === 'Open Recycle Bin') {
+                        SkillInstaller.openRecycleBin();
+                        continue;
+                    }
+                    if (confirm === 'Move to Recycle Bin') {
+                        confirmed = true;
+                    }
+                }
 
                 const res = await SkillInstaller.uninstallSelectedSkills(toRemove, selectedScope.value);
-                vscode.window.showInformationMessage(
-                    `🗑️ Moved ${res.total.length} skill(s) to Recycle Bin from ${selectedScope.label}: ${res.total.join(', ')}.`
+                const afterAction = await vscode.window.showInformationMessage(
+                    `🗑️ Moved ${res.total.length} skill(s) to Recycle Bin from ${selectedScope.label}: ${res.total.join(', ')}.`,
+                    'Open Recycle Bin'
                 );
+                if (afterAction === 'Open Recycle Bin') {
+                    SkillInstaller.openRecycleBin();
+                }
             } else {
                 const skillSets = [
-                    { label: '🗑️ All Skills (All 27 Chat Commands)', description: 'RTK, Ponytail, Anti-Slop & JevGraph skills', value: 'all' },
+                    { label: '🗑️ All Skills (All 31 Chat Commands)', description: 'RTK, Ponytail, Anti-Slop, JevGraph & CodeGraph skills', value: 'all' },
                     { label: '⚡ RTK Core Skills (15 Skills)', description: '/rtk-gain, /rtk-run, /rtk-tree, /rtk-outline, etc.', value: 'rtk' },
                     { label: '🥋 Ponytail Skills (6 Skills)', description: '/ponytail, /ponytail-audit, /ponytail-gain, etc.', value: 'ponytail' },
                     { label: '🛡️ Anti-Slop Skills (6 Skills)', description: '/antislop, /antislop-ui, /antislop-code, etc.', value: 'antislop' },
-                    { label: '🕸️ JevGraph Skills (2 Skills)', description: '/jevgraph-build, /jevgraph-query', value: 'jevgraph' }
+                    { label: '🕸️ JevGraph Skills (2 Skills)', description: '/jevgraph-build, /jevgraph-query (Doc Graph)', value: 'jevgraph' },
+                    { label: '🧬 CodeGraphContext Skills (2 Skills)', description: '/codegraph-query, /codegraph-index (Code Graph)', value: 'codegraph' }
                 ];
 
                 const selectedSet = await vscode.window.showQuickPick(skillSets, {
@@ -390,17 +456,32 @@ async function activate(context) {
                 });
                 if (!selectedSet) return;
 
-                const confirm = await vscode.window.showWarningMessage(
-                    `Uninstall ${selectedSet.label} from ${selectedScope.label}? Skills will be moved to the Recycle Bin.`,
-                    { modal: true },
-                    'Move to Recycle Bin'
-                );
-                if (confirm !== 'Move to Recycle Bin') return;
+                let confirmedSet = false;
+                while (!confirmedSet) {
+                    const confirm = await vscode.window.showWarningMessage(
+                        `Uninstall ${selectedSet.label} from ${selectedScope.label}? Skills will be moved to the Recycle Bin.`,
+                        { modal: true },
+                        'Move to Recycle Bin',
+                        'Open Recycle Bin'
+                    );
+                    if (!confirm) return;
+                    if (confirm === 'Open Recycle Bin') {
+                        SkillInstaller.openRecycleBin();
+                        continue;
+                    }
+                    if (confirm === 'Move to Recycle Bin') {
+                        confirmedSet = true;
+                    }
+                }
 
                 const res = await SkillInstaller.uninstallSkillSet(selectedSet.value, selectedScope.value);
-                vscode.window.showInformationMessage(
-                    `🗑️ Successfully moved ${res.total.length} skill(s) (${selectedSet.label}) from ${selectedScope.label} to Recycle Bin.`
+                const afterAction = await vscode.window.showInformationMessage(
+                    `🗑️ Successfully moved ${res.total.length} skill(s) (${selectedSet.label}) from ${selectedScope.label} to Recycle Bin.`,
+                    'Open Recycle Bin'
                 );
+                if (afterAction === 'Open Recycle Bin') {
+                    SkillInstaller.openRecycleBin();
+                }
             }
             await refreshStatus(context);
         } catch (err) {
@@ -563,8 +644,19 @@ async function activate(context) {
         const headroomCheck = await RtkService.checkHeadroomInstalled();
         const ponytailCheck = await RtkService.checkPonytailInstalled();
         const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
+        const codeGraphCheck = await CodeGraphService.checkInstalled();
 
-        const prompt = RtkService.generateAiInstallPrompt(isWindows, isMac, !check.installed, !headroomCheck.installed, !ponytailCheck.installed, true, !antiSlopCheck.installed);
+        const prompt = RtkService.generateAiInstallPrompt(
+            isWindows,
+            isMac,
+            !check.installed,
+            !headroomCheck.installed,
+            !ponytailCheck.installed,
+            true,
+            !antiSlopCheck.installed,
+            true,
+            !codeGraphCheck.installed
+        );
         await vscode.env.clipboard.writeText(prompt);
 
         vscode.window.showInformationMessage(

@@ -1318,12 +1318,35 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     /**
      * Uninstall JevGraph skills specifically (chenmingtang830/jevgraph)
      */
-    static async uninstallJevGraphSkills(targetScope = 'all') {
-        return await this.uninstallSkillSet('jevgraph', targetScope);
+    /**
+     * Safely open the OS Recycle Bin / Trash folder in the native file explorer
+     */
+    static openRecycleBin() {
+        const { exec } = require('child_process');
+        try {
+            if (process.platform === 'win32') {
+                exec('explorer.exe shell:RecycleBinFolder');
+            } else if (process.platform === 'darwin') {
+                exec('open ~/.Trash');
+            } else {
+                exec('xdg-open trash:///');
+            }
+            return true;
+        } catch (e) {
+            console.error('Failed to open OS Recycle Bin:', e);
+            return false;
+        }
     }
 
     /**
-     * Uninstall all Token Saver / RTK / Ponytail / Anti-Slop skills
+     * Uninstall CodeGraphContext skills specifically (CodeGraphContext/CodeGraphContext)
+     */
+    static async uninstallCodeGraphSkills(targetScope = 'all') {
+        return await this.uninstallSkillSet('codegraph', targetScope);
+    }
+
+    /**
+     * Uninstall all Token Saver / RTK / Ponytail / Anti-Slop / JevGraph / CodeGraph skills
      */
     static async uninstallAllSkills(targetScope = 'all') {
         return await this.uninstallSkillSet('all', targetScope);
@@ -1353,7 +1376,7 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
-     * Uninstall a specific skill set (all, rtk, ponytail, antislop, jevgraph) across a target scope (all, global, workspace)
+     * Uninstall a specific skill set (all, rtk, ponytail, antislop, jevgraph, codegraph) across a target scope (all, global, workspace)
      */
     static async uninstallSkillSet(skillSetType = 'all', targetScope = 'all') {
         const ponytailSkills = [
@@ -1376,6 +1399,10 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             'jevgraph-build',
             'jevgraph-query'
         ];
+        const codeGraphSkills = [
+            'codegraph-query',
+            'codegraph-index'
+        ];
 
         let targetSkills = [];
         if (skillSetType === 'ponytail') {
@@ -1384,8 +1411,10 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             targetSkills = antiSlopSkills;
         } else if (skillSetType === 'jevgraph') {
             targetSkills = jevSkills;
+        } else if (skillSetType === 'codegraph') {
+            targetSkills = codeGraphSkills;
         } else if (skillSetType === 'rtk') {
-            const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills]);
+            const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills, ...codeGraphSkills]);
             targetSkills = Object.keys(SKILLS_MAP).filter(s => !excluded.has(s));
         } else {
             targetSkills = Object.keys(SKILLS_MAP);

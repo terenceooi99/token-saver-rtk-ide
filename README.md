@@ -200,13 +200,32 @@ The extension provides full graphical and automated control directly from your *
   <img src="resources/dashboard-breakdown.png" alt="Token Saver Real-time Compression Scoreboard & Savings Breakdown" width="100%" />
 </p>
 
-4. **Upstream GitHub 6-Way Core Sync (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph)**:
-   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, `diegosouzapw/OmniRoute` & `chenmingtang830/jevgraph`).
-   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail, Anti-Slop, and JevGraph.
-5. **Dynamic Live Status Bar**:
+4. **🗑️ Uninstall Skills & OS Recycle Bin Recovery**:
+   - Safely removes individual skills or preset bundles (`RTK Core`, `Ponytail`, `Anti-Slop`, `JevGraph`, `CodeGraph`, or `All 31 Skills`) from either **Global IDE Config** (`~/.gemini/config/skills/`) or **Project Workspace** (`.agents/skills/`).
+   - **Zero Data Loss / Recycle Bin First**: Deleted skills are moved directly into the native OS Recycle Bin / Trash (`shell:RecycleBinFolder` on Windows, `~/.Trash` on macOS, `trash:///` on Linux) with an instant option to view/open the folder.
+   - **1-Click Skill Recovery**: Includes built-in options to immediately restore / re-install uninstalled skills to Global IDE, Project Workspace, or both scopes without manual cloning.
+
+<p align="center">
+  <img src="resources/dashboard-uninstalledskillwindow.png" alt="Token Saver Uninstall Skills & Recovery Pop-up Window" width="100%" />
+</p>
+
+5. **⏸️ Temporary Disable Skills (Agent Quarantine Mode)**:
+   - Temporarily removes selected skills from AI agent `@` mention auto-completes and `/` chat action menus without permanently deleting files.
+   - **🤖 Agent Decide (AI Prompt Mode)**: Copies an intelligent context-pruning prompt for your agent to automatically ignore irrelevant skill sets for your current session.
+   - **✋ Manual Quarantine**: Quarantine specific skills into a isolated `.disabled-skills/` directory while keeping rules and configurations intact.
+   - **🔄 Re-Enable All Skills**: Instantly un-quarantines and restores all temporarily disabled skills across global and workspace targets in one click.
+
+<p align="center">
+  <img src="resources/dashboard-disableskillwindow.png" alt="Token Saver Temporary Disable Skills Pop-up Window" width="100%" />
+</p>
+
+6. **Upstream GitHub 7-Way Core Sync (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraphContext)**:
+   - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, `diegosouzapw/OmniRoute`, `chenmingtang830/jevgraph` & `CodeGraphContext/CodeGraphContext`).
+   - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail, Anti-Slop, JevGraph, and CodeGraph.
+7. **Dynamic Live Status Bar**:
    - Shows real-time savings: `⚡ RTK: 48.2k saved (72%)` or `⚪ RTK: OFF`.
    - Rich hover tooltips with cost savings and quick access to the dashboard.
-6. **Commands in Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)**:
+8. **Commands in Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)**:
    - `Token Saver: Open Interactive Dashboard`
    - `Token Saver: Sync Rules to All AI Agents (VS Code, Cursor, Windsurf, Cline, Claude, Antigravity)`
    - `Token Saver: Configure Target Agentic IDEs / AI Rules`

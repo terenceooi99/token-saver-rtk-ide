@@ -635,13 +635,30 @@ class RtkService {
             });
         };
 
-        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph] = await Promise.all([
+        const testCodeGraph = () => {
+            return new Promise((resolve) => {
+                const start = Date.now();
+                const CodeGraphService = require('./codegraph-service');
+                CodeGraphService.checkInstalled().then(res => {
+                    const duration = Date.now() - start;
+                    resolve({
+                        name: 'CodeGraphContext',
+                        available: res.installed,
+                        latency: res.installed ? `${duration}ms (${res.version || 'Ready'})` : 'Not Installed',
+                        ms: duration
+                    });
+                });
+            });
+        };
+
+        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph] = await Promise.all([
             testRtk(),
             testHeadroom(),
             testPonytail(),
             testAntiSlop(),
             testOmniRoute(),
-            testJevGraph()
+            testJevGraph(),
+            testCodeGraph()
         ]);
 
         const parts = [];
@@ -651,20 +668,22 @@ class RtkService {
         if (antislop.available) parts.push(`Anti-Slop: ${antislop.latency}`);
         if (omniroute.available) parts.push(`OmniRoute: ${omniroute.latency}`);
         if (jevgraph.available) parts.push(`JevGraph: ${jevgraph.latency}`);
+        if (codegraph.available) parts.push(`CodeGraph: ${codegraph.latency}`);
 
         const summary = parts.length > 0 ? parts.join(' • ') : 'No upstream layers detected';
-        const anyAvailable = rtk.available || headroom.available || ponytail.available || antislop.available || omniroute.available || jevgraph.available;
+        const anyAvailable = rtk.available || headroom.available || ponytail.available || antislop.available || omniroute.available || jevgraph.available || codegraph.available;
 
         return {
             available: anyAvailable,
             summary,
-            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | Anti-Slop: ${antislop.latency} | OmniRoute: ${omniroute.latency} | JevGraph: ${jevgraph.latency}`,
+            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | Anti-Slop: ${antislop.latency} | OmniRoute: ${omniroute.latency} | JevGraph: ${jevgraph.latency} | CodeGraph: ${codegraph.latency}`,
             rtk,
             headroom,
             ponytail,
             antislop,
             omniroute,
-            jevgraph
+            jevgraph,
+            codegraph
         };
     }
 
@@ -752,6 +771,10 @@ class RtkService {
         const jevCmds = JevGraphService.getInstallCommands(isWindows);
         const jevGraphCmd = jevCmds.jevgraphSyncCmd;
 
+        const codeGraphCmd = isWindows
+            ? 'python -m pip install codegraphcontext 2>$null; if (!$?) { pip install codegraphcontext }'
+            : 'pip install codegraphcontext || python3 -m pip install codegraphcontext';
+
         const verifyCmd = 'rtk --version ; headroom --version';
 
         return {
@@ -760,8 +783,9 @@ class RtkService {
             omniRouteCmd,
             ponytailCmd,
             jevGraphCmd,
+            codeGraphCmd,
             verifyCmd,
-            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd}`
+            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd} ; ${codeGraphCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd} && ${codeGraphCmd}`
         };
     }
 
@@ -788,8 +812,8 @@ class RtkService {
             headroomUninstallCmd,
             omniRouteUninstallCmd,
             combinedUninstallCmd: isWindows 
-                ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd}` 
-                : `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd}`
+                ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd}`
+                : `${rtkUninstallCmd} && ${headroomUninstallCmd} && ${omniRouteUninstallCmd}`
         };
     }
 
@@ -807,7 +831,7 @@ class RtkService {
         this.runInTerminal(cmds.headroomUninstallCmd);
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true) {
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const cmds = this.getInstallCommands(isWindows, isMac);
 
@@ -834,6 +858,11 @@ class RtkService {
             stepIdx++;
         }
 
+        if (codeGraphMissing) {
+            items.push(`${stepIdx}. **Install CodeGraphContext Code AST Engine (Upstream: CodeGraphContext/CodeGraphContext)**:\n   Run command: \`${cmds.codeGraphCmd}\`\n   (Provides semantic code knowledge graph, AST indexing, and symbol lookups via \`cgc\`).`);
+            stepIdx++;
+        }
+
         if (ponytailMissing) {
             items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: DietrichGebert/ponytail)**:\n   Clone or fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`). Ensure skills (\`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\`) are installed.`);
             stepIdx++;
@@ -844,12 +873,12 @@ class RtkService {
             stepIdx++;
         }
 
-        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, \`omniroute --version\`, \`uv run jevgraph --help\`, and verify Ponytail, Anti-Slop & OmniRoute skills are available in the IDE.`);
+        items.push(`${stepIdx}. **Verify Installations**:\n   Run: \`rtk --version\`, \`headroom --version\`, \`omniroute --version\`, \`uv run jevgraph --help\`, \`cgc --version\`, and verify Ponytail, Anti-Slop & OmniRoute skills are available in the IDE.`);
         stepIdx++;
         items.push(`${stepIdx}. **Confirm Success**:\n   Report the installed version numbers and active status back to me once done.`);
 
         const prompt = [
-            `Please help me install, fetch, and configure the necessary token saving, anti-slop, and AI routing tools (OmniRoute, RTK, Headroom, JevGraph, Anti-Slop, and Ponytail) for Token Saver on this ${osName} machine:`,
+            `Please help me install, fetch, and configure the necessary token saving, anti-slop, and AI routing tools (OmniRoute, RTK, Headroom, JevGraph, CodeGraphContext, Anti-Slop, and Ponytail) for Token Saver on this ${osName} machine:`,
             '',
             items.join('\n\n'),
             '',
