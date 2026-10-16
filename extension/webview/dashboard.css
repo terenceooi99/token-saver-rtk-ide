@@ -2445,6 +2445,20 @@ pre#rawOutputText {
     gap: 6px;
 }
 
+.footer-version-badge {
+    display: inline-block;
+    padding: 1px 7px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    border-radius: 6px;
+    background: rgba(10, 132, 255, 0.12);
+    color: var(--apple-cyan, #5ac8fa);
+    border: 1px solid rgba(10, 132, 255, 0.25);
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+}
+
 .footer-repo-link {
     color: var(--apple-cyan);
     text-decoration: none;
@@ -3157,6 +3171,23 @@ body.light-theme .diag-dropdown-item {
 body.light-theme .jev-quick-actions {
     border-top-color: rgba(0, 0, 0, 0.06);
 }
+/* fastCRW Web Scraper & Search Engine Styles */
+.tag-orange {
+    background: rgba(255, 159, 10, 0.15) !important;
+    color: #ff9f0a !important;
+    border: 1px solid rgba(255, 159, 10, 0.3) !important;
+}
 
+.chip-orange {
+    background: rgba(255, 159, 10, 0.15);
+    color: #ff9f0a;
+    border: 1px solid rgba(255, 159, 10, 0.3);
+}
 
+.crw-section {
+    border-color: rgba(255, 159, 10, 0.25);
+}
 
+.crw-section:hover {
+    border-color: rgba(255, 159, 10, 0.45);
+}

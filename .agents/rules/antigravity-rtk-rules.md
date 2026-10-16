@@ -17,6 +17,11 @@ Command output is condensed to save 60-90% LLM context window tokens while prese
 - `rtk proxy <cmd>` - Run a command unfiltered if raw output is strictly needed.
 - `RTK_DISABLED=1 <cmd>` - Skip RTK for one command.
 
+## fastCRW Hybrid Web Search & Scraping Policy (Upstream: fastcrw/crw)
+- **Hybrid Search Workflow:** For web research and page reading, autonomous agents should prioritize using local fastCRW (`crw search`, `crw scrape`, or `http://127.0.0.1:3000`) in combination with the IDE's built-in web search.
+- **Token Optimization on Web Content:** fastCRW converts raw HTML, JS-rendered DOMs, and heavy web pages into clean, condensed Markdown before injecting into LLM context, preventing web clutter and saving 70-90% context tokens.
+- **Zero-Failure Fallback:** When a site blocks generic HTTP requests or returns Cloudflare challenges, route via fastCRW headless browser extraction.
+
 ## Mandatory Semantic Knowledge Graph First Policy (Token Saver Enforcement)
 Autonomous AI agents in ANY IDE MUST ALWAYS query the pre-indexed semantic knowledge graphs to provide answers BEFORE falling back to raw file reads that waste prompt tokens:
 
@@ -53,4 +58,19 @@ Follow Anti-Slop rules to prevent generic AI slop in generated UI, copy, and cod
 ## Context Optimization (Compact Diffs & Outlines)
 - Inspect git changes using compact single-line diffs: `rtk git diff -U1` instead of wide multi-line context.
 - When exploring codebases, inspect function signatures / AST outlines (/rtk-outline) before reading entire files into context.
+
+## Upstream Engine Integration & Latency Guardrails Standards
+Whenever a new upstream engine or external tool (e.g. `fastcrw/crw`, `CodeGraphContext`, `JevGraph`) is introduced or updated:
+1. **Holistic Dashboard Integration (8 Surfaces Required)**:
+   - Header action toggle button (`Turn <Tool> ON / OFF`)
+   - Setup alert banner (missing chips + AI install prompt generator)
+   - Dedicated dashboard section & Quick Action triggers
+   - Multi-channel savings breakdown navigation tabs & distribution weights
+   - System Health diagnostics row with status, AI install prompt, sync, and uninstall actions
+   - Upstream versions dropdown listing
+   - Upstream Sync Picker (`showSyncPicker`) and Uninstall Picker (`showUninstallPicker`)
+   - Footer upstream reference links
+2. **Zero-Noise Latency Benchmarks**: "Test Upstream Latencies" must selectively ping and display only **installed** upstream components, silently omitting/ignoring uninstalled tools so users never see failed pings or clutter for optional tools.
+3. **Footer Version Number Invariant**: The current plugin release version must always be presented beside "Token Saver" in front of "• GitHub".
+
 

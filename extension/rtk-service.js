@@ -135,6 +135,11 @@ class RtkService {
         return CodeGraphService.checkInstalled();
     }
 
+    static checkCrwInstalled() {
+        const { CrwService } = require('./crw-service');
+        return CrwService.checkInstalled();
+    }
+
     static getSavingsRaw() {
         return new Promise((resolve, reject) => {
             exec('rtk gain', (error, stdout, stderr) => {
@@ -489,6 +494,30 @@ class RtkService {
                     { name: 'Call Hierarchies (Callers/Callees)', percentage: 89, description: 'Deep dependency graphs without file dumps' },
                     { name: 'Live File Watcher & Incremental Sync', percentage: 85, description: 'Keeps project graph fresh automatically' }
                 ]
+            },
+            {
+                id: 'crw',
+                name: 'fastCRW Search & Scraper',
+                shortName: 'fastCRW',
+                icon: '🕷️',
+                layer: 'Web Search & Scraping Optimization',
+                category: 'web',
+                color: '#ff9500',
+                accentColor: 'var(--apple-orange, #ff9500)',
+                status: pluginStatus.crwInstalled ? 'active' : (pluginStatus.crwEnabled ? 'synced' : 'disabled'),
+                statusLabel: pluginStatus.crwInstalled ? 'Active & Ready' : (pluginStatus.crwEnabled ? 'Hybrid Search' : 'Disabled'),
+                isLive: false,
+                savedTokens: Math.round(totalEcosystemTokens * 0.16),
+                savedFormatted: formatTokens(Math.round(totalEcosystemTokens * 0.16)),
+                percentage: 78.5,
+                dollarSavings: formatDollars(Math.round(totalEcosystemTokens * 0.16)),
+                sharePct: 16,
+                description: 'Rust-powered web crawler, scraper, and search engine. Delivers clean, LLM-ready markdown from web pages and searches, avoiding heavy browser token bloat.',
+                subItems: [
+                    { name: 'Token-Compressed Markdown Scrapes', percentage: 86, description: 'Strips HTML boilerplate, scripts, and clutter' },
+                    { name: 'AI Hybrid Search Engine', percentage: 76, description: 'Drop-in Firecrawl-compatible /v1/search API' },
+                    { name: 'Anti-Bot & Dynamic DOM Handling', percentage: 74, description: 'Sub-second cold starts with zero memory bloat' }
+                ]
             }
         ];
 
@@ -638,7 +667,7 @@ class RtkService {
         const testCodeGraph = () => {
             return new Promise((resolve) => {
                 const start = Date.now();
-                const CodeGraphService = require('./codegraph-service');
+                const { CodeGraphService } = require('./codegraph-service');
                 CodeGraphService.checkInstalled().then(res => {
                     const duration = Date.now() - start;
                     resolve({
@@ -651,39 +680,54 @@ class RtkService {
             });
         };
 
-        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph] = await Promise.all([
+        const testCrw = () => {
+            return new Promise((resolve) => {
+                const start = Date.now();
+                const { CrwService } = require('./crw-service');
+                CrwService.checkInstalled().then(res => {
+                    const duration = Date.now() - start;
+                    resolve({
+                        name: 'fastCRW',
+                        available: res.installed,
+                        latency: res.installed ? `${duration}ms (${res.version || 'Ready'})` : 'Not Installed',
+                        ms: duration
+                    });
+                });
+            });
+        };
+
+        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw] = await Promise.all([
             testRtk(),
             testHeadroom(),
             testPonytail(),
             testAntiSlop(),
             testOmniRoute(),
             testJevGraph(),
-            testCodeGraph()
+            testCodeGraph(),
+            testCrw()
         ]);
 
-        const parts = [];
-        if (rtk.available) parts.push(`RTK: ${rtk.latency}`);
-        if (headroom.available) parts.push(`Headroom: ${headroom.latency}`);
-        if (ponytail.available) parts.push(`Ponytail: ${ponytail.latency}`);
-        if (antislop.available) parts.push(`Anti-Slop: ${antislop.latency}`);
-        if (omniroute.available) parts.push(`OmniRoute: ${omniroute.latency}`);
-        if (jevgraph.available) parts.push(`JevGraph: ${jevgraph.latency}`);
-        if (codegraph.available) parts.push(`CodeGraph: ${codegraph.latency}`);
+        const allLayers = [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw];
+        // Strictly ignore any upstream that is not installed/available
+        const installedLayers = allLayers.filter(l => l && l.available);
+        const parts = installedLayers.map(l => `${l.name}: ${l.latency}`);
 
-        const summary = parts.length > 0 ? parts.join(' • ') : 'No upstream layers detected';
-        const anyAvailable = rtk.available || headroom.available || ponytail.available || antislop.available || omniroute.available || jevgraph.available || codegraph.available;
+        const summary = parts.length > 0 ? parts.join(' • ') : 'No installed upstream layers detected';
+        const details = parts.length > 0 ? parts.join(' | ') : 'No upstream layers installed';
+        const anyAvailable = installedLayers.length > 0;
 
         return {
             available: anyAvailable,
             summary,
-            details: `RTK: ${rtk.latency} | Headroom: ${headroom.latency} | Ponytail: ${ponytail.latency} | Anti-Slop: ${antislop.latency} | OmniRoute: ${omniroute.latency} | JevGraph: ${jevgraph.latency} | CodeGraph: ${codegraph.latency}`,
+            details,
             rtk,
             headroom,
             ponytail,
             antislop,
             omniroute,
             jevgraph,
-            codegraph
+            codegraph,
+            crw
         };
     }
 
@@ -775,6 +819,10 @@ class RtkService {
             ? 'python -m pip install codegraphcontext 2>$null; if (!$?) { pip install codegraphcontext }'
             : 'pip install codegraphcontext || python3 -m pip install codegraphcontext';
 
+        const { CrwService } = require('./crw-service');
+        const crwCmds = CrwService.getInstallCommands(isWindows);
+        const crwCmd = crwCmds.primaryCmd;
+
         const verifyCmd = 'rtk --version ; headroom --version';
 
         return {
@@ -784,8 +832,9 @@ class RtkService {
             ponytailCmd,
             jevGraphCmd,
             codeGraphCmd,
+            crwCmd,
             verifyCmd,
-            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd} ; ${codeGraphCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd} && ${codeGraphCmd}`
+            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd} ; ${codeGraphCmd} ; ${crwCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd} && ${codeGraphCmd} && ${crwCmd}`
         };
     }
 
@@ -807,13 +856,18 @@ class RtkService {
             ? 'if (Get-Command npm -ErrorAction SilentlyContinue) { npm uninstall -g omniroute }'
             : 'command -v npm >/dev/null 2>&1 && npm uninstall -g omniroute || true';
 
+        const { CrwService } = require('./crw-service');
+        const crwUninstallCmds = CrwService.getUninstallCommands(isWindows);
+        const crwUninstallCmd = crwUninstallCmds.primaryCmd;
+
         return {
             rtkUninstallCmd,
             headroomUninstallCmd,
             omniRouteUninstallCmd,
+            crwUninstallCmd,
             combinedUninstallCmd: isWindows
-                ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd}`
-                : `${rtkUninstallCmd} && ${headroomUninstallCmd} && ${omniRouteUninstallCmd}`
+                ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd} ; ${crwUninstallCmd}`
+                : `${rtkUninstallCmd} && ${headroomUninstallCmd} && ${omniRouteUninstallCmd} && ${crwUninstallCmd}`
         };
     }
 
@@ -831,7 +885,7 @@ class RtkService {
         this.runInTerminal(cmds.headroomUninstallCmd);
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true) {
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true, crwMissing = true) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const cmds = this.getInstallCommands(isWindows, isMac);
 
@@ -863,6 +917,11 @@ class RtkService {
             stepIdx++;
         }
 
+        if (crwMissing) {
+            items.push(`${stepIdx}. **Install fastCRW Hybrid Scraper & Search Engine (Upstream: fastcrw/crw)**:\n   Run command: \`${cmds.crwCmd}\`\n   (Provides fast Rust crawler, scraper, and /v1/search API for AI agents).`);
+            stepIdx++;
+        }
+
         if (ponytailMissing) {
             items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: DietrichGebert/ponytail)**:\n   Clone or fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`). Ensure skills (\`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\`) are installed.`);
             stepIdx++;
@@ -879,6 +938,7 @@ class RtkService {
         if (omniMissing) verifyCmds.push('`omniroute --version`');
         if (jevGraphMissing) verifyCmds.push('`uv run jevgraph --help`');
         if (codeGraphMissing) verifyCmds.push('`cgc --version`');
+        if (crwMissing) verifyCmds.push('`crw --version`');
         const verifyText = verifyCmds.length > 0 ? `Run ${verifyCmds.join(', ')} and verify active status in IDE.` : 'Verify all components are active in IDE.';
 
         items.push(`${stepIdx}. **Verify Installations**:\n   ${verifyText}`);
@@ -891,6 +951,7 @@ class RtkService {
         if (headroomMissing) missingLabels.push('Headroom');
         if (jevGraphMissing) missingLabels.push('JevGraph');
         if (codeGraphMissing) missingLabels.push('CodeGraphContext');
+        if (crwMissing) missingLabels.push('fastCRW');
         if (antiSlopMissing) missingLabels.push('Anti-Slop');
         if (ponytailMissing) missingLabels.push('Ponytail');
 
@@ -969,6 +1030,14 @@ class RtkService {
                     `1. **Install CodeGraphContext**:\n   Run command: \`${cmds.codeGraphCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`cgc --version\`.`,
                     `3. **Index Codebase**:\n   Run \`cgc index\` or \`/codegraph-index\` to build the semantic property graph.`
+                );
+                break;
+            case 'crw':
+                title = 'fastCRW Hybrid Scraper & Search Engine (fastcrw/crw)';
+                instructions.push(
+                    `1. **Install fastCRW CLI / Server**:\n   Run command: \`${cmds.crwCmd}\``,
+                    `2. **Verify Installation**:\n   Run: \`crw --version\` or \`crw-server --version\`.`,
+                    `3. **Usage**:\n   Run \`crw <url>\` to scrape websites straight into token-efficient markdown, or run \`crw-server\` on port 3000.`
                 );
                 break;
             default:

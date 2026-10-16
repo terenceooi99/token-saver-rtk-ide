@@ -43,6 +43,7 @@
                 <button class="btn btn-primary" id="toggleOmniRouteBtn">Turn OmniRoute ON</button>
                 <button class="btn btn-primary" id="toggleJevGraphBtn">Turn JevGraph ON</button>
                 <button class="btn btn-primary" id="toggleCodeGraphBtn">Turn CodeGraph ON</button>
+                <button class="btn btn-primary" id="toggleCrwBtn">Turn fastCRW ON</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
@@ -505,6 +506,49 @@
                     </div>
                 </section>
 
+                <!-- fastCRW Hybrid Web Scraper & Search Engine -->
+                <section class="panel-card crw-section" id="sectionCrw">
+                    <div class="panel-header collapsible" data-target="bodyCrw">
+                        <div class="panel-header-left">
+                            <span class="collapse-chevron">▾</span>
+                            <div>
+                                <h2>🕷️ fastCRW Web Scraper & Search Engine</h2>
+                                <p class="panel-subtitle">Rust-powered crawler, token-compressed markdown scraper, & hybrid search API</p>
+                            </div>
+                        </div>
+                        <div class="header-tags-group">
+                            <a href="https://github.com/fastcrw/crw" target="_blank"
+                                class="repo-badge-link"
+                                title="Upstream GitHub: fastcrw/crw">GitHub:
+                                fastcrw/crw ↗</a>
+                            <span class="panel-tag tag-orange" id="crwStatusBadge">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="bodyCrw">
+                        <!-- fastCRW Description & Sync -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <div class="opt-title-line">
+                                    <span class="opt-title">Hybrid Web Search & Extraction:</span>
+                                    <button class="btn-mini-sync" id="crwInlineSyncBtn"
+                                        title="Fetch & install latest fastCRW from GitHub">⭮ Sync
+                                        from GitHub</button>
+                                </div>
+                                <span class="opt-desc">Provides sub-second cold starts and Firecrawl-compatible APIs. Directs AI agents to read web links and search results as clean, stripped markdown without wasting prompt tokens on raw HTML or scripts.</span>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Grid -->
+                        <div class="jev-quick-actions">
+                            <button class="btn btn-sm btn-primary" id="crwStartServerBtn"
+                                title="Start local fastCRW server (:3000) in terminal">⚡ Start Local Server</button>
+                            <button class="btn btn-sm btn-ghost" id="crwTestScrapeBtn"
+                                title="Scrape target website into clean markdown">🔍 Test Scrape URL</button>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- OmniRoute AI Gateway & Router (For Vibe Coders) -->
                 <section class="panel-card omniroute-section" id="sectionOmniRoute">
                     <div class="panel-header collapsible" data-target="bodyOmniRoute">
@@ -645,6 +689,9 @@
                             </button>
                             <button class="channel-tab-btn" data-channel="jevgraph" id="tabChannelJev">
                                 <span class="tab-icon">🕸️</span> JevGraph KG
+                            </button>
+                            <button class="channel-tab-btn" data-channel="crw" id="tabChannelCrw">
+                                <span class="tab-icon">🕷️</span> fastCRW Search
                             </button>
                         </div>
 
@@ -928,6 +975,20 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="diag-row">
+                                <span class="diag-key">fastCRW (GitHub):</span>
+                                <div class="diag-val-wrapper">
+                                    <span class="diag-val" id="diagCrwStatus">Checking...</span>
+                                    <span class="diag-action-btns" id="crwDiagActions" style="display: none;">
+                                        <button class="btn-diag-mini btn-diag-ai" id="crwDiagAiBtn"
+                                            title="Copy AI install prompt for fastCRW">🤖 Ask AI</button>
+                                        <button class="btn-diag-mini btn-diag-sync" id="crwDiagSyncBtn"
+                                            title="Install fastCRW binary or cargo crate">🕷️ Sync</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="crwDiagUninstallBtn"
+                                            title="Uninstall fastCRW Engine">🗑️</button>
+                                    </span>
+                                </div>
+                            </div>
                             <div class="diag-row diag-row-dropdown" id="diagVersionRow">
                                 <span class="diag-key">Upstream Versions:</span>
                                 <div class="diag-dropdown-wrapper">
@@ -961,7 +1022,7 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <span class="footer-brand-title">🕛 Token Saver • <a
+            <span class="footer-brand-title">🕛 Token Saver <span class="footer-version-badge" id="footerVersionBadge">v1.13.0</span> • <a
                     href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link"
                     title="Token Saver GitHub Repository">GitHub</a></span>
             <span class="footer-links">
@@ -971,7 +1032,8 @@
                 <a href="https://github.com/miqdadbadjuber/anti-slop" target="_blank">Anti-Slop</a> •
                 <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a> •
                 <a href="https://github.com/chenmingtang830/jevgraph" target="_blank">JevGraph</a> •
-                <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank">CodeGraphContext</a>
+                <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank">CodeGraphContext</a> •
+                <a href="https://github.com/fastcrw/crw" target="_blank">fastCRW</a>
             </span>
         </footer>
     </div>

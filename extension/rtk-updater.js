@@ -375,6 +375,23 @@ class RtkUpdater {
         }
     }
 
+    static async performCrwSync() {
+        const { CrwService } = require('./crw-service');
+        const isWindows = process.platform === 'win32';
+        const cmds = CrwService.getInstallCommands(isWindows);
+
+        try {
+            vscode.window.showInformationMessage('🕷️ Fetching & installing fastCRW from GitHub (fastcrw/crw)...');
+            RtkService.runInTerminal(cmds.primaryCmd);
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            SkillInstaller.installAllSkills(scope);
+            SkillInstaller.syncRules(true, scope);
+            vscode.window.showInformationMessage('✓ fastCRW hybrid web search optimization & directives synced across IDE.');
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to sync fastCRW: ${e.message}`);
+        }
+    }
+
     static async performLayerUninstall(layerKey) {
         const OmniRouteService = require('./omniroute-service');
         const config = vscode.workspace.getConfiguration('tokenSaver');
@@ -445,6 +462,21 @@ class RtkUpdater {
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall CodeGraphContext: ${e.message}`);
+                }
+            case 'crw':
+                try {
+                    const { CrwService } = require('./crw-service');
+                    const isWindows = process.platform === 'win32';
+                    const cmds = CrwService.getUninstallCommands(isWindows);
+                    await config.update('crwEnabled', false, vscode.ConfigurationTarget.Global);
+                    const scope = config.get('targetScope', 'all');
+                    SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    RtkService.runInTerminal(cmds.primaryCmd);
+                    vscode.window.showInformationMessage(
+                        '🕷️ fastCRW uninstaller started in terminal and hybrid search rule disabled.'
+                    );
+                } catch (e) {
+                    vscode.window.showErrorMessage(`Failed to uninstall fastCRW: ${e.message}`);
                 }
                 break;
             case 'omniroute':
@@ -565,6 +597,11 @@ class RtkUpdater {
                 layerKey: 'codegraph'
             },
             {
+                label: '$(globe) fastCRW Hybrid Scraper & Search (fastcrw/crw)',
+                description: 'cargo uninstall crw/crw-server and disable hybrid search feature',
+                layerKey: 'crw'
+            },
+            {
                 label: '$(clear-all) Injected Multi-IDE Rules & Skills',
                 description: 'Strip all rule blocks from AGENTS.md, .cursorrules, etc. and remove .agents/skills',
                 layerKey: 'rules_skills'
@@ -584,13 +621,14 @@ class RtkUpdater {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraph)...',
+                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph & fastCRW)...',
                 cancellable: false
             },
             async () => {
                 const OmniRouteService = require('./omniroute-service');
                 const { CodeGraphService } = require('./codegraph-service');
-                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease] = await Promise.all([
+                const { CrwService } = require('./crw-service');
+                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, crwCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease, crwRelease] = await Promise.all([
                     RtkService.checkInstalled(),
                     RtkService.checkHeadroomInstalled(),
                     RtkService.checkPonytailInstalled(),
@@ -598,13 +636,15 @@ class RtkUpdater {
                     RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
                     RtkService.checkJevGraphInstalled ? RtkService.checkJevGraphInstalled() : { installed: false },
                     CodeGraphService.checkInstalled(),
+                    CrwService.checkInstalled(),
                     this.getLatestRelease('rtk-ai/rtk'),
                     this.getLatestRelease('headroomlabs-ai/headroom'),
                     this.getLatestRelease('DietrichGebert/ponytail'),
                     this.getLatestRelease('diegosouzapw/OmniRoute'),
                     this.getLatestRelease('miqdadbadjuber/anti-slop'),
                     this.getLatestRelease('chenmingtang830/jevgraph'),
-                    this.getLatestRelease('CodeGraphContext/CodeGraphContext')
+                    this.getLatestRelease('CodeGraphContext/CodeGraphContext'),
+                    this.getLatestRelease('fastcrw/crw')
                 ]);
 
                 const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
@@ -614,14 +654,23 @@ class RtkUpdater {
                 const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
                 const jevHasUpdate = jevRelease.success && (!jevCheck.installed);
                 const codeGraphHasUpdate = codeGraphRelease.success && (!codeGraphCheck.installed);
-                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate;
+                const crwHasUpdate = crwRelease.success && (!crwCheck.installed);
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate || crwHasUpdate;
 
                 const picks = [
                     {
                         label: hasAnyUpdate ? '$(cloud-download) Update / Sync All Upstream GitHub Layers' : '$(sync) Sync All Upstream GitHub Layers',
-                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraph',
+                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph & fastCRW',
                         detail: hasAnyUpdate ? '🚀 Updates available for one or more layers - Click to update all' : '✓ All components up-to-date - Click to force re-sync',
                         actionKey: 'all'
+                    },
+                    {
+                        label: '$(globe) fastCRW Hybrid Scraper & Search (fastcrw/crw)',
+                        description: `Installed: ${crwCheck.installed ? (crwCheck.runner || 'Ready') : 'Not Installed'} | GitHub: ${crwRelease.tag || 'Latest'}`,
+                        detail: crwHasUpdate
+                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
+                            : (crwCheck.installed ? '✓ Synced & ready for hybrid web search - Click to re-fetch' : '⚡ Click to install fastCRW binary or cargo crate'),
+                        actionKey: 'crw'
                     },
                     {
                         label: '$(database) CodeGraphContext Semantic Code Graph (CodeGraphContext/CodeGraphContext)',
@@ -695,6 +744,8 @@ class RtkUpdater {
 
                 if (sel.actionKey === 'all') {
                     this.performAllUpdates();
+                } else if (sel.actionKey === 'crw') {
+                    await this.performCrwSync();
                 } else if (sel.actionKey === 'codegraph') {
                     await this.performCodeGraphSync();
                 } else if (sel.actionKey === 'jevgraph') {
@@ -717,6 +768,7 @@ class RtkUpdater {
                     if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
                     if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
                     if (codeGraphRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(codeGraphRelease.htmlUrl));
+                    if (crwRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(crwRelease.htmlUrl));
                 }
             }
         );

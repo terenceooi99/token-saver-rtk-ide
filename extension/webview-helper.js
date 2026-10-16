@@ -31,17 +31,32 @@ class WebviewHelper {
         const headroomEnabled = config.get('headroomEnabled', true);
         const omniPort = config.get('omniRoutePort', 20128);
 
+        const { CrwService } = require('./crw-service');
         const check = await RtkService.checkInstalled();
         const headroomCheck = await RtkService.checkHeadroomInstalled();
         const ponytailCheck = await RtkService.checkPonytailInstalled();
         const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
         const jevGraphCheck = await RtkService.checkJevGraphInstalled();
         const codeGraphCheck = await RtkService.checkCodeGraphInstalled();
+        const crwCheck = await CrwService.checkInstalled();
+        const crwEnabled = CrwService.isEnabled();
         const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
         const metrics = await RtkService.getParsedMetrics();
         const skillsInstalled = SkillInstaller.checkSkillsInstalled('all');
         const ideStatus = SkillInstaller.getIdeStatus();
         const omniPresets = OmniRouteService.getIdePresets(omniPort);
+
+        let extensionVersion = '1.13.0';
+        try {
+            if (context.extension && context.extension.packageJSON && context.extension.packageJSON.version) {
+                extensionVersion = context.extension.packageJSON.version;
+            } else {
+                const pkgPath = path.join(context.extensionUri.fsPath, 'package.json');
+                if (fs.existsSync(pkgPath)) {
+                    extensionVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
+                }
+            }
+        } catch (_) {}
 
         const pluginStatus = {
             installed: check.installed,
@@ -55,6 +70,8 @@ class WebviewHelper {
             jevGraphEnabled: config.get('jevGraphEnabled', true),
             codeGraphInstalled: codeGraphCheck.installed,
             codeGraphEnabled: config.get('codeGraphEnabled', true),
+            crwInstalled: crwCheck.installed,
+            crwEnabled,
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running
         };
@@ -65,6 +82,7 @@ class WebviewHelper {
             isEnabled,
             weeklyAutoSync,
             tokenPricePerMillion,
+            extensionVersion,
             headroomEnabled,
             headroomInstalled: headroomCheck.installed,
             headroomVersion: headroomCheck.version || 'Not installed',
@@ -87,6 +105,10 @@ class WebviewHelper {
             codeGraphInstalled: codeGraphCheck.installed,
             codeGraphVersion: codeGraphCheck.version || 'Not installed',
             codeGraphStatus: codeGraphCheck,
+            crwEnabled,
+            crwInstalled: crwCheck.installed,
+            crwVersion: crwCheck.version || 'Not installed',
+            crwPort: config.get('crwPort', 3000),
             omniRouteEnabled: config.get('omniRouteEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running,
@@ -425,6 +447,22 @@ class WebviewHelper {
                     await cfg.update('codeGraphAutoUpdate', autoUpdate, vscode.ConfigurationTarget.Global);
                 } catch (e) {}
                 triggerRefresh(300);
+                break;
+            case 'toggleCrw':
+                await vscode.commands.executeCommand('tokenSaver.toggleCrw');
+                triggerRefresh(300);
+                break;
+            case 'syncCrw':
+                await vscode.commands.executeCommand('tokenSaver.syncCrw');
+                triggerRefresh(1000);
+                break;
+            case 'startCrwServer':
+                const { CrwService } = require('./crw-service');
+                await CrwService.startServer();
+                break;
+            case 'testScrapeCrw':
+                const { CrwService: CrwSvc } = require('./crw-service');
+                await CrwSvc.testScrapePrompt();
                 break;
             case 'setJevGraphProvider':
                 if (message.provider) {

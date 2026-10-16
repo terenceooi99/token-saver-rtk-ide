@@ -12,6 +12,8 @@ const toggleAntiSlopBtn = document.getElementById('toggleAntiSlopBtn');
 const toggleOmniRouteBtn = document.getElementById('toggleOmniRouteBtn');
 const toggleJevGraphBtn = document.getElementById('toggleJevGraphBtn');
 const toggleCodeGraphBtn = document.getElementById('toggleCodeGraphBtn');
+const toggleCrwBtn = document.getElementById('toggleCrwBtn');
+const footerVersionBadge = document.getElementById('footerVersionBadge');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -180,6 +182,19 @@ const codeGraphDiagActions = document.getElementById('codeGraphDiagActions');
 const codeGraphDiagAiBtn = document.getElementById('codeGraphDiagAiBtn');
 const codeGraphDiagSyncBtn = document.getElementById('codeGraphDiagSyncBtn');
 const codeGraphDiagUninstallBtn = document.getElementById('codeGraphDiagUninstallBtn');
+
+// fastCRW Elements
+const sectionCrw = document.getElementById('sectionCrw');
+const crwStatusBadge = document.getElementById('crwStatusBadge');
+const crwInlineSyncBtn = document.getElementById('crwInlineSyncBtn');
+const crwStartServerBtn = document.getElementById('crwStartServerBtn');
+const crwTestScrapeBtn = document.getElementById('crwTestScrapeBtn');
+
+const diagCrwStatus = document.getElementById('diagCrwStatus');
+const crwDiagActions = document.getElementById('crwDiagActions');
+const crwDiagAiBtn = document.getElementById('crwDiagAiBtn');
+const crwDiagSyncBtn = document.getElementById('crwDiagSyncBtn');
+const crwDiagUninstallBtn = document.getElementById('crwDiagUninstallBtn');
 
 const uninstallUpstreamBtn = document.getElementById('uninstallUpstreamBtn');
 const headerUninstallBtn = document.getElementById('headerUninstallBtn');
@@ -726,6 +741,12 @@ if (toggleCodeGraphBtn) {
     });
 }
 
+if (toggleCrwBtn) {
+    toggleCrwBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'toggleCrw' });
+    });
+}
+
 syncAllIdesBtn.addEventListener('click', () => {
     syncAllIdesBtn.textContent = 'Syncing...';
     vscode.postMessage({ command: 'syncAllIdeRules' });
@@ -1241,6 +1262,50 @@ if (codeGraphDiagUninstallBtn) {
     });
 }
 
+// fastCRW Action Handlers
+if (crwInlineSyncBtn) {
+    crwInlineSyncBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'syncCrw' });
+    });
+}
+
+if (crwStartServerBtn) {
+    crwStartServerBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'startCrwServer' });
+    });
+}
+
+if (crwTestScrapeBtn) {
+    crwTestScrapeBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'testScrapeCrw' });
+    });
+}
+
+if (crwDiagAiBtn) {
+    crwDiagAiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'copyAiInstallPrompt', elementKey: 'fastcrw', elementName: 'fastCRW' });
+        crwDiagAiBtn.textContent = '✓ Copied';
+        setTimeout(() => { crwDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+    });
+}
+
+if (crwDiagSyncBtn) {
+    crwDiagSyncBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        crwDiagSyncBtn.textContent = '🕷️ Syncing...';
+        vscode.postMessage({ command: 'syncCrw' });
+        setTimeout(() => { crwDiagSyncBtn.textContent = '🕷️ Sync'; }, 3000);
+    });
+}
+
+if (crwDiagUninstallBtn) {
+    crwDiagUninstallBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'crw' });
+    });
+}
+
 // Handle incoming messages from extension host
 window.addEventListener('message', (event) => {
     const message = event.data;
@@ -1425,6 +1490,22 @@ function renderDashboardState(data) {
         }
     }
 
+    // fastCRW Button in Header
+    if (toggleCrwBtn) {
+        const isCrw = Boolean(data.crwEnabled);
+        if (isCrw) {
+            toggleCrwBtn.textContent = 'Turn fastCRW OFF';
+            toggleCrwBtn.className = 'btn btn-ghost';
+        } else {
+            toggleCrwBtn.textContent = 'Turn fastCRW ON';
+            toggleCrwBtn.className = 'btn btn-primary';
+        }
+    }
+
+    if (footerVersionBadge && data.extensionVersion) {
+        footerVersionBadge.textContent = 'v' + data.extensionVersion;
+    }
+
     // Top Metric Cards
     currentTotalSavedTokens = (metrics && metrics.totalSavedTokens) || 0;
     totalSavedVal.textContent = metrics.totalSavedFormatted || '0';
@@ -1499,7 +1580,8 @@ function renderDashboardState(data) {
     const isOmniMissing = !data.omniRouteInstalled && !data.omniRouteRunning;
     const isJevGraphMissing = !data.jevGraphInstalled;
     const isCodeGraphMissing = !data.codeGraphInstalled;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing;
+    const isCrwMissing = !data.crwInstalled;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing || isCrwMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
@@ -1527,6 +1609,9 @@ function renderDashboardState(data) {
                 if (isCodeGraphMissing) {
                     chips.push('<button type="button" class="missing-chip chip-cyan" data-element="codegraph" data-name="CodeGraphContext" title="Click to copy AI prompt to install CodeGraphContext" style="background: rgba(0, 122, 255, 0.15); color: #5ac8fa; border: 1px solid rgba(0, 122, 255, 0.3);"><span class="chip-content">🧬 CodeGraph Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
+                if (isCrwMissing) {
+                    chips.push('<button type="button" class="missing-chip chip-orange" data-element="fastcrw" data-name="fastCRW" title="Click to copy AI prompt to install fastCRW"><span class="chip-content">🕷️ fastCRW Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                }
                 setupMissingTags.innerHTML = chips.join('');
             }
             if (setupBannerDesc) {
@@ -1538,7 +1623,8 @@ function renderDashboardState(data) {
                 if (isAntiSlopMissing) missingNames.push('Anti-Slop');
                 if (isJevGraphMissing) missingNames.push('JevGraph KG');
                 if (isCodeGraphMissing) missingNames.push('CodeGraphContext');
-                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, and build knowledge graphs from specs.`;
+                if (isCrwMissing) missingNames.push('fastCRW Scraper');
+                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, build knowledge graphs from specs, and hybridize web search.`;
             }
         } else {
             setupBanner.style.display = 'none';
@@ -1780,6 +1866,29 @@ function renderDashboardState(data) {
         if (codeGraphDiagUninstallBtn) codeGraphDiagUninstallBtn.style.display = cgInstalled ? 'inline-block' : 'none';
     }
 
+    if (diagCrwStatus) {
+        const crwInstalled = Boolean(data.crwInstalled);
+        const crwEnabled = data.crwEnabled !== false;
+        const crwVer = data.crwVersion || 'Ready';
+        if (crwInstalled && crwEnabled) {
+            diagCrwStatus.textContent = `Active (${crwVer})`;
+            diagCrwStatus.style.color = 'var(--accent-green)';
+        } else if (crwInstalled && !crwEnabled) {
+            diagCrwStatus.textContent = 'Inactive (Disabled)';
+            diagCrwStatus.style.color = 'var(--text-muted)';
+        } else {
+            diagCrwStatus.textContent = 'Inactive (Not Installed)';
+            diagCrwStatus.style.color = 'var(--accent-amber)';
+        }
+    }
+    if (crwDiagActions) {
+        crwDiagActions.style.display = 'inline-flex';
+        const crwInstalled = Boolean(data.crwInstalled);
+        if (crwDiagAiBtn) crwDiagAiBtn.style.display = crwInstalled ? 'none' : 'inline-block';
+        if (crwDiagSyncBtn) crwDiagSyncBtn.style.display = crwInstalled ? 'none' : 'inline-block';
+        if (crwDiagUninstallBtn) crwDiagUninstallBtn.style.display = crwInstalled ? 'inline-block' : 'none';
+    }
+
     if (jevStatusBadge) {
         const jInstalled = data.jevGraphInstalled;
         const jEnabled = data.jevGraphEnabled !== false;
@@ -1887,6 +1996,14 @@ function renderDashboardState(data) {
             repo: 'CodeGraphContext/CodeGraphContext',
             version: data.codeGraphInstalled ? `${data.codeGraphVersion || 'Ready'} (cgc)` : 'Not installed',
             isInstalled: Boolean(data.codeGraphInstalled)
+        },
+        {
+            key: 'crw',
+            name: 'fastCRW (Web Scraper & Search)',
+            icon: '🕷️',
+            repo: 'fastcrw/crw',
+            version: data.crwInstalled ? `${data.crwVersion || 'Ready'} (crw)` : 'Not installed',
+            isInstalled: Boolean(data.crwInstalled)
         }
     ];
 
@@ -2018,6 +2135,22 @@ function renderDashboardState(data) {
     if (codeGraphStatusBadge && data.codeGraphStatus) {
         codeGraphStatusBadge.textContent = data.codeGraphStatus.installed ? 'Active & Ready' : 'Ready to Sync';
         codeGraphStatusBadge.className = data.codeGraphStatus.installed ? 'panel-tag tag-indigo' : 'panel-tag tag-amber';
+    }
+
+    // fastCRW State
+    if (crwStatusBadge) {
+        const isCrwInstalled = Boolean(data.crwInstalled);
+        const isCrwEnabled = data.crwEnabled !== false;
+        if (isCrwInstalled && isCrwEnabled) {
+            crwStatusBadge.textContent = '🟢 READY & ACTIVE';
+            crwStatusBadge.className = 'panel-tag tag-orange';
+        } else if (isCrwInstalled && !isCrwEnabled) {
+            crwStatusBadge.textContent = '⚪ DISABLED';
+            crwStatusBadge.className = 'panel-tag';
+        } else {
+            crwStatusBadge.textContent = '⚠️ NOT DETECTED';
+            crwStatusBadge.className = 'panel-tag tag-amber';
+        }
     }
 }
 
@@ -2157,6 +2290,8 @@ function renderMultiChannelBreakdown(multiChannelData, activeTab = 'all') {
         visibleChannels = channels.filter(c => c.id === 'omniRoute');
     } else if (activeTab === 'jevgraph') {
         visibleChannels = channels.filter(c => c.id === 'jevgraph');
+    } else if (activeTab === 'crw') {
+        visibleChannels = channels.filter(c => c.id === 'crw');
     }
 
     // 5. Render Channels Grid Cards

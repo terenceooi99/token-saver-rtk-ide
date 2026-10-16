@@ -669,6 +669,35 @@ Indexes source code files into a local semantic property graph (KùzuDB / Falkor
   \`cgc watch\`
 - Launch MCP Server for AI assistants:
   \`cgc mcp start\`
+`,
+    'crw-search': `---
+name: crw-search
+description: >
+  Hybrid web search and scraping engine powered by fastCRW (Upstream: fastcrw/crw).
+  Extracts clean, condensed Markdown from URLs and web search queries, saving 70-90% prompt tokens compared to raw browser HTML.
+  Activate when the user types /crw-search, /crw-scrape, "fastcrw", "scrape url", or asks to perform hybrid web search with fastCRW.
+argument-hint: "<url_or_query>"
+license: MIT
+---
+
+# fastCRW Hybrid Web Search & Scraper (/crw-search)
+
+High-performance Rust-based web scraping, crawling, and AI search tool for AI coding agents.
+
+### Key Capabilities:
+- **Token Efficiency:** Strips CSS, JavaScript bloat, ads, and navigation boilerplate, delivering pure structured Markdown.
+- **Hybrid Search:** Combines fastCRW with the IDE's built-in web search for resilient web retrieval.
+- **Local API Endpoint:** Runs on \`http://127.0.0.1:3000\` with sub-second extraction speeds.
+
+### CLI Commands:
+- Scrape URL to clean Markdown:
+  \`crw scrape <url>\`
+- Deep crawl a website:
+  \`crw crawl <url> --depth 2\`
+- Start local daemon server:
+  \`crw serve --port 3000\`
+- Extract structured data with CSS/XPath selectors:
+  \`crw extract <url> -s "article, main"\`
 `
 };
 
@@ -758,6 +787,7 @@ class SkillInstaller {
         let antiSlopMode = 'during';
         let jevGraphEnabled = true;
         let codeGraphEnabled = true;
+        let crwEnabled = true;
 
         try {
             const config = vscode.workspace.getConfiguration('tokenSaver');
@@ -770,11 +800,19 @@ class SkillInstaller {
             antiSlopMode = config.get('antiSlopMode', 'during');
             jevGraphEnabled = config.get('jevGraphEnabled', true);
             codeGraphEnabled = config.get('codeGraphEnabled', true);
+            crwEnabled = config.get('crwEnabled', true);
         } catch (e) {
             // Use defaults if config is inaccessible
         }
 
         let text = CORE_RULE_TEXT;
+
+        if (crwEnabled) {
+            text += `\n\n## fastCRW Hybrid Web Search & Scraping Policy (Upstream: fastcrw/crw)\n`;
+            text += `- **Hybrid Search Workflow:** For web research and page reading, autonomous agents should prioritize using local fastCRW (\`crw search\`, \`crw scrape\`, or \`http://127.0.0.1:3000\`) in combination with the IDE's built-in web search.\n`;
+            text += `- **Token Optimization on Web Content:** fastCRW converts raw HTML, JS-rendered DOMs, and heavy web pages into clean, condensed Markdown before injecting into LLM context, preventing web clutter and saving 70-90% context tokens.\n`;
+            text += `- **Zero-Failure Fallback:** When a site blocks generic HTTP requests or returns Cloudflare challenges, route via fastCRW headless browser extraction.\n`;
+        }
 
         if (codeGraphEnabled || jevGraphEnabled) {
             text += `\n\n## Mandatory Semantic Knowledge Graph First Policy (Token Saver Enforcement)\n`;
@@ -832,6 +870,20 @@ class SkillInstaller {
                 text += `- When exploring codebases, inspect function signatures / AST outlines (/rtk-outline) before reading entire files into context.\n`;
             }
         }
+
+        text += `\n## Upstream Engine Integration & Latency Guardrails Standards\n`;
+        text += `Whenever a new upstream engine or external tool (e.g. \`fastcrw/crw\`, \`CodeGraphContext\`, \`JevGraph\`) is introduced or updated:\n`;
+        text += `1. **Holistic Dashboard Integration (8 Surfaces Required)**:\n`;
+        text += `   - Header action toggle button (\`Turn <Tool> ON / OFF\`)\n`;
+        text += `   - Setup alert banner (missing chips + AI install prompt generator)\n`;
+        text += `   - Dedicated dashboard section & Quick Action triggers\n`;
+        text += `   - Multi-channel savings breakdown navigation tabs & distribution weights\n`;
+        text += `   - System Health diagnostics row with status, AI install prompt, sync, and uninstall actions\n`;
+        text += `   - Upstream versions dropdown listing\n`;
+        text += `   - Upstream Sync Picker (\`showSyncPicker\`) and Uninstall Picker (\`showUninstallPicker\`)\n`;
+        text += `   - Footer upstream reference links\n`;
+        text += `2. **Zero-Noise Latency Benchmarks**: "Test Upstream Latencies" must selectively ping and display only **installed** upstream components, silently omitting/ignoring uninstalled tools so users never see failed pings or clutter for optional tools.\n`;
+        text += `3. **Footer Version Number Invariant**: The current plugin release version must always be presented beside "Token Saver" in front of "• GitHub".\n`;
 
         const disabledSkills = this.listDisabledSkills('all');
         const disabledNames = [...new Set(disabledSkills.map(s => s.name))];
@@ -1403,6 +1455,9 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             'codegraph-query',
             'codegraph-index'
         ];
+        const crwSkills = [
+            'crw-search'
+        ];
 
         let targetSkills = [];
         if (skillSetType === 'ponytail') {
@@ -1413,8 +1468,10 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             targetSkills = jevSkills;
         } else if (skillSetType === 'codegraph') {
             targetSkills = codeGraphSkills;
+        } else if (skillSetType === 'crw') {
+            targetSkills = crwSkills;
         } else if (skillSetType === 'rtk') {
-            const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills, ...codeGraphSkills]);
+            const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills, ...codeGraphSkills, ...crwSkills]);
             targetSkills = Object.keys(SKILLS_MAP).filter(s => !excluded.has(s));
         } else {
             targetSkills = Object.keys(SKILLS_MAP);

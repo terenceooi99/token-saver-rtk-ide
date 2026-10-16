@@ -195,6 +195,24 @@
         "icon": "$(database)"
       },
       {
+        "command": "tokenSaver.toggleCrw",
+        "title": "Toggle fastCRW Hybrid Search & Scraper Optimization",
+        "category": "Token Saver",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "tokenSaver.syncCrw",
+        "title": "Fetch & Sync fastCRW from GitHub (fastcrw/crw)",
+        "category": "Token Saver",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "tokenSaver.uninstallCrw",
+        "title": "Uninstall fastCRW Engine (fastcrw/crw)",
+        "category": "Token Saver",
+        "icon": "$(trash)"
+      },
+      {
         "command": "tokenSaver.indexCodeGraph",
         "title": "Index Workspace Code into Semantic Graph (CodeGraphContext)",
         "category": "Token Saver",
@@ -564,6 +582,16 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically keep the semantic code graph updated in real-time when code files are saved."
+        },
+        "tokenSaver.crwEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable fastCRW (fastcrw/crw) hybrid scraping & web search optimization."
+        },
+        "tokenSaver.crwPort": {
+          "type": "number",
+          "default": 3000,
+          "description": "Local port for fastCRW server (default: 3000)."
         }
       }
     }

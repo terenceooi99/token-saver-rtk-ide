@@ -6,6 +6,7 @@ const SkillInstaller = require('./skill-installer');
 const OmniRouteService = require('./omniroute-service');
 const JevGraphService = require('./jevgraph-service');
 const { CodeGraphService } = require('./codegraph-service');
+const { CrwService } = require('./crw-service');
 const DashboardPanel = require('./dashboard-panel');
 const SidebarProvider = require('./sidebar-provider');
 const path = require('path');
@@ -80,10 +81,11 @@ async function activate(context) {
     const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
     const jevGraphCheck = await RtkService.checkJevGraphInstalled();
     const codeGraphCheck = await CodeGraphService.checkInstalled();
+    const crwCheck = await CrwService.checkInstalled();
     const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
     const isOmniMissing = omniRouteEnabled && !omniStatus.installed;
-    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || !jevGraphCheck.installed || !codeGraphCheck.installed || isOmniMissing) {
+    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || !jevGraphCheck.installed || !codeGraphCheck.installed || !crwCheck.installed || isOmniMissing) {
         const missing = [];
         if (!check.installed) missing.push('RTK CLI');
         if (!headroomCheck.installed) missing.push('Headroom CCR');
@@ -91,9 +93,13 @@ async function activate(context) {
         if (!antiSlopCheck.installed) missing.push('Anti-Slop (GitHub)');
         if (!jevGraphCheck.installed) missing.push('JevGraph Knowledge Graph');
         if (!codeGraphCheck.installed) missing.push('CodeGraphContext (GitHub)');
+        if (!crwCheck.installed) missing.push('fastCRW Scraper (GitHub)');
         if (isOmniMissing) missing.push('OmniRoute Gateway');
 
         const options = ['🤖 Ask AI (Copy Prompt)'];
+        if (!crwCheck.installed) {
+            options.push('🕷️ Sync fastCRW GitHub');
+        }
         if (!codeGraphCheck.installed) {
             options.push('🧬 Sync CodeGraph GitHub');
         }
@@ -114,6 +120,8 @@ async function activate(context) {
         ).then(choice => {
             if (choice === '🤖 Ask AI (Copy Prompt)') {
                 vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
+            } else if (choice === '🕷️ Sync fastCRW GitHub') {
+                vscode.commands.executeCommand('tokenSaver.syncCrw');
             } else if (choice === '🧬 Sync CodeGraph GitHub') {
                 vscode.commands.executeCommand('tokenSaver.syncCodeGraph');
             } else if (choice === '🕸️ Sync JevGraph GitHub') {
@@ -978,6 +986,31 @@ async function activate(context) {
         await refreshStatus(context);
     });
 
+    const toggleCrwCmd = vscode.commands.registerCommand('tokenSaver.toggleCrw', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const current = config.get('crwEnabled', true);
+        await config.update('crwEnabled', !current, vscode.ConfigurationTarget.Global);
+        const scope = config.get('targetScope', 'all');
+        const isEnabled = context.globalState.get('tokenSaver.enabled', config.get('enableOnStartup', true));
+        SkillInstaller.syncRules(isEnabled, scope);
+        vscode.window.showInformationMessage(
+            !current
+                ? '🕷️ fastCRW hybrid web search optimization is now ENABLED.'
+                : '⚪ fastCRW hybrid web search optimization is now DISABLED.'
+        );
+        await refreshStatus(context);
+    });
+
+    const syncCrwCmd = vscode.commands.registerCommand('tokenSaver.syncCrw', async () => {
+        await RtkUpdater.performCrwSync();
+        await refreshStatus(context);
+    });
+
+    const uninstallCrwCmd = vscode.commands.registerCommand('tokenSaver.uninstallCrw', async () => {
+        await RtkUpdater.performLayerUninstall('crw');
+        await refreshStatus(context);
+    });
+
     // Background watcher for code file saves to keep semantic graph fresh
     let autoIndexDebounceTimer = null;
     const codeExts = new Set(['.js', '.jsx', '.ts', '.tsx', '.py', '.rs', '.go', '.java', '.c', '.cpp', '.h', '.hpp', '.cs', '.rb', '.php', '.swift', '.kt']);
@@ -1025,6 +1058,9 @@ async function activate(context) {
         toggleCodeGraphCmd,
         resetCodeGraphCmd,
         uninstallCodeGraphCmd,
+        toggleCrwCmd,
+        syncCrwCmd,
+        uninstallCrwCmd,
         onSaveDoc,
         toggleAntiSlopCmd,
         setAntiSlopModeCmd,
