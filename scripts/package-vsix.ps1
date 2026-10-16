@@ -53,7 +53,7 @@ $vsixManifestXml = @"
 		<Identity Language="en-US" Id="$name" Version="$version" Publisher="$publisher" />
 		<DisplayName>$displayName</DisplayName>
 		<Description xml:space="preserve">$description</Description>
-		<Tags>vscode,copilot,cursor,windsurf,cline,roo-code,claude-code,antigravity,rtk,token-saver,token-killer,ai-agents,context-window,llm,compression,rust</Tags>
+		<Tags>vscode,copilot,cursor,windsurf,cline,roo-code,claude-code,antigravity,rtk,token-saver,token-killer,ai-agents,context-window,llm,compression,jevgraph,knowledge-graph,codegraph,codegraphcontext,semantic-graph,token-optimization,prompt-engineering,context-compression,productivity,terminal,rust</Tags>
 		<Categories>AI,Other,Programming Languages</Categories>
 		<GalleryFlags>Public</GalleryFlags>
 		<Properties>
