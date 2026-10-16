@@ -273,11 +273,11 @@ class RtkService {
         return {
             isMock,
             totalSavedTokens: totalSaved,
-            totalSavedFormatted: totalSaved >= 1000000 
-                ? (totalSaved / 1000000).toFixed(2) + 'M' 
-                : totalSaved >= 1000 
-                ? (totalSaved / 1000).toFixed(1) + 'K' 
-                : totalSaved.toString(),
+            totalSavedFormatted: totalSaved >= 1000000
+                ? (totalSaved / 1000000).toFixed(2) + 'M'
+                : totalSaved >= 1000
+                    ? (totalSaved / 1000).toFixed(1) + 'K'
+                    : totalSaved.toString(),
             savedPercentage: percentage || (totalSaved > 0 ? 57.3 : 0),
             estimatedDollarSavings: `$${dollarSaved}`,
             tokenPricePerMillion: pricePerMillion,
@@ -811,7 +811,7 @@ class RtkService {
             rtkUninstallCmd,
             headroomUninstallCmd,
             omniRouteUninstallCmd,
-            combinedUninstallCmd: isWindows 
+            combinedUninstallCmd: isWindows
                 ? `${rtkUninstallCmd} ; ${headroomUninstallCmd} ; ${omniRouteUninstallCmd}`
                 : `${rtkUninstallCmd} && ${headroomUninstallCmd} && ${omniRouteUninstallCmd}`
         };

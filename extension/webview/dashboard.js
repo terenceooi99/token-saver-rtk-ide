@@ -593,14 +593,14 @@ try {
     if (savedTheme === 'light' || savedTheme === 'dark') {
         currentTheme = savedTheme;
     }
-} catch (_) {}
+} catch (_) { }
 
 function applyTheme(theme) {
     currentTheme = theme;
     if (theme === 'light') {
         document.body.setAttribute('data-theme', 'light');
         document.body.classList.add('light-theme');
-        if (themeIcon) themeIcon.textContent = '🌙';
+        if (themeIcon) themeIcon.textContent = '⏾';
         if (themeToggleBtn) {
             themeToggleBtn.title = 'Switch to Dark Mode';
             themeToggleBtn.classList.add('active');
@@ -608,7 +608,7 @@ function applyTheme(theme) {
     } else {
         document.body.setAttribute('data-theme', 'dark');
         document.body.classList.remove('light-theme');
-        if (themeIcon) themeIcon.textContent = '☀️';
+        if (themeIcon) themeIcon.textContent = '☀︎';
         if (themeToggleBtn) {
             themeToggleBtn.title = 'Switch to Light Mode';
             themeToggleBtn.classList.remove('active');
@@ -616,7 +616,7 @@ function applyTheme(theme) {
     }
     try {
         localStorage.setItem('tokenSaverTheme', theme);
-    } catch (_) {}
+    } catch (_) { }
 }
 
 // Initialize Theme
@@ -898,9 +898,9 @@ if (syncPonytailBtn) {
 if (ponytailInlineSyncBtn) {
     ponytailInlineSyncBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ponytailInlineSyncBtn.textContent = '🔄 Syncing...';
+        ponytailInlineSyncBtn.textContent = '⭮ Syncing...';
         vscode.postMessage({ command: 'syncPonytail' });
-        setTimeout(() => { ponytailInlineSyncBtn.textContent = '🔄 Sync from GitHub'; }, 3000);
+        setTimeout(() => { ponytailInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
     });
 }
 
@@ -936,9 +936,9 @@ if (antiSlopSegmentGroup) {
 if (antiSlopInlineSyncBtn) {
     antiSlopInlineSyncBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        antiSlopInlineSyncBtn.textContent = '🔄 Syncing...';
+        antiSlopInlineSyncBtn.textContent = '⭮ Syncing...';
         vscode.postMessage({ command: 'syncAntiSlop' });
-        setTimeout(() => { antiSlopInlineSyncBtn.textContent = '🔄 Sync from GitHub'; }, 3000);
+        setTimeout(() => { antiSlopInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
     });
 }
 
@@ -1079,9 +1079,9 @@ if (antiSlopDiagUninstallBtn) {
 if (jevInlineSyncBtn) {
     jevInlineSyncBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        jevInlineSyncBtn.textContent = '🔄 Syncing...';
+        jevInlineSyncBtn.textContent = '⭮ Syncing...';
         vscode.postMessage({ command: 'syncJevGraph' });
-        setTimeout(() => { jevInlineSyncBtn.textContent = '🔄 Sync from GitHub'; }, 3000);
+        setTimeout(() => { jevInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
     });
 }
 
@@ -1387,8 +1387,8 @@ function renderDashboardState(data) {
     // Top Metric Cards
     currentTotalSavedTokens = (metrics && metrics.totalSavedTokens) || 0;
     totalSavedVal.textContent = metrics.totalSavedFormatted || '0';
-    savedRatioVal.textContent = metrics.isMock 
-        ? 'Awaiting command executions' 
+    savedRatioVal.textContent = metrics.isMock
+        ? 'Awaiting command executions'
         : `Active compression across ${metrics.commandBreakdown.length} tool categories`;
 
     const pct = metrics.savedPercentage || 0;
@@ -1516,8 +1516,8 @@ function renderDashboardState(data) {
         if (!omniEnabled) {
             omniStatusMain.textContent = 'OmniRoute Disabled in Settings';
         } else {
-            omniStatusMain.textContent = omniRunning 
-                ? `Gateway Active (Port ${omniPort})` 
+            omniStatusMain.textContent = omniRunning
+                ? `Gateway Active (Port ${omniPort})`
                 : (omniInstalled ? 'Gateway Ready (Offline)' : 'Gateway Not Detected');
         }
     }
@@ -1525,8 +1525,8 @@ function renderDashboardState(data) {
         if (!omniEnabled) {
             omniStatusSub.textContent = 'Toggle "Active" switch above or user setting tokenSaver.omniRouteEnabled to re-enable';
         } else {
-            omniStatusSub.textContent = omniRunning 
-                ? `Live at http://localhost:${omniPort}/v1 • Auto-Fallback Active` 
+            omniStatusSub.textContent = omniRunning
+                ? `Live at http://localhost:${omniPort}/v1 • Auto-Fallback Active`
                 : `Endpoint: http://localhost:${omniPort}/v1`;
         }
     }
@@ -1535,8 +1535,8 @@ function renderDashboardState(data) {
             omniStatusBadge.textContent = '⚪ DISABLED';
             omniStatusBadge.className = 'panel-tag';
         } else {
-            omniStatusBadge.textContent = omniRunning 
-                ? `🟢 RUNNING (:${omniPort})` 
+            omniStatusBadge.textContent = omniRunning
+                ? `🟢 RUNNING (:${omniPort})`
                 : (omniInstalled ? '🔴 STOPPED' : '⚠️ NOT DETECTED');
             omniStatusBadge.className = omniRunning ? 'panel-tag tag-cyan' : 'panel-tag tag-purple';
         }
@@ -2025,7 +2025,7 @@ function renderIdeGrid(ideList) {
 
         const syncBtn = document.createElement('button');
         syncBtn.className = 'btn-ide-sync';
-        syncBtn.textContent = ide.synced ? '🔄 Re-Sync Rule' : '⚡ Enable Rule';
+        syncBtn.textContent = ide.synced ? '⭮ Re-Sync Rule' : '⚡ Enable Rule';
         syncBtn.addEventListener('click', () => {
             vscode.postMessage({
                 command: 'syncSingleTarget',

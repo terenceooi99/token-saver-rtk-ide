@@ -505,7 +505,7 @@ async function activate(context) {
                 value: 'manual'
             },
             {
-                label: `🔄 Re-Enable All Skills (${disabledCount} currently disabled)`,
+                label: `⭮ Re-Enable All Skills (${disabledCount} currently disabled)`,
                 description: 'Instantly restore all quarantined skills across project & global repositories',
                 value: 're_enable'
             }
@@ -529,7 +529,7 @@ async function activate(context) {
         if (selectedAction.value === 're_enable') {
             const res = SkillInstaller.reEnableAllSkills('all');
             vscode.window.showInformationMessage(
-                `🔄 Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
+                `⭮ Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
             );
             await refreshStatus(context);
             return;
@@ -585,7 +585,7 @@ async function activate(context) {
     const reEnableAllSkillsCmd = vscode.commands.registerCommand('tokenSaver.reEnableAllSkills', async () => {
         const res = SkillInstaller.reEnableAllSkills('all');
         vscode.window.showInformationMessage(
-            `🔄 Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
+            `⭮ Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
         );
         await refreshStatus(context);
     });

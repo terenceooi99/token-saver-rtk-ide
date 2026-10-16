@@ -266,7 +266,7 @@ class RtkUpdater {
 
     static async performAntiSlopSync() {
         try {
-            vscode.window.showInformationMessage('🔄 Fetching & synchronizing Anti-Slop from GitHub (miqdadbadjuber/anti-slop)...');
+            vscode.window.showInformationMessage('⭮ Fetching & synchronizing Anti-Slop from GitHub (miqdadbadjuber/anti-slop)...');
             const results = SkillInstaller.installAllSkills();
             const config = vscode.workspace.getConfiguration('tokenSaver');
             const isEnabled = config.get('enableOnStartup', true);
@@ -286,7 +286,7 @@ class RtkUpdater {
 
     static async performPonytailSync() {
         try {
-            vscode.window.showInformationMessage('🔄 Fetching & synchronizing Ponytail from GitHub (DietrichGebert/ponytail)...');
+            vscode.window.showInformationMessage('⭮ Fetching & synchronizing Ponytail from GitHub (DietrichGebert/ponytail)...');
             const results = SkillInstaller.installAllSkills();
             const config = vscode.workspace.getConfiguration('tokenSaver');
             const isEnabled = config.get('enableOnStartup', true);
@@ -647,32 +647,32 @@ class RtkUpdater {
                     {
                         label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
                         description: `Installed: ${ponytailCheck.installed ? `${ponytailCheck.skillsCount || 6}/6 skills active` : 'Not Synced'} | GitHub: ${ponytailRelease.tag || 'Latest'}`,
-                        detail: ponytailHasUpdate 
-                            ? `🚀 Update / Missing skills detected - Click to fetch & sync from GitHub` 
+                        detail: ponytailHasUpdate
+                            ? `🚀 Update / Missing skills detected - Click to fetch & sync from GitHub`
                             : (ponytailCheck.installed ? '✓ Synced & active in Global IDE - Click to re-fetch' : '⚡ Click to fetch DietrichGebert/ponytail skills to IDE'),
                         actionKey: 'ponytail'
                     },
                     {
                         label: '$(terminal) RTK CLI (rtk-ai/rtk)',
                         description: `Installed: ${rtkCheck.installed ? rtkCheck.version : 'Not Installed'} | GitHub: ${rtkRelease.tag || 'Latest'}`,
-                        detail: rtkHasUpdate 
-                            ? `🚀 Update Available (${rtkCheck.version} ➔ ${rtkRelease.tag}) - Click to update` 
+                        detail: rtkHasUpdate
+                            ? `🚀 Update Available (${rtkCheck.version} ➔ ${rtkRelease.tag}) - Click to update`
                             : (rtkCheck.installed ? `✓ Up to date (${rtkCheck.version})` : '⚡ Not Installed - Click to install via terminal'),
                         actionKey: 'rtk'
                     },
                     {
                         label: '$(package) Headroom CCR (headroomlabs-ai/headroom)',
                         description: `Installed: ${headroomCheck.installed ? headroomCheck.version : 'Not Installed'} | GitHub: ${headroomRelease.tag || 'Latest'}`,
-                        detail: headroomHasUpdate 
-                            ? `🚀 Update Available (${headroomCheck.version} ➔ ${headroomRelease.tag}) - Click to update` 
+                        detail: headroomHasUpdate
+                            ? `🚀 Update Available (${headroomCheck.version} ➔ ${headroomRelease.tag}) - Click to update`
                             : (headroomCheck.installed ? `✓ Up to date (${headroomCheck.version})` : '⚡ Not Installed - Click to install via pip'),
                         actionKey: 'headroom'
                     },
                     {
                         label: '$(globe) OmniRoute AI Gateway (diegosouzapw/OmniRoute)',
                         description: `Installed: ${omniCheck.installed ? (omniCheck.version || 'Ready') : 'Not Installed'} | GitHub: ${omniRelease.tag || 'Latest'}`,
-                        detail: omniHasUpdate 
-                            ? `🚀 Update Available (${omniCheck.version || 'installed'} ➔ ${omniRelease.tag}) - Click to update` 
+                        detail: omniHasUpdate
+                            ? `🚀 Update Available (${omniCheck.version || 'installed'} ➔ ${omniRelease.tag}) - Click to update`
                             : (omniCheck.installed ? `✓ Up to date (${omniCheck.version || 'Ready'})` : '⚡ Not Installed - Click to install via npm'),
                         actionKey: 'omniroute'
                     },

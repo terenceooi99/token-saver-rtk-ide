@@ -47,7 +47,7 @@
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
                     <button class="btn btn-ghost btn-refresh-action" id="refreshBtn" title="Click to Refresh Metrics">
-                        <span class="refresh-icon" id="refreshIcon">🔄</span>
+                        <span class="refresh-icon" id="refreshIcon">⭮</span>
                         <span class="refresh-timer-badge" id="refreshTimerBadge" style="display: none;">1m</span>
                     </button>
                     <button class="btn btn-ghost btn-refresh-dropdown" id="refreshMenuBtn"
@@ -93,7 +93,7 @@
 
                 <button class="btn btn-ghost btn-theme-toggle" id="themeToggleBtn" title="Switch to Light Mode"
                     aria-label="Toggle Theme">
-                    <span id="themeIcon">☀️</span>
+                    <span id="themeIcon">☀︎</span>
                 </button>
                 <button class="btn btn-ghost" id="popOutBtn" title="Pop Out to Editor Tab">⤢</button>
                 <button class="btn btn-ghost" id="minimizeBtn" title="Minimize / Compact Dashboard">🗕</button>
@@ -266,7 +266,7 @@
                                 <div class="opt-title-line">
                                     <span class="opt-title">Ponytail YAGNI Mode:</span>
                                     <button class="btn-mini-sync" id="ponytailInlineSyncBtn"
-                                        title="Fetch & sync latest Ponytail skills from GitHub to global IDE">🔄 Sync
+                                        title="Fetch & sync latest Ponytail skills from GitHub to global IDE">⭮ Sync
                                         from GitHub</button>
                                 </div>
                                 <span class="opt-desc">Directs AI to prioritize stdlib, shortest diffs, and max 3-line
@@ -361,7 +361,7 @@
                                 <div class="opt-title-line">
                                     <span class="opt-title">Anti-Slop Mode:</span>
                                     <button class="btn-mini-sync" id="antiSlopInlineSyncBtn"
-                                        title="Fetch & sync latest Anti-Slop skills from GitHub to global IDE">🔄 Sync
+                                        title="Fetch & sync latest Anti-Slop skills from GitHub to global IDE">⭮ Sync
                                         from GitHub</button>
                                 </div>
                                 <span class="opt-desc">Controls how AI guards against slop: 'During' (direct execution),
@@ -403,7 +403,7 @@
                                 <div class="opt-title-line">
                                     <span class="opt-title">Document Knowledge Graph Engine:</span>
                                     <button class="btn-mini-sync" id="jevInlineSyncBtn"
-                                        title="Fetch & sync latest JevGraph engine from GitHub via uv">🔄 Sync from
+                                        title="Fetch & sync latest JevGraph engine from GitHub via uv">⭮ Sync from
                                         GitHub</button>
                                 </div>
                                 <span class="opt-desc">Converts raw specs, PRDs, and PDFs to bounded knowledge graphs
@@ -467,7 +467,7 @@
                                 <div class="opt-title-line">
                                     <span class="opt-title">Code Knowledge Graph Engine:</span>
                                     <button class="btn-mini-sync" id="codeGraphInlineSyncBtn"
-                                        title="Fetch & sync latest CodeGraphContext engine from GitHub via pip">🔄 Sync
+                                        title="Fetch & sync latest CodeGraphContext engine from GitHub via pip">⭮ Sync
                                         from GitHub</button>
                                 </div>
                                 <span class="opt-desc">Maps functions, classes, imports, and call graphs. Forces AI
@@ -736,7 +736,8 @@
                                     <span class="btn-icon">🗑️</span>
                                     <div class="btn-text-block">
                                         <span class="btn-label" id="uninstallSkillsLabel">Uninstall Skills</span>
-                                        <span class="btn-sub" id="uninstallSkillsSub">Global IDE vs Project (Recycle Bin)</span>
+                                        <span class="btn-sub" id="uninstallSkillsSub">Global IDE vs Project (Recycle
+                                            Bin)</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge badge-warning">
@@ -750,7 +751,8 @@
                                     <span class="btn-icon">⏸️</span>
                                     <div class="btn-text-block">
                                         <span class="btn-label" id="disableSkillsLabel">Temporary Disable Skills</span>
-                                        <span class="btn-sub" id="disableSkillsSub">Agent Decide / Manual / Re-Enable</span>
+                                        <span class="btn-sub" id="disableSkillsSub">Agent Decide / Manual /
+                                            Re-Enable</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge badge-warning" id="disabledSkillsBadge">
