@@ -1,7 +1,8 @@
 ---
 name: jevgraph-build
 description: >
-  Build evidence-backed candidate knowledge graphs with typed relation decisions from documents, specs, PRDs, or PDFs.
+  Build evidence-backed candidate knowledge graphs with typed relation decisions from non-code documents (specs, PRDs, or PDFs).
+  Use EXCLUSIVELY for non-code files. For source code files, use CodeGraphContext (/codegraph-index).
   Activate when the user types /jevgraph-build, /jevgraph, "build knowledge graph", "document graph",
   or asks to extract structured entity relations from specifications or documents.
 argument-hint: "<input_file_or_doc> [--ontology <path>] [--entities <path>] [--provider keyword|jev]"
@@ -11,6 +12,7 @@ license: MIT
 # JevGraph Candidate Knowledge Graph Builder (/jevgraph-build)
 
 Builds an evidence-backed candidate knowledge graph from documents (PDF, DOCX, PPTX, TXT, or markdown architectural specs) using bounded candidate blocking and typed relation decisions (Upstream: `chenmingtang830/jevgraph`).
+NOTE: JevGraph is strictly for non-code documentation. For code-based files, use CodeGraphContext (/codegraph-index).
 
 ## Why JevGraph Saves Prompt Tokens
 Instead of dumping full 50-100 page spec documents or massive architecture files into the LLM prompt context (which consumes 50,000–200,000 tokens), JevGraph performs local parsing and candidate blocking to generate compact, structured knowledge graphs with page-level evidence windows.

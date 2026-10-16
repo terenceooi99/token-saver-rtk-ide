@@ -44,3 +44,4 @@ OmniRoute is an open-source, local AI gateway and quota-aware router running at 
 
 ### Antigravity & VS Code Continue
 - Point OpenAI-compatible base URL to `http://localhost:20128/v1`.
+

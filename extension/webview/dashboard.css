@@ -475,6 +475,56 @@ h1 {
     min-width: 0;
 }
 
+.header-actions > .btn {
+    height: 28px;
+    padding: 0 11px;
+    font-size: 11.5px;
+    line-height: 26px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.header-actions > .btn-ghost {
+    padding: 0 9px;
+}
+
+.header-actions > .refresh-dropdown-group {
+    height: 28px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+}
+
+.header-actions .btn-refresh-action,
+.header-actions .btn-refresh-dropdown {
+    height: 100%;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    line-height: 1;
+}
+
+.header-actions .btn-refresh-dropdown {
+    padding: 0 6px;
+}
+
+.header-actions #themeToggleBtn,
+.header-actions #popOutBtn,
+.header-actions #minimizeBtn {
+    min-width: 28px;
+    padding: 0 8px;
+    font-size: 13px;
+    line-height: 1;
+}
+
+
 /* Apple macOS Status Pill */
 .status-pill {
     display: flex;

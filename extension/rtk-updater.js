@@ -335,6 +335,7 @@ class RtkUpdater {
         this.performPonytailSync();
         this.performAntiSlopSync();
         this.performJevGraphSync();
+        this.performCodeGraphSync();
     }
 
     static async performJevGraphSync() {
@@ -351,6 +352,23 @@ class RtkUpdater {
             vscode.window.showInformationMessage('✓ JevGraph skills & directives synced across IDE.');
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to sync JevGraph: ${e.message}`);
+        }
+    }
+
+    static async performCodeGraphSync() {
+        const { CodeGraphService } = require('./codegraph-service');
+        const isWindows = process.platform === 'win32';
+        const cmds = CodeGraphService.getInstallCommands(isWindows);
+
+        try {
+            vscode.window.showInformationMessage('🧬 Syncing CodeGraphContext semantic code graph engine from GitHub (CodeGraphContext/CodeGraphContext)...');
+            RtkService.runInTerminal(cmds.primaryCmd);
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            SkillInstaller.installAllSkills(scope);
+            SkillInstaller.syncRules(true, scope);
+            vscode.window.showInformationMessage('✓ CodeGraphContext skills & directives synced across IDE.');
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to sync CodeGraphContext: ${e.message}`);
         }
     }
 
@@ -408,6 +426,22 @@ class RtkUpdater {
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall JevGraph: ${e.message}`);
+                }
+                break;
+            case 'codegraph':
+                try {
+                    const { CodeGraphService } = require('./codegraph-service');
+                    const isWindows = process.platform === 'win32';
+                    const cmds = CodeGraphService.getUninstallCommands(isWindows);
+                    await config.update('codeGraphEnabled', false, vscode.ConfigurationTarget.Global);
+                    const scope = config.get('targetScope', 'all');
+                    SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    RtkService.runInTerminal(cmds.primaryCmd);
+                    vscode.window.showInformationMessage(
+                        '🧬 CodeGraphContext uninstaller started in terminal and rule disabled.'
+                    );
+                } catch (e) {
+                    vscode.window.showErrorMessage(`Failed to uninstall CodeGraphContext: ${e.message}`);
                 }
                 break;
             case 'omniroute':
@@ -523,6 +557,11 @@ class RtkUpdater {
                 layerKey: 'jevgraph'
             },
             {
+                label: '$(database) CodeGraphContext Semantic Graph (CodeGraphContext/CodeGraphContext)',
+                description: 'pip uninstall codegraphcontext, remove /codegraph-* skills, and disable feature',
+                layerKey: 'codegraph'
+            },
+            {
                 label: '$(clear-all) Injected Multi-IDE Rules & Skills',
                 description: 'Strip all rule blocks from AGENTS.md, .cursorrules, etc. and remove .agents/skills',
                 layerKey: 'rules_skills'
@@ -542,24 +581,27 @@ class RtkUpdater {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph)...',
+                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraph)...',
                 cancellable: false
             },
             async () => {
                 const OmniRouteService = require('./omniroute-service');
-                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease] = await Promise.all([
+                const { CodeGraphService } = require('./codegraph-service');
+                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease] = await Promise.all([
                     RtkService.checkInstalled(),
                     RtkService.checkHeadroomInstalled(),
                     RtkService.checkPonytailInstalled(),
                     RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : OmniRouteService.checkInstalled(),
                     RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
                     RtkService.checkJevGraphInstalled ? RtkService.checkJevGraphInstalled() : { installed: false },
+                    CodeGraphService.checkInstalled(),
                     this.getLatestRelease('rtk-ai/rtk'),
                     this.getLatestRelease('headroomlabs-ai/headroom'),
                     this.getLatestRelease('DietrichGebert/ponytail'),
                     this.getLatestRelease('diegosouzapw/OmniRoute'),
                     this.getLatestRelease('miqdadbadjuber/anti-slop'),
-                    this.getLatestRelease('chenmingtang830/jevgraph')
+                    this.getLatestRelease('chenmingtang830/jevgraph'),
+                    this.getLatestRelease('CodeGraphContext/CodeGraphContext')
                 ]);
 
                 const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
@@ -568,14 +610,23 @@ class RtkUpdater {
                 const antiSlopHasUpdate = antiSlopRelease.success && (!antiSlopCheck.installed || (antiSlopCheck.skillsCount && antiSlopCheck.skillsCount < 6));
                 const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
                 const jevHasUpdate = jevRelease.success && (!jevCheck.installed);
-                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate;
+                const codeGraphHasUpdate = codeGraphRelease.success && (!codeGraphCheck.installed);
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate;
 
                 const picks = [
                     {
                         label: hasAnyUpdate ? '$(cloud-download) Update / Sync All Upstream GitHub Layers' : '$(sync) Sync All Upstream GitHub Layers',
-                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute and JevGraph',
+                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraph',
                         detail: hasAnyUpdate ? '🚀 Updates available for one or more layers - Click to update all' : '✓ All components up-to-date - Click to force re-sync',
                         actionKey: 'all'
+                    },
+                    {
+                        label: '$(database) CodeGraphContext Semantic Code Graph (CodeGraphContext/CodeGraphContext)',
+                        description: `Installed: ${codeGraphCheck.installed ? (codeGraphCheck.runner || 'Ready') : 'Not Installed'} | GitHub: ${codeGraphRelease.tag || 'Latest'}`,
+                        detail: codeGraphHasUpdate
+                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
+                            : (codeGraphCheck.installed ? '✓ Synced & ready for code graph queries - Click to re-fetch' : '⚡ Click to install CodeGraphContext via pip'),
+                        actionKey: 'codegraph'
                     },
                     {
                         label: '$(type-hierarchy) JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
@@ -628,7 +679,7 @@ class RtkUpdater {
                     {
                         label: '$(link-external) View Upstream GitHub Release Notes & Compare',
                         description: 'Open release notes and commit history on GitHub',
-                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute & jevgraph in your browser',
+                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute, jevgraph & codegraph in your browser',
                         actionKey: 'notes'
                     }
                 ];
@@ -641,6 +692,8 @@ class RtkUpdater {
 
                 if (sel.actionKey === 'all') {
                     this.performAllUpdates();
+                } else if (sel.actionKey === 'codegraph') {
+                    await this.performCodeGraphSync();
                 } else if (sel.actionKey === 'jevgraph') {
                     await this.performJevGraphSync();
                 } else if (sel.actionKey === 'antislop') {
@@ -660,6 +713,7 @@ class RtkUpdater {
                     if (antiSlopRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
                     if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
                     if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
+                    if (codeGraphRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(codeGraphRelease.htmlUrl));
                 }
             }
         );

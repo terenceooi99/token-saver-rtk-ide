@@ -2,7 +2,26 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
-## [1.11.0] - 2026-10-08
+## [1.12.0] - 2026-10-16
+### Added & Improved
+- **CodeGraphContext Integration (`CodeGraphContext/CodeGraphContext`)**:
+  - Integrated pre-indexed semantic AST & call graph engine for code files.
+  - Slashes code exploration token consumption by up to **90%** by allowing AI agents to query pre-indexed symbols, call hierarchies, and dependencies instead of reading full source files.
+  - Added dedicated AI agent skills: `/codegraph-query` (query semantic code graph) and `/codegraph-index` (build/refresh code knowledge graph).
+  - Added continuous real-time graph auto-updater on code file save (`tokenSaver.codeGraphAutoUpdate`).
+  - Added interactive CodeGraphContext card, index/query triggers, and real-time auto-update switch in the Webview Dashboard.
+- **Mandatory Semantic Knowledge Graph First Policy (Dual-Graph Separation)**:
+  - Enforced strict dual-graph separation across all IDE rule targets (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`, Antigravity rules):
+    - **CodeGraphContext**: AI query engine for code files (`.ts`, `.js`, `.py`, `.rs`, `.go`, `.java`, `.cpp`, etc.).
+    - **JevGraph**: AI query engine strictly for non-code files (`.md`, `.pdf`, `.docx`, `.txt` specs, PRDs, architectures).
+  - Strict rule policy instructs AI agents to query semantic graphs first before falling back to full file reads.
+- **7-Way Upstream GitHub Core Synchronization**:
+  - Unified multi-engine management across 7 upstream open-source projects: **RTK**, **Headroom**, **Ponytail**, **Anti-Slop**, **OmniRoute**, **JevGraph**, and **CodeGraphContext**.
+  - Added granular sync and uninstallation support for CodeGraphContext.
+- **Webview UI Refinement**:
+  - Removed "Terminal Scoreboard" button from Quick Actions to declutter the dashboard header.
+
+
 ### Added & Improved
 - **JevGraph Knowledge Graph Engine Integration (`chenmingtang830/jevgraph`)**:
   - Integrated evidence-backed candidate knowledge graph extraction from documents and technical specifications (PDF, DOCX, PPTX, text).

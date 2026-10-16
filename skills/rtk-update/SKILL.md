@@ -1,8 +1,8 @@
 ---
 name: rtk-update
 description: >
-  Manually check and update or uninstall upstream GitHub repositories (rtk-ai/rtk, headroomlabs-ai/headroom, DietrichGebert/ponytail, miqdadbadjuber/anti-slop, and diegosouzapw/OmniRoute).
-  Activate when the user types /rtk-update, /headroom-sync, /ponytail-sync, /antislop-sync, "update upstream", "sync rtk", or asks to
+  Manually check and update or uninstall upstream GitHub repositories (rtk-ai/rtk, headroomlabs-ai/headroom, DietrichGebert/ponytail, miqdadbadjuber/anti-slop, diegosouzapw/OmniRoute, chenmingtang830/jevgraph, and CodeGraphContext/CodeGraphContext).
+  Activate when the user types /rtk-update, /headroom-sync, /ponytail-sync, /antislop-sync, /jevgraph-sync, /codegraph-sync, "update upstream", "sync rtk", or asks to
   synchronize or uninstall upstream tools.
 ---
 
@@ -14,6 +14,8 @@ Manually update, synchronize, or manage upstream token saver engines:
 3. **Ponytail:** YAGNI token saver suite from GitHub (`DietrichGebert/ponytail`)
 4. **Anti-Slop:** AI quality & slop prevention framework from GitHub (`miqdadbadjuber/anti-slop`)
 5. **OmniRoute:** AI Gateway & model router from GitHub (`diegosouzapw/OmniRoute`)
+6. **JevGraph:** Document knowledge graph engine from GitHub (`chenmingtang830/jevgraph`)
+7. **CodeGraphContext:** Code semantic graph engine from GitHub (`CodeGraphContext/CodeGraphContext`)
 
 ## Execution Steps
 

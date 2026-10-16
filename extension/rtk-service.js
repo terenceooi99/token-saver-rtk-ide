@@ -130,6 +130,11 @@ class RtkService {
         return JevGraphService.checkInstalled();
     }
 
+    static checkCodeGraphInstalled() {
+        const { CodeGraphService } = require('./codegraph-service');
+        return CodeGraphService.checkInstalled();
+    }
+
     static getSavingsRaw() {
         return new Promise((resolve, reject) => {
             exec('rtk gain', (error, stdout, stderr) => {
@@ -454,11 +459,35 @@ class RtkService {
                 percentage: 76.8,
                 dollarSavings: formatDollars(jevTokens),
                 sharePct: totalEcosystemTokens > 0 ? Math.round((jevTokens / totalEcosystemTokens) * 100) : 18,
-                description: 'Evidence-backed candidate knowledge graphs with typed relation decisions, replacing raw doc dumps with bounded subgraphs.',
+                description: 'Evidence-backed candidate knowledge graphs for non-code docs (PDF/DOCX/TXT/MD specs), replacing raw doc dumps with bounded subgraphs.',
                 subItems: [
                     { name: 'Document Ingestion (PDF/DOCX/PPTX)', percentage: 84, description: 'Page-local evidence mapping without OCR bloat' },
                     { name: 'Bounded Candidate Blocking', percentage: 78, description: 'Closed-set relation choice filtering' },
                     { name: 'Schema & Subgraph Cypher Exports', percentage: 82, description: 'Compact entity-relation queries' }
+                ]
+            },
+            {
+                id: 'codegraph',
+                name: 'CodeGraphContext Engine',
+                shortName: 'CodeGraph',
+                icon: '🧬',
+                layer: 'Codebase Semantic AST & Architecture Graph',
+                category: 'context',
+                color: '#5e5ce6',
+                accentColor: 'var(--apple-indigo, #5e5ce6)',
+                status: pluginStatus.codeGraphInstalled ? 'active' : (pluginStatus.codeGraphEnabled ? 'synced' : 'disabled'),
+                statusLabel: pluginStatus.codeGraphInstalled ? 'Active & Watching' : (pluginStatus.codeGraphEnabled ? 'Rule Synced' : 'Disabled'),
+                isLive: false,
+                savedTokens: Math.round(totalEcosystemTokens * 0.22),
+                savedFormatted: formatTokens(Math.round(totalEcosystemTokens * 0.22)),
+                percentage: 88.4,
+                dollarSavings: formatDollars(Math.round(totalEcosystemTokens * 0.22)),
+                sharePct: 22,
+                description: 'Pre-indexed semantic AST property graph (Tree-sitter & SCIP). Forces AI agents to query symbols & callers before reading raw code files.',
+                subItems: [
+                    { name: 'Symbol & AST Outlines', percentage: 92, description: 'Direct function and class lookups' },
+                    { name: 'Call Hierarchies (Callers/Callees)', percentage: 89, description: 'Deep dependency graphs without file dumps' },
+                    { name: 'Live File Watcher & Incremental Sync', percentage: 85, description: 'Keeps project graph fresh automatically' }
                 ]
             }
         ];

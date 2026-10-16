@@ -35,6 +35,7 @@
                 <button class="btn btn-primary" id="toggleAntiSlopBtn">Turn Anti-Slop ON</button>
                 <button class="btn btn-primary" id="toggleOmniRouteBtn">Turn OmniRoute ON</button>
                 <button class="btn btn-primary" id="toggleJevGraphBtn">Turn JevGraph ON</button>
+                <button class="btn btn-primary" id="toggleCodeGraphBtn">Turn CodeGraph ON</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
@@ -348,8 +349,8 @@
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🕸️ JevGraph Knowledge Graph Engine</h2>
-                                <p class="panel-subtitle">Evidence-backed candidate graphs with typed relation decisions from docs & specs</p>
+                                <h2>🕸️ JevGraph Knowledge Graph Engine (Non-Code Docs)</h2>
+                                <p class="panel-subtitle">Evidence-backed candidate graphs for non-code files (PDF, DOCX, TXT, MD specs/PRDs)</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
@@ -366,7 +367,7 @@
                                     <span class="opt-title">Document Knowledge Graph Engine:</span>
                                     <button class="btn-mini-sync" id="jevInlineSyncBtn" title="Fetch & sync latest JevGraph engine from GitHub via uv">🔄 Sync from GitHub</button>
                                 </div>
-                                <span class="opt-desc">Converts raw specs, PRDs, and PDFs to bounded knowledge graphs with character-level page evidence, cutting prompt tokens by 80–95%.</span>
+                                <span class="opt-desc">Converts raw specs, PRDs, and PDFs to bounded knowledge graphs with character-level page evidence, cutting prompt tokens by 80–95%. Exclusively for non-code documents.</span>
                             </div>
                         </div>
 
@@ -387,6 +388,57 @@
                         <div class="jev-quick-actions">
                             <button class="btn btn-sm btn-primary" id="jevManualInsertBtn" title="Search for local documents (PDF, DOCX, PPTX, TXT, MD) or enter web link to link into JevGraph">📁 Manual Insert Documents</button>
                             <button class="btn btn-sm btn-ghost" id="jevResetBtn" title="Reset and wipe knowledge graph for this active repository">🗑️ Reset Repo Graph</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CodeGraphContext Semantic Code Graph Engine (Code Files AST & Call Graphs) -->
+                <section class="panel-card codegraph-section" id="sectionCodeGraph">
+                    <div class="panel-header collapsible" data-target="bodyCodeGraph">
+                        <div class="panel-header-left">
+                            <span class="collapse-chevron">▾</span>
+                            <div>
+                                <h2>🧬 CodeGraphContext Semantic Code Graph</h2>
+                                <p class="panel-subtitle">Pre-indexed AST & call hierarchy query engine for code files (Tree-sitter & SCIP)</p>
+                            </div>
+                        </div>
+                        <div class="header-tags-group">
+                            <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank" class="repo-badge-link" title="Upstream GitHub: CodeGraphContext/CodeGraphContext">GitHub: CodeGraphContext/CodeGraphContext ↗</a>
+                            <span class="panel-tag tag-indigo" id="codeGraphStatusBadge">Active & Ready</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="bodyCodeGraph">
+                        <!-- CodeGraph Engine & Sync -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <div class="opt-title-line">
+                                    <span class="opt-title">Code Knowledge Graph Engine:</span>
+                                    <button class="btn-mini-sync" id="codeGraphInlineSyncBtn" title="Fetch & sync latest CodeGraphContext engine from GitHub via pip">🔄 Sync from GitHub</button>
+                                </div>
+                                <span class="opt-desc">Maps functions, classes, imports, and call graphs. Forces AI coding agents to query semantic graphs before reading raw files.</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Auto-Update / Watcher Toggle -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <span class="opt-title">Continuous Live Index Synchronization:</span>
+                                <span class="opt-desc">Automatically refreshes graph on code save or background watcher, ensuring AI always has real-time codebase context.</span>
+                            </div>
+                            <div class="toggle-container">
+                                <label class="switch">
+                                    <input type="checkbox" id="codeGraphAutoWatchToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Grid -->
+                        <div class="jev-quick-actions">
+                            <button class="btn btn-sm btn-primary" id="codeGraphIndexBtn" title="Index workspace source code into semantic graph">⚡ Index Workspace Code</button>
+                            <button class="btn btn-sm btn-ghost" id="codeGraphQueryBtn" title="Interactive symbol, caller, or Cypher query">🔍 Query Code Graph</button>
+                            <button class="btn btn-sm btn-ghost" id="codeGraphResetBtn" title="Reset and clear code graph database for this workspace">🗑️ Reset Code Graph</button>
                         </div>
                     </div>
                 </section>
@@ -649,16 +701,6 @@
                                 </span>
                             </button>
 
-                            <button class="btn btn-action" id="openTerminalBtn" title="Open terminal to run rtk gain interactively">
-                                <div class="btn-action-left">
-                                    <span class="btn-icon">🖥️</span>
-                                    <div class="btn-text-block">
-                                        <span class="btn-label">Terminal Scoreboard</span>
-                                        <span class="btn-sub">Run rtk gain interactively</span>
-                                    </div>
-                                </div>
-                            </button>
-
                             <button class="btn btn-action" id="testLatencyBtn" title="Test Upstream GitHub Layer Latencies (RTK, Headroom, Ponytail & OmniRoute)">
                                 <div class="btn-action-left">
                                     <span class="btn-icon">⏱️</span>
@@ -782,14 +824,15 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <span class="footer-brand-title">⚡ Token Saver (RTK, Headroom, Anti-Slop, OmniRoute & JevGraph) • <a href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link" title="Token Saver GitHub Repository">GitHub</a></span>
+            <span class="footer-brand-title">⚡ Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraphContext) • <a href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link" title="Token Saver GitHub Repository">GitHub</a></span>
             <span class="footer-links">
                 <a href="https://github.com/rtk-ai/rtk" target="_blank">RTK Core</a> • 
                 <a href="https://github.com/headroomlabs-ai/headroom" target="_blank">Headroom</a> • 
                 <a href="https://github.com/DietrichGebert/ponytail" target="_blank">Ponytail (YAGNI)</a> • 
                 <a href="https://github.com/miqdadbadjuber/anti-slop" target="_blank">Anti-Slop</a> • 
                 <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a> • 
-                <a href="https://github.com/chenmingtang830/jevgraph" target="_blank">JevGraph</a>
+                <a href="https://github.com/chenmingtang830/jevgraph" target="_blank">JevGraph</a> • 
+                <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank">CodeGraphContext</a>
             </span>
         </footer>
     </div>

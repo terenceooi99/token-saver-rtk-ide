@@ -36,6 +36,7 @@ class WebviewHelper {
         const ponytailCheck = await RtkService.checkPonytailInstalled();
         const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
         const jevGraphCheck = await RtkService.checkJevGraphInstalled();
+        const codeGraphCheck = await RtkService.checkCodeGraphInstalled();
         const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
         const metrics = await RtkService.getParsedMetrics();
         const skillsInstalled = SkillInstaller.checkSkillsInstalled('all');
@@ -52,6 +53,8 @@ class WebviewHelper {
             antiSlopEnabled: config.get('antiSlopEnabled', true),
             jevGraphInstalled: jevGraphCheck.installed,
             jevGraphEnabled: config.get('jevGraphEnabled', true),
+            codeGraphInstalled: codeGraphCheck.installed,
+            codeGraphEnabled: config.get('codeGraphEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running
         };
@@ -79,6 +82,11 @@ class WebviewHelper {
             jevGraphVersion: jevGraphCheck.version || (jevGraphCheck.uvAvailable ? 'uv Ready' : 'Not installed'),
             jevGraphRunner: jevGraphCheck.runner || (jevGraphCheck.uvAvailable ? 'uv' : null),
             jevGraphProvider: config.get('jevGraphProvider', 'keyword'),
+            codeGraphEnabled: config.get('codeGraphEnabled', true),
+            codeGraphAutoUpdate: config.get('codeGraphAutoUpdate', true),
+            codeGraphInstalled: codeGraphCheck.installed,
+            codeGraphVersion: codeGraphCheck.version || 'Not installed',
+            codeGraphStatus: codeGraphCheck,
             omniRouteEnabled: config.get('omniRouteEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running,
@@ -364,6 +372,10 @@ class WebviewHelper {
                 await vscode.commands.executeCommand('tokenSaver.toggleJevGraph');
                 triggerRefresh(300);
                 break;
+            case 'toggleCodeGraph':
+                await vscode.commands.executeCommand('tokenSaver.toggleCodeGraph');
+                triggerRefresh(300);
+                break;
             case 'syncJevGraph':
                 await vscode.commands.executeCommand('tokenSaver.syncJevGraph');
                 triggerRefresh(1000);
@@ -377,6 +389,28 @@ class WebviewHelper {
                 break;
             case 'buildJevGraph':
                 await vscode.commands.executeCommand('tokenSaver.insertDocumentJevGraph');
+                break;
+            case 'syncCodeGraph':
+                await vscode.commands.executeCommand('tokenSaver.syncCodeGraph');
+                triggerRefresh(1000);
+                break;
+            case 'indexCodeGraph':
+                await vscode.commands.executeCommand('tokenSaver.indexCodeGraph');
+                break;
+            case 'queryCodeGraph':
+                await vscode.commands.executeCommand('tokenSaver.queryCodeGraph');
+                break;
+            case 'resetCodeGraph':
+                await vscode.commands.executeCommand('tokenSaver.resetCodeGraph');
+                triggerRefresh(300);
+                break;
+            case 'toggleCodeGraphAutoWatch':
+                const autoUpdate = message.enabled !== undefined ? message.enabled : true;
+                try {
+                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                    await cfg.update('codeGraphAutoUpdate', autoUpdate, vscode.ConfigurationTarget.Global);
+                } catch (e) {}
+                triggerRefresh(300);
                 break;
             case 'setJevGraphProvider':
                 if (message.provider) {

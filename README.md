@@ -8,7 +8,7 @@
 [![Windsurf](https://img.shields.io/badge/Windsurf%20IDE-Compatible-00E5FF.svg)](https://codeium.com/windsurf)
 [![Antigravity](https://img.shields.io/badge/Antigravity%20IDE-Compatible-purple.svg)](https://github.com/terenceooi99/token-saver-rtk-ide)
 
-**Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute & JevGraph)** is an all-in-one token optimization, knowledge graph extraction, and AI quality suite with CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), [Anti-Slop AI Quality Framework](https://github.com/miqdadbadjuber/anti-slop), [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), and [JevGraph Knowledge Graph Engine](https://github.com/chenmingtang830/jevgraph), it slashes AI context window token consumption by **60% - 95%** during terminal command execution (`git`, `cargo`, `npm`, `pnpm`, `pytest`, `vitest`, `rg`, `ls`, `tree`, etc.), document ingestion (PDF, DOCX, PPTX), and enforces production-grade anti-slop quality across **all major Agentic AI IDEs and coding assistants**.
+**Token Saver (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph & CodeGraphContext)** is an all-in-one token optimization, semantic code & knowledge graph extraction, and AI quality suite with CLI output compression proxy. Powered by [RTK (Rust Token Killer)](https://www.rtk-ai.app), [Headroom context compression](https://github.com/headroomlabs-ai/headroom), [Ponytail YAGNI mode](https://github.com/DietrichGebert/ponytail), [Anti-Slop AI Quality Framework](https://github.com/miqdadbadjuber/anti-slop), [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute), [JevGraph Engine](https://github.com/chenmingtang830/jevgraph) (for non-code specs & docs), and [CodeGraphContext](https://github.com/CodeGraphContext/CodeGraphContext) (for semantic code graphs), it slashes AI context window token consumption by **60% - 95%** during terminal command execution, code exploration, and document ingestion across **all major Agentic AI IDEs and coding assistants**.
 
 <p align="center">
   <img src="resources/dashboard-preview.png" alt="Token Saver Interactive Glassmorphic Dashboard" width="100%" />
@@ -18,7 +18,7 @@
 
 ## 🏗️ Architectural Flowchart
 
-The following flowchart illustrates how **Token Saver** bridges multiple AI IDEs, coordinates six specialized optimization & quality engines, and optimizes terminal output, document context & prompt context before hitting LLM models:
+The following flowchart illustrates how **Token Saver** bridges multiple AI IDEs, coordinates seven specialized optimization & quality engines, and optimizes terminal output, document context & prompt context before hitting LLM models:
 
 ```mermaid
 flowchart TD
@@ -35,7 +35,8 @@ flowchart TD
         RuleSync["Multi-IDE Rule Synchronizer<br/>(Safe Delimiter System)"]
         WebviewDash["Interactive Webview Dashboard<br/>(Live Counters, Breakdown & Controls)"]
         StatusBar["Dynamic Status Bar Meter<br/>(Real-Time Savings & Cost Gauge)"]
-        SlashSkills["Chat Skills & Commands Engine<br/>(/rtk-*, /ponytail-*, /antislop-*, /omniroute, /jevgraph-*)"]
+        SlashSkills["Chat Skills & Commands Engine<br/>(/rtk-*, /ponytail-*, /antislop-*, /omniroute, /jevgraph-*, /codegraph-*)"]
+        CodeWatcher["Real-Time Code Watcher<br/>(Continuous Semantic Graph Auto-Update)"]
     end
 
     subgraph OptimEngines ["Token Optimization, Quality & Routing Engines"]
@@ -44,12 +45,14 @@ flowchart TD
         Ponytail["Ponytail YAGNI Engine<br/>(Terse Directives, Compact Diffs, AST Outlines)"]
         AntiSlop["Anti-Slop AI Framework<br/>(UI, Copywriting, Code & Mobile Anti-Slop)"]
         OmniRoute["OmniRoute AI Gateway (:20128)<br/>(Multi-Model Routing & Auto-Failover)"]
-        JevGraph["JevGraph Knowledge Graph Engine<br/>(Doc Spec Candidate Graphs, 80-95% Reduction)"]
+        JevGraph["JevGraph Engine (Docs / Non-Code)<br/>(Doc Spec Candidate Graphs, 80-95% Reduction)"]
+        CodeGraph["CodeGraphContext (Code AST & Calls)<br/>(Semantic Graph-First Queries, 80-90% Reduction)"]
     end
 
     subgraph ContextOptimization ["Context Window & Execution Flow"]
         TerminalOut["Condensed Terminal Output<br/>(git, npm, cargo, pytest, rg, etc.)"]
-        DocGraphs["Schema-Guided Knowledge Graphs<br/>(Bounded Subgraphs with Page Evidence)"]
+        DocGraphs["Schema-Guided Doc Graphs<br/>(Bounded Subgraphs with Page Evidence)"]
+        CodeGraphs["Pre-Indexed Semantic Code Graph<br/>(Symbols, Call Graph & Dependencies)"]
         AgentPrompt["Optimized AI Prompt & Context<br/>(Zero Noise, High-Signal & Slop-Free)"]
         LLMModels["LLM Providers & Models<br/>(Claude 3.7 / GPT-4o / Gemini / DeepSeek)"]
     end
@@ -58,6 +61,7 @@ flowchart TD
     IDEs <-->|"Rule Sync & Injections"| RuleSync
     IDEs -->|"Slash Commands & Chat"| SlashSkills
     IDEs -->|"User Configuration"| WebviewDash
+    IDEs -->|"Code File Edits"| CodeWatcher
     WebviewDash -->|"Status Bar Updates"| StatusBar
 
     SlashSkills -->|"Executes Shell Commands"| RTK
@@ -65,10 +69,13 @@ flowchart TD
     SlashSkills -->|"Enforces Terse Code Diff"| Ponytail
     SlashSkills -->|"Enforces Quality Standards"| AntiSlop
     SlashSkills -->|"Routes AI Queries"| OmniRoute
-    SlashSkills -->|"Builds Knowledge Graphs"| JevGraph
+    SlashSkills -->|"Queries Non-Code Graphs"| JevGraph
+    SlashSkills -->|"Queries Code Semantic Graph"| CodeGraph
+    CodeWatcher -->|"Auto-Indexes on Save"| CodeGraph
 
     RTK -->|"Filters Verbosity"| TerminalOut
-    JevGraph -->|"Converts Raw Docs to Graphs"| DocGraphs
+    JevGraph -->|"Converts Raw Specs/Docs to Graphs"| DocGraphs
+    CodeGraph -->|"Indexes AST, Hierarchy & Calls"| CodeGraphs
     Headroom -->|"Compresses JSON/Logs"| AgentPrompt
     Ponytail -->|"Prunes Boilerplate"| AgentPrompt
     AntiSlop -->|"Eliminates AI Hallucinations & Generic Slop"| AgentPrompt
@@ -76,9 +83,12 @@ flowchart TD
 
     TerminalOut -->|"Feeds Condensed Signal"| AgentPrompt
     DocGraphs -->|"Feeds Bounded Evidence Graphs"| AgentPrompt
+    CodeGraphs -->|"Graph-First Context Before File Read"| AgentPrompt
     AgentPrompt -->|"Consumes 60-95% Fewer Tokens"| LLMModels
     LLMModels -.->|"Telemetry & Savings Data"| WebviewDash
 ```
+
+
 
 ---
 

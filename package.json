@@ -35,7 +35,10 @@
     "llm",
     "compression",
     "jevgraph",
-    "knowledge-graph"
+    "knowledge-graph",
+    "codegraph",
+    "codegraphcontext",
+    "semantic-graph"
   ],
   "engines": {
     "vscode": "^1.74.0"
@@ -168,6 +171,36 @@
         "title": "Toggle JevGraph Knowledge Graph Optimization",
         "category": "Token Saver",
         "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "tokenSaver.syncCodeGraph",
+        "title": "Fetch & Sync CodeGraphContext from GitHub (CodeGraphContext/CodeGraphContext)",
+        "category": "Token Saver",
+        "icon": "$(database)"
+      },
+      {
+        "command": "tokenSaver.indexCodeGraph",
+        "title": "Index Workspace Code into Semantic Graph (CodeGraphContext)",
+        "category": "Token Saver",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "tokenSaver.queryCodeGraph",
+        "title": "Query CodeGraphContext Semantic Code Graph",
+        "category": "Token Saver",
+        "icon": "$(search)"
+      },
+      {
+        "command": "tokenSaver.toggleCodeGraph",
+        "title": "Toggle CodeGraphContext Code Graph Optimization",
+        "category": "Token Saver",
+        "icon": "$(database)"
+      },
+      {
+        "command": "tokenSaver.resetCodeGraph",
+        "title": "Reset / Clear CodeGraphContext Database for Workspace",
+        "category": "Token Saver",
+        "icon": "$(trash)"
       },
       {
         "command": "tokenSaver.toggleAntiSlop",
@@ -338,13 +371,18 @@
         "category": "Token Saver"
       },
       {
+        "command": "tokenSaver.uninstallCodeGraph",
+        "title": "Uninstall CodeGraphContext Engine (CodeGraphContext/CodeGraphContext)",
+        "category": "Token Saver"
+      },
+      {
         "command": "tokenSaver.uninstallAllUpstream",
         "title": "Uninstall All Upstream GitHub Layers (Full Clean Purge)",
         "category": "Token Saver"
       }
     ],
     "configuration": {
-      "title": "Token Saver (RTK, Headroom, Ponytail, OmniRoute, Anti-Slop & JevGraph)",
+      "title": "Token Saver (RTK, Headroom, Ponytail, OmniRoute, Anti-Slop, JevGraph & CodeGraph)",
       "properties": {
         "tokenSaver.enableOnStartup": {
           "type": "boolean",
@@ -488,6 +526,16 @@
           "type": "boolean",
           "default": true,
           "description": "Direct AI agents to inspect class and function symbol outlines (/rtk-outline) before reading full files into context."
+        },
+        "tokenSaver.codeGraphEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable CodeGraphContext pre-indexed semantic AST & call graph optimization for code files."
+        },
+        "tokenSaver.codeGraphAutoUpdate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically keep the semantic code graph updated in real-time when code files are saved."
         }
       }
     }

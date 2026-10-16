@@ -11,6 +11,7 @@ const togglePonytailBtn = document.getElementById('togglePonytailBtn');
 const toggleAntiSlopBtn = document.getElementById('toggleAntiSlopBtn');
 const toggleOmniRouteBtn = document.getElementById('toggleOmniRouteBtn');
 const toggleJevGraphBtn = document.getElementById('toggleJevGraphBtn');
+const toggleCodeGraphBtn = document.getElementById('toggleCodeGraphBtn');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -162,6 +163,15 @@ const jevGraphDiagActions = document.getElementById('jevGraphDiagActions');
 const jevGraphDiagAiBtn = document.getElementById('jevGraphDiagAiBtn');
 const jevGraphDiagSyncBtn = document.getElementById('jevGraphDiagSyncBtn');
 const jevGraphDiagUninstallBtn = document.getElementById('jevGraphDiagUninstallBtn');
+
+// CodeGraphContext Elements
+const sectionCodeGraph = document.getElementById('sectionCodeGraph');
+const codeGraphStatusBadge = document.getElementById('codeGraphStatusBadge');
+const codeGraphInlineSyncBtn = document.getElementById('codeGraphInlineSyncBtn');
+const codeGraphAutoWatchToggle = document.getElementById('codeGraphAutoWatchToggle');
+const codeGraphIndexBtn = document.getElementById('codeGraphIndexBtn');
+const codeGraphQueryBtn = document.getElementById('codeGraphQueryBtn');
+const codeGraphResetBtn = document.getElementById('codeGraphResetBtn');
 
 const uninstallUpstreamBtn = document.getElementById('uninstallUpstreamBtn');
 const headerUninstallBtn = document.getElementById('headerUninstallBtn');
@@ -692,6 +702,12 @@ if (toggleJevGraphBtn) {
     });
 }
 
+if (toggleCodeGraphBtn) {
+    toggleCodeGraphBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'toggleCodeGraph' });
+    });
+}
+
 syncAllIdesBtn.addEventListener('click', () => {
     syncAllIdesBtn.textContent = 'Syncing...';
     vscode.postMessage({ command: 'syncAllIdeRules' });
@@ -743,9 +759,11 @@ if (weeklySyncCheckbox) {
     });
 }
 
-openTerminalBtn.addEventListener('click', () => {
-    vscode.postMessage({ command: 'openScoreboardTerminal' });
-});
+if (openTerminalBtn) {
+    openTerminalBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openScoreboardTerminal' });
+    });
+}
 
 if (testLatencyBtn) {
     testLatencyBtn.addEventListener('click', () => {
@@ -1088,6 +1106,37 @@ if (jevResetBtn) {
     });
 }
 
+// CodeGraphContext Action Handlers
+if (codeGraphInlineSyncBtn) {
+    codeGraphInlineSyncBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'syncCodeGraph' });
+    });
+}
+
+if (codeGraphAutoWatchToggle) {
+    codeGraphAutoWatchToggle.addEventListener('change', (e) => {
+        vscode.postMessage({ command: 'toggleCodeGraphAutoWatch', enabled: e.target.checked });
+    });
+}
+
+if (codeGraphIndexBtn) {
+    codeGraphIndexBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'indexCodeGraph' });
+    });
+}
+
+if (codeGraphQueryBtn) {
+    codeGraphQueryBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'queryCodeGraph' });
+    });
+}
+
+if (codeGraphResetBtn) {
+    codeGraphResetBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'resetCodeGraph' });
+    });
+}
+
 if (jevGraphDiagAiBtn) {
     jevGraphDiagAiBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1282,6 +1331,18 @@ function renderDashboardState(data) {
         } else {
             toggleJevGraphBtn.textContent = 'Turn JevGraph ON';
             toggleJevGraphBtn.className = 'btn btn-primary';
+        }
+    }
+
+    // CodeGraph Button in Header
+    if (toggleCodeGraphBtn) {
+        const isCodeGraph = Boolean(data.codeGraphEnabled);
+        if (isCodeGraph) {
+            toggleCodeGraphBtn.textContent = 'Turn CodeGraph OFF';
+            toggleCodeGraphBtn.className = 'btn btn-ghost';
+        } else {
+            toggleCodeGraphBtn.textContent = 'Turn CodeGraph ON';
+            toggleCodeGraphBtn.className = 'btn btn-primary';
         }
     }
 
@@ -1817,6 +1878,15 @@ function renderDashboardState(data) {
         btns.forEach(b => {
             b.classList.toggle('active', b.dataset.provider === jProvider);
         });
+    }
+
+    // CodeGraphContext State
+    if (codeGraphAutoWatchToggle && data.codeGraphAutoUpdate !== undefined) {
+        codeGraphAutoWatchToggle.checked = Boolean(data.codeGraphAutoUpdate);
+    }
+    if (codeGraphStatusBadge && data.codeGraphStatus) {
+        codeGraphStatusBadge.textContent = data.codeGraphStatus.installed ? 'Active & Ready' : 'Ready to Sync';
+        codeGraphStatusBadge.className = data.codeGraphStatus.installed ? 'panel-tag tag-indigo' : 'panel-tag tag-amber';
     }
 }
 

@@ -5,8 +5,10 @@ const RtkUpdater = require('./rtk-updater');
 const SkillInstaller = require('./skill-installer');
 const OmniRouteService = require('./omniroute-service');
 const JevGraphService = require('./jevgraph-service');
+const { CodeGraphService } = require('./codegraph-service');
 const DashboardPanel = require('./dashboard-panel');
 const SidebarProvider = require('./sidebar-provider');
+const path = require('path');
 
 let statusBar;
 let outputChannel;
@@ -77,19 +79,24 @@ async function activate(context) {
     const ponytailCheck = await RtkService.checkPonytailInstalled();
     const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
     const jevGraphCheck = await RtkService.checkJevGraphInstalled();
+    const codeGraphCheck = await CodeGraphService.checkInstalled();
     const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
     const isOmniMissing = omniRouteEnabled && !omniStatus.installed;
-    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || !jevGraphCheck.installed || isOmniMissing) {
+    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || !jevGraphCheck.installed || !codeGraphCheck.installed || isOmniMissing) {
         const missing = [];
         if (!check.installed) missing.push('RTK CLI');
         if (!headroomCheck.installed) missing.push('Headroom CCR');
         if (!ponytailCheck.installed) missing.push('Ponytail YAGNI (GitHub)');
         if (!antiSlopCheck.installed) missing.push('Anti-Slop (GitHub)');
         if (!jevGraphCheck.installed) missing.push('JevGraph Knowledge Graph');
+        if (!codeGraphCheck.installed) missing.push('CodeGraphContext (GitHub)');
         if (isOmniMissing) missing.push('OmniRoute Gateway');
 
         const options = ['🤖 Ask AI (Copy Prompt)'];
+        if (!codeGraphCheck.installed) {
+            options.push('🧬 Sync CodeGraph GitHub');
+        }
         if (!jevGraphCheck.installed) {
             options.push('🕸️ Sync JevGraph GitHub');
         }
@@ -107,6 +114,8 @@ async function activate(context) {
         ).then(choice => {
             if (choice === '🤖 Ask AI (Copy Prompt)') {
                 vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
+            } else if (choice === '🧬 Sync CodeGraph GitHub') {
+                vscode.commands.executeCommand('tokenSaver.syncCodeGraph');
             } else if (choice === '🕸️ Sync JevGraph GitHub') {
                 vscode.commands.executeCommand('tokenSaver.syncJevGraph');
             } else if (choice === '🛡️ Sync Anti-Slop GitHub') {
@@ -644,6 +653,61 @@ async function activate(context) {
         await refreshStatus(context);
     });
 
+    // CodeGraphContext Commands
+    const syncCodeGraphCmd = vscode.commands.registerCommand('tokenSaver.syncCodeGraph', async () => {
+        await RtkUpdater.performCodeGraphSync();
+        await refreshStatus(context);
+    });
+
+    const indexCodeGraphCmd = vscode.commands.registerCommand('tokenSaver.indexCodeGraph', async () => {
+        await CodeGraphService.indexWorkspace();
+    });
+
+    const queryCodeGraphCmd = vscode.commands.registerCommand('tokenSaver.queryCodeGraph', async () => {
+        await CodeGraphService.queryPrompt();
+    });
+
+    const toggleCodeGraphCmd = vscode.commands.registerCommand('tokenSaver.toggleCodeGraph', async () => {
+        const cfg = vscode.workspace.getConfiguration('tokenSaver');
+        const current = cfg.get('codeGraphEnabled', true);
+        await cfg.update('codeGraphEnabled', !current, vscode.ConfigurationTarget.Global);
+        const scope = cfg.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        vscode.window.showInformationMessage(
+            !current
+                ? '🧬 CodeGraphContext semantic code graph optimization is now ENABLED.'
+                : '⚪ CodeGraphContext semantic code graph optimization is now DISABLED.'
+        );
+        await refreshStatus(context);
+    });
+
+    const resetCodeGraphCmd = vscode.commands.registerCommand('tokenSaver.resetCodeGraph', async () => {
+        await CodeGraphService.resetGraph();
+        await refreshStatus(context);
+    });
+
+    const uninstallCodeGraphCmd = vscode.commands.registerCommand('tokenSaver.uninstallCodeGraph', async () => {
+        await RtkUpdater.performLayerUninstall('codegraph');
+        await refreshStatus(context);
+    });
+
+    // Background watcher for code file saves to keep semantic graph fresh
+    let autoIndexDebounceTimer = null;
+    const codeExts = new Set(['.js', '.jsx', '.ts', '.tsx', '.py', '.rs', '.go', '.java', '.c', '.cpp', '.h', '.hpp', '.cs', '.rb', '.php', '.swift', '.kt']);
+    const onSaveDoc = vscode.workspace.onDidSaveTextDocument((doc) => {
+        const cfg = vscode.workspace.getConfiguration('tokenSaver');
+        if (!cfg.get('codeGraphEnabled', true) || !cfg.get('codeGraphAutoUpdate', true)) return;
+        const ext = path.extname(doc.fileName).toLowerCase();
+        if (codeExts.has(ext)) {
+            if (autoIndexDebounceTimer) clearTimeout(autoIndexDebounceTimer);
+            autoIndexDebounceTimer = setTimeout(() => {
+                if (outputChannel) {
+                    outputChannel.appendLine(`[CodeGraphContext] Code file saved (${path.basename(doc.fileName)}). Refreshing semantic index...`);
+                }
+            }, 2500);
+        }
+    });
+
     const uninstallAllUpstreamCmd = vscode.commands.registerCommand('tokenSaver.uninstallAllUpstream', async () => {
         await RtkUpdater.performAllUninstall();
         await refreshStatus(context);
@@ -667,6 +731,13 @@ async function activate(context) {
         buildJevGraphCmd,
         toggleJevGraphCmd,
         uninstallJevGraphCmd,
+        syncCodeGraphCmd,
+        indexCodeGraphCmd,
+        queryCodeGraphCmd,
+        toggleCodeGraphCmd,
+        resetCodeGraphCmd,
+        uninstallCodeGraphCmd,
+        onSaveDoc,
         toggleAntiSlopCmd,
         setAntiSlopModeCmd,
         uninstallAntiSlopCmd,
