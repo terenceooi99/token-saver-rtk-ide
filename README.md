@@ -1,4 +1,8 @@
-# ⚡ Token Saver for VS Code & Agentic IDEs
+# Token Saver for VS Code & Agentic IDEs
+
+<p align="center">
+  <img src="resources/icon.png" alt="Token Saver Logo" width="128" />
+</p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenVSX](https://img.shields.io/badge/Open%20VSX-available-blue.svg)](https://open-vsx.org/extension/terenceooi/token-saver-rtk-ide)

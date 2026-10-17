@@ -1473,22 +1473,22 @@ function renderDashboardState(data) {
         }
     }
     if (isEnabled) {
-        toggleModeBtn.textContent = 'Turn Token Saver OFF';
-        toggleModeBtn.className = 'btn btn-ghost';
-    } else {
-        toggleModeBtn.textContent = 'Turn Token Saver ON';
+        toggleModeBtn.textContent = 'Token Saver ON';
         toggleModeBtn.className = 'btn btn-primary';
+    } else {
+        toggleModeBtn.textContent = 'Token Saver OFF';
+        toggleModeBtn.className = 'btn btn-ghost';
     }
 
     // Headroom Button
     if (toggleHeadroomBtn) {
         const isHeadroom = Boolean(data.headroomEnabled);
         if (isHeadroom) {
-            toggleHeadroomBtn.textContent = 'Turn Headroom OFF';
-            toggleHeadroomBtn.className = 'btn btn-ghost';
-        } else {
-            toggleHeadroomBtn.textContent = 'Turn Headroom ON';
+            toggleHeadroomBtn.textContent = 'Headroom ON';
             toggleHeadroomBtn.className = 'btn btn-primary';
+        } else {
+            toggleHeadroomBtn.textContent = 'Headroom OFF';
+            toggleHeadroomBtn.className = 'btn btn-ghost';
         }
     }
 
@@ -1496,11 +1496,11 @@ function renderDashboardState(data) {
     if (togglePonytailBtn) {
         const isPonytail = (data.ponytailMode || 'full') !== 'off';
         if (isPonytail) {
-            togglePonytailBtn.textContent = 'Turn Ponytail OFF';
-            togglePonytailBtn.className = 'btn btn-ghost';
-        } else {
-            togglePonytailBtn.textContent = 'Turn Ponytail ON';
+            togglePonytailBtn.textContent = 'Ponytail ON';
             togglePonytailBtn.className = 'btn btn-primary';
+        } else {
+            togglePonytailBtn.textContent = 'Ponytail OFF';
+            togglePonytailBtn.className = 'btn btn-ghost';
         }
     }
 
@@ -1508,11 +1508,11 @@ function renderDashboardState(data) {
     if (toggleAntiSlopBtn) {
         const isAntiSlop = Boolean(data.antiSlopEnabled !== false && (data.antiSlopMode || 'during') !== 'off');
         if (isAntiSlop) {
-            toggleAntiSlopBtn.textContent = 'Turn Anti-Slop OFF';
-            toggleAntiSlopBtn.className = 'btn btn-ghost';
-        } else {
-            toggleAntiSlopBtn.textContent = 'Turn Anti-Slop ON';
+            toggleAntiSlopBtn.textContent = 'Anti-Slop ON';
             toggleAntiSlopBtn.className = 'btn btn-primary';
+        } else {
+            toggleAntiSlopBtn.textContent = 'Anti-Slop OFF';
+            toggleAntiSlopBtn.className = 'btn btn-ghost';
         }
     }
 
@@ -1520,11 +1520,11 @@ function renderDashboardState(data) {
     if (toggleOmniRouteBtn) {
         const isOmni = Boolean(data.omniRouteEnabled);
         if (isOmni) {
-            toggleOmniRouteBtn.textContent = 'Turn OmniRoute OFF';
-            toggleOmniRouteBtn.className = 'btn btn-ghost';
-        } else {
-            toggleOmniRouteBtn.textContent = 'Turn OmniRoute ON';
+            toggleOmniRouteBtn.textContent = 'OmniRoute ON';
             toggleOmniRouteBtn.className = 'btn btn-primary';
+        } else {
+            toggleOmniRouteBtn.textContent = 'OmniRoute OFF';
+            toggleOmniRouteBtn.className = 'btn btn-ghost';
         }
     }
 
@@ -1532,11 +1532,11 @@ function renderDashboardState(data) {
     if (toggleJevGraphBtn) {
         const isJev = Boolean(data.jevGraphEnabled);
         if (isJev) {
-            toggleJevGraphBtn.textContent = 'Turn JevGraph OFF';
-            toggleJevGraphBtn.className = 'btn btn-ghost';
-        } else {
-            toggleJevGraphBtn.textContent = 'Turn JevGraph ON';
+            toggleJevGraphBtn.textContent = 'JevGraph ON';
             toggleJevGraphBtn.className = 'btn btn-primary';
+        } else {
+            toggleJevGraphBtn.textContent = 'JevGraph OFF';
+            toggleJevGraphBtn.className = 'btn btn-ghost';
         }
     }
 
@@ -1544,11 +1544,11 @@ function renderDashboardState(data) {
     if (toggleCodeGraphBtn) {
         const isCodeGraph = Boolean(data.codeGraphEnabled);
         if (isCodeGraph) {
-            toggleCodeGraphBtn.textContent = 'Turn CodeGraph OFF';
-            toggleCodeGraphBtn.className = 'btn btn-ghost';
-        } else {
-            toggleCodeGraphBtn.textContent = 'Turn CodeGraph ON';
+            toggleCodeGraphBtn.textContent = 'CodeGraph ON';
             toggleCodeGraphBtn.className = 'btn btn-primary';
+        } else {
+            toggleCodeGraphBtn.textContent = 'CodeGraph OFF';
+            toggleCodeGraphBtn.className = 'btn btn-ghost';
         }
     }
 
@@ -1557,11 +1557,11 @@ function renderDashboardState(data) {
     if (hybridBtn) {
         const isHybrid = data.hybridWebEnabled !== undefined ? Boolean(data.hybridWebEnabled) : Boolean(data.crwEnabled);
         if (isHybrid) {
-            hybridBtn.textContent = 'Turn Hybrid Web OFF';
-            hybridBtn.className = 'btn btn-ghost';
-        } else {
-            hybridBtn.textContent = 'Turn Hybrid Web ON';
+            hybridBtn.textContent = 'Hybrid Web ON';
             hybridBtn.className = 'btn btn-primary';
+        } else {
+            hybridBtn.textContent = 'Hybrid Web OFF';
+            hybridBtn.className = 'btn btn-ghost';
         }
     }
 
