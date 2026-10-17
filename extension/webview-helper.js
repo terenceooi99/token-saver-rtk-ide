@@ -51,7 +51,7 @@ class WebviewHelper {
         const ideStatus = SkillInstaller.getIdeStatus();
         const omniPresets = OmniRouteService.getIdePresets(omniPort);
 
-        let extensionVersion = '1.14.0';
+        let extensionVersion = '1.14.5';
         try {
             if (context.extension && context.extension.packageJSON && context.extension.packageJSON.version) {
                 extensionVersion = context.extension.packageJSON.version;
@@ -140,6 +140,7 @@ class WebviewHelper {
             multiChannelBreakdown,
             skillsInstalled,
             disabledSkillsCount: SkillInstaller.listDisabledSkills('all').length,
+            upstreamInstallPath: config.get('upstreamInstallPath', ''),
             scope: config.get('targetScope', 'all'),
             ideStatus,
             detectedIde: ideStatus.detectedIde,
@@ -259,6 +260,33 @@ class WebviewHelper {
             case 'copyInstallCommands':
                 await vscode.commands.executeCommand('tokenSaver.copyInstallCommands');
                 webview.postMessage({ type: 'toast', message: '📋 Raw install commands copied to clipboard!' });
+                break;
+            case 'setUpstreamInstallPath':
+                const pathVal = (message.path || '').trim();
+                await vscode.workspace.getConfiguration('tokenSaver').update('upstreamInstallPath', pathVal, vscode.ConfigurationTarget.Global);
+                webview.postMessage({
+                    type: 'toast',
+                    message: pathVal ? `📁 Upstream install directory set to: ${pathVal}` : '📁 Upstream install directory reset to default.'
+                });
+                triggerRefresh(150);
+                break;
+            case 'browseUpstreamInstallPath':
+                const selectedUri = await vscode.window.showOpenDialog({
+                    canSelectFiles: false,
+                    canSelectFolders: true,
+                    canSelectMany: false,
+                    openLabel: 'Select Upstream Install Directory',
+                    title: 'Select Destination Folder for Upstream GitHub Clones'
+                });
+                if (selectedUri && selectedUri[0]) {
+                    const chosenPath = selectedUri[0].fsPath;
+                    await vscode.workspace.getConfiguration('tokenSaver').update('upstreamInstallPath', chosenPath, vscode.ConfigurationTarget.Global);
+                    webview.postMessage({
+                        type: 'toast',
+                        message: `📁 Upstream install directory set to: ${chosenPath}`
+                    });
+                    triggerRefresh(150);
+                }
                 break;
             case 'installSkills':
                 await vscode.commands.executeCommand('tokenSaver.installSkills');

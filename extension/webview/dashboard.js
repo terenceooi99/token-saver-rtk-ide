@@ -121,6 +121,9 @@ const antiSlopDiagUninstallBtn = document.getElementById('antiSlopDiagUninstallB
 const setupBanner = document.getElementById('setupBanner');
 const setupBannerDesc = document.getElementById('setupBannerDesc');
 const setupMissingTags = document.getElementById('setupMissingTags');
+const setupInstallPathInput = document.getElementById('setupInstallPathInput');
+const setupBrowsePathBtn = document.getElementById('setupBrowsePathBtn');
+const setupSavePathBtn = document.getElementById('setupSavePathBtn');
 const setupAskAiBtn = document.getElementById('setupAskAiBtn');
 const setupTerminalBtn = document.getElementById('setupTerminalBtn');
 const setupCopyCmdBtn = document.getElementById('setupCopyCmdBtn');
@@ -627,12 +630,14 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// Theme Management (Default: Dark Mode)
+// Theme Management (Default: Follow VS Code host or Dark Mode)
 let currentTheme = 'dark';
 try {
     const savedTheme = localStorage.getItem('tokenSaverTheme');
     if (savedTheme === 'light' || savedTheme === 'dark') {
         currentTheme = savedTheme;
+    } else if (document.body.classList.contains('vscode-light')) {
+        currentTheme = 'light';
     }
 } catch (_) { }
 
@@ -662,6 +667,22 @@ function applyTheme(theme) {
 
 // Initialize Theme
 applyTheme(currentTheme);
+
+// Observe VS Code theme change if user switches host theme and hasn't manually overridden
+try {
+    const observer = new MutationObserver(() => {
+        const savedTheme = localStorage.getItem('tokenSaverTheme');
+        if (!savedTheme) {
+            const isVsCodeLight = document.body.classList.contains('vscode-light');
+            if (isVsCodeLight && currentTheme !== 'light') {
+                applyTheme('light');
+            } else if (!isVsCodeLight && currentTheme !== 'dark') {
+                applyTheme('dark');
+            }
+        }
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+} catch (_) { }
 
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
@@ -965,6 +986,47 @@ if (compactDiffCheckbox) {
 }
 
 // Setup Hub Listeners
+if (setupBrowsePathBtn) {
+    setupBrowsePathBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'browseUpstreamInstallPath' });
+    });
+}
+
+if (setupInstallPathInput) {
+    setupInstallPathInput.addEventListener('input', () => {
+        if (setupSavePathBtn) {
+            setupSavePathBtn.style.display = 'inline-block';
+        }
+    });
+
+    setupInstallPathInput.addEventListener('change', () => {
+        vscode.postMessage({
+            command: 'setUpstreamInstallPath',
+            path: setupInstallPathInput.value.trim()
+        });
+        if (setupSavePathBtn) {
+            setupSavePathBtn.style.display = 'none';
+        }
+    });
+
+    setupInstallPathInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            setupInstallPathInput.blur();
+        }
+    });
+}
+
+if (setupSavePathBtn) {
+    setupSavePathBtn.addEventListener('click', () => {
+        vscode.postMessage({
+            command: 'setUpstreamInstallPath',
+            path: setupInstallPathInput ? setupInstallPathInput.value.trim() : ''
+        });
+        setupSavePathBtn.style.display = 'none';
+    });
+}
+
 if (setupAskAiBtn) {
     setupAskAiBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'copyAiInstallPrompt' });
@@ -1824,6 +1886,12 @@ function renderDashboardState(data) {
                 if (isCrwMissing) missingNames.push('fastCRW Scraper');
                 if (isLightpandaMissing) missingNames.push('Lightpanda Browser');
                 setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, build knowledge graphs from specs, and hybridize web search.`;
+            }
+            if (setupInstallPathInput && document.activeElement !== setupInstallPathInput) {
+                setupInstallPathInput.value = data.upstreamInstallPath || '';
+                if (setupSavePathBtn) {
+                    setupSavePathBtn.style.display = 'none';
+                }
             }
         } else {
             setupBanner.style.display = 'none';

@@ -2,6 +2,15 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.5] - 2026-10-17
+### Added & Improved
+- **Custom Upstream GitHub Install Directory**:
+  - Added custom file path input and native folder picker (`Browse`) to the "CLI Installation Required" alert banner in the dashboard.
+  - Automatically targets and creates dedicated sub-folders named after upstream repositories (`<installPath>/<repo-name>`) when cloning tools (`jevgraph`, `CodeGraphContext`, `crw`, `browser`, `ponytail`, `anti-slop`).
+  - Integrated with `tokenSaver.upstreamInstallPath` setting, persisting paths across sessions and feeding dynamic destination paths into AI setup prompt generation and terminal install commands.
+- **Light Theme Text Color Inversion**:
+  - Enhanced all dashboard text, headings, badges, descriptions, and input elements with inverted high-contrast colors when switching to Light Mode, guaranteeing WCAG AA accessibility compliance.
+
 ## [1.14.4] - 2026-10-17
 ### Added & Improved
 - **Header Action Button Prioritization**:

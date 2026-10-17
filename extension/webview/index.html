@@ -119,6 +119,18 @@
                     <!-- Dynamic missing chips (e.g. RTK CLI Missing, Headroom Missing) -->
                 </div>
             </div>
+            <div class="setup-banner-path-row">
+                <label for="setupInstallPathInput" class="setup-path-label" title="Custom installation directory for cloning upstream GitHub repositories">
+                    📁 <span>Install Path:</span>
+                </label>
+                <div class="setup-path-input-group">
+                    <input type="text" id="setupInstallPathInput" class="setup-path-input"
+                        placeholder="Default (~/.config / global). Type or select directory e.g. D:\Software\AI Agent Space"
+                        spellcheck="false" />
+                    <button type="button" class="btn btn-setup-browse" id="setupBrowsePathBtn" title="Browse for directory folder">📂 Browse</button>
+                    <button type="button" class="btn btn-setup-save-path" id="setupSavePathBtn" title="Save install directory path" style="display: none;">✓ Save</button>
+                </div>
+            </div>
             <div class="setup-banner-actions">
                 <button class="btn btn-setup btn-setup-ai" id="setupAskAiBtn"
                     title="Copy an optimized installation prompt to clipboard for your AI chat assistant">

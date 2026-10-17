@@ -812,7 +812,7 @@ class RtkService {
         return outline.join('\n');
     }
 
-    static getInstallCommands(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin')) {
+    static getInstallCommands(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), customInstallPath = null) {
         let rtkCmd;
         if (isWindows) {
             rtkCmd = 'winget install --id rtk-ai.rtk --accept-source-agreements --accept-package-agreements';
@@ -830,25 +830,61 @@ class RtkService {
             ? 'if (Get-Command npm -ErrorAction SilentlyContinue) { npm install -g omniroute } else { Write-Host "ℹ️ Node.js / npm not detected (Install Node.js to use OmniRoute)" }'
             : 'command -v npm >/dev/null 2>&1 && npm install -g omniroute || echo "ℹ️ npm not found"';
 
-        const ponytailCmd = isWindows
-            ? 'git clone https://github.com/DietrichGebert/ponytail.git "$HOME/.config/ponytail" 2>$null || echo "Ponytail fetched"'
-            : 'git clone https://github.com/DietrichGebert/ponytail.git ~/.config/ponytail 2>/dev/null || echo "Ponytail fetched"';
+        const basePath = (customInstallPath || '').trim();
+        let ponytailCmd;
+        let jevGraphCmd;
+        let codeGraphCmd;
+        let crwCmd;
+        let lightpandaCmd;
 
-        const JevGraphService = require('./jevgraph-service');
-        const jevCmds = JevGraphService.getInstallCommands(isWindows);
-        const jevGraphCmd = jevCmds.jevgraphSyncCmd;
+        if (basePath) {
+            const normalizedBase = isWindows ? basePath.replace(/\//g, '\\') : basePath.replace(/\\/g, '/');
+            const ptTarget = isWindows ? `"${normalizedBase}\\ponytail"` : `"${normalizedBase}/ponytail"`;
+            const jgTarget = isWindows ? `"${normalizedBase}\\jevgraph"` : `"${normalizedBase}/jevgraph"`;
+            const cgcTarget = isWindows ? `"${normalizedBase}\\CodeGraphContext"` : `"${normalizedBase}/CodeGraphContext"`;
+            const crwTarget = isWindows ? `"${normalizedBase}\\crw"` : `"${normalizedBase}/crw"`;
+            const lpTarget = isWindows ? `"${normalizedBase}\\browser"` : `"${normalizedBase}/browser"`;
 
-        const codeGraphCmd = isWindows
-            ? 'python -m pip install codegraphcontext 2>$null; if (!$?) { pip install codegraphcontext }'
-            : 'pip install codegraphcontext || python3 -m pip install codegraphcontext';
+            ponytailCmd = isWindows
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/DietrichGebert/ponytail.git ${ptTarget}`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/DietrichGebert/ponytail.git ${ptTarget}`;
 
-        const { CrwService } = require('./crw-service');
-        const crwCmds = CrwService.getInstallCommands(isWindows);
-        const crwCmd = crwCmds.primaryCmd;
+            jevGraphCmd = isWindows
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/chenmingtang830/jevgraph.git ${jgTarget}; if (Test-Path ${jgTarget}) { cd ${jgTarget}; uv sync --extra dev }`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/chenmingtang830/jevgraph.git ${jgTarget} && cd ${jgTarget} && uv sync --extra dev`;
 
-        const { LightpandaService } = require('./lightpanda-service');
-        const lightpandaCmds = LightpandaService.getInstallCommands(isWindows, isMac);
-        const lightpandaCmd = lightpandaCmds.primaryCmd;
+            codeGraphCmd = isWindows
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/CodeGraphContext/CodeGraphContext.git ${cgcTarget}; pip install -e ${cgcTarget}`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/CodeGraphContext/CodeGraphContext.git ${cgcTarget} && pip install -e ${cgcTarget}`;
+
+            crwCmd = isWindows
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/fastcrw/crw.git ${crwTarget}; cd ${crwTarget}; cargo build --release`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/fastcrw/crw.git ${crwTarget} && cd ${crwTarget} && cargo build --release`;
+
+            lightpandaCmd = isWindows
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/lightpanda-io/browser.git ${lpTarget}; cd ${lpTarget}; npm install`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/lightpanda-io/browser.git ${lpTarget} && cd ${lpTarget} && npm install`;
+        } else {
+            ponytailCmd = isWindows
+                ? 'git clone https://github.com/DietrichGebert/ponytail.git "$HOME/.config/ponytail" 2>$null || echo "Ponytail fetched"'
+                : 'git clone https://github.com/DietrichGebert/ponytail.git ~/.config/ponytail 2>/dev/null || echo "Ponytail fetched"';
+
+            const JevGraphService = require('./jevgraph-service');
+            const jevCmds = JevGraphService.getInstallCommands(isWindows);
+            jevGraphCmd = jevCmds.jevgraphSyncCmd;
+
+            codeGraphCmd = isWindows
+                ? 'python -m pip install codegraphcontext 2>$null; if (!$?) { pip install codegraphcontext }'
+                : 'pip install codegraphcontext || python3 -m pip install codegraphcontext';
+
+            const { CrwService } = require('./crw-service');
+            const crwCmds = CrwService.getInstallCommands(isWindows);
+            crwCmd = crwCmds.primaryCmd;
+
+            const { LightpandaService } = require('./lightpanda-service');
+            const lightpandaCmds = LightpandaService.getInstallCommands(isWindows, isMac);
+            lightpandaCmd = lightpandaCmds.primaryCmd;
+        }
 
         const verifyCmd = 'rtk --version ; headroom --version';
 
@@ -918,9 +954,10 @@ class RtkService {
         this.runInTerminal(cmds.headroomUninstallCmd);
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true, crwMissing = true, lightpandaMissing = true) {
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true, crwMissing = true, lightpandaMissing = true, customInstallPath = null) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
-        const cmds = this.getInstallCommands(isWindows, isMac);
+        const basePath = (customInstallPath || '').trim();
+        const cmds = this.getInstallCommands(isWindows, isMac, basePath);
 
         let items = [];
         let stepIdx = 1;
@@ -941,32 +978,38 @@ class RtkService {
         }
 
         if (jevGraphMissing) {
-            items.push(`${stepIdx}. **Install JevGraph Knowledge Graph Engine (Upstream: chenmingtang830/jevgraph)**:\n   Clone and set up JevGraph via \`uv\`:\n   \`${cmds.jevGraphCmd}\`\n   (Provides bounded document-to-graph pipeline and evidence mapping).`);
+            const locNote = basePath ? ` in \`${basePath}/jevgraph\`` : '';
+            items.push(`${stepIdx}. **Install JevGraph Knowledge Graph Engine (Upstream: chenmingtang830/jevgraph)**:\n   Clone and set up JevGraph via \`uv\`${locNote}:\n   \`${cmds.jevGraphCmd}\`\n   (Provides bounded document-to-graph pipeline and evidence mapping).`);
             stepIdx++;
         }
 
         if (codeGraphMissing) {
-            items.push(`${stepIdx}. **Install CodeGraphContext Code AST Engine (Upstream: CodeGraphContext/CodeGraphContext)**:\n   Run command: \`${cmds.codeGraphCmd}\`\n   (Provides semantic code knowledge graph, AST indexing, and symbol lookups via \`cgc\`).`);
+            const locNote = basePath ? ` in \`${basePath}/CodeGraphContext\`` : '';
+            items.push(`${stepIdx}. **Install CodeGraphContext Code AST Engine (Upstream: CodeGraphContext/CodeGraphContext)**:\n   Run command${locNote}:\n   \`${cmds.codeGraphCmd}\`\n   (Provides semantic code knowledge graph, AST indexing, and symbol lookups via \`cgc\`).`);
             stepIdx++;
         }
 
         if (crwMissing) {
-            items.push(`${stepIdx}. **Install fastCRW Hybrid Scraper & Search Engine (Upstream: fastcrw/crw)**:\n   Run command: \`${cmds.crwCmd}\`\n   (Provides fast Rust crawler, scraper, and /v1/search API for AI agents).`);
+            const locNote = basePath ? ` in \`${basePath}/crw\`` : '';
+            items.push(`${stepIdx}. **Install fastCRW Hybrid Scraper & Search Engine (Upstream: fastcrw/crw)**:\n   Run command${locNote}:\n   \`${cmds.crwCmd}\`\n   (Provides fast Rust crawler, scraper, and /v1/search API for AI agents).`);
             stepIdx++;
         }
 
         if (lightpandaMissing) {
-            items.push(`${stepIdx}. **Install Lightpanda Headless Browser Engine (Upstream: lightpanda-io/browser)**:\n   Run command: \`${cmds.lightpandaCmd}\`\n   (Provides ultra-lightweight V8 dynamic JS rendering and local MCP server for AI agents).`);
+            const locNote = basePath ? ` in \`${basePath}/browser\`` : '';
+            items.push(`${stepIdx}. **Install Lightpanda Headless Browser Engine (Upstream: lightpanda-io/browser)**:\n   Run command${locNote}:\n   \`${cmds.lightpandaCmd}\`\n   (Provides ultra-lightweight V8 dynamic JS rendering and local MCP server for AI agents).`);
             stepIdx++;
         }
 
         if (ponytailMissing) {
-            items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: DietrichGebert/ponytail)**:\n   Clone or fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`). Ensure skills (\`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\`) are installed.`);
+            const locNote = basePath ? ` Also clone the upstream repository to \`${basePath}/ponytail\` for full source inspection.` : '';
+            items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: DietrichGebert/ponytail)**:\n   Clone or fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`).${locNote} Ensure skills (\`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\`) are installed.`);
             stepIdx++;
         }
 
         if (antiSlopMissing) {
-            items.push(`${stepIdx}. **Fetch & Install Anti-Slop Framework (Upstream: miqdadbadjuber/anti-slop)**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`). Ensure skills (\`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\`) are installed.`);
+            const locNote = basePath ? ` Also clone the upstream repository to \`${basePath}/anti-slop\` for source inspection.` : '';
+            items.push(`${stepIdx}. **Fetch & Install Anti-Slop Framework (Upstream: miqdadbadjuber/anti-slop)**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`).${locNote} Ensure skills (\`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\`) are installed.`);
             stepIdx++;
         }
 
@@ -996,9 +1039,12 @@ class RtkService {
         if (ponytailMissing) missingLabels.push('Ponytail');
 
         const labelText = missingLabels.length > 0 ? missingLabels.join(', ') : 'necessary';
+        const targetPathHeader = basePath
+            ? `\n> **Target Base Directory**: All cloned upstream GitHub repositories must be installed/cloned into sub-folders under: \`${basePath}\` (e.g. \`${basePath}/<upstream-repo-name>\`).\n`
+            : '';
 
         const prompt = [
-            `Please help me install, fetch, and configure the missing tools (${labelText}) for Token Saver on this ${osName} machine:`,
+            `Please help me install, fetch, and configure the missing tools (${labelText}) for Token Saver on this ${osName} machine:${targetPathHeader}`,
             '',
             items.join('\n\n'),
             '',
@@ -1008,9 +1054,10 @@ class RtkService {
         return prompt;
     }
 
-    static generateSingleElementAiPrompt(elementKey, isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin')) {
+    static generateSingleElementAiPrompt(elementKey, isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), customInstallPath = null) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
-        const cmds = this.getInstallCommands(isWindows, isMac);
+        const basePath = (customInstallPath || '').trim();
+        const cmds = this.getInstallCommands(isWindows, isMac, basePath);
 
         let title = '';
         let instructions = [];
@@ -1027,8 +1074,8 @@ class RtkService {
             case 'jevgraph':
                 title = 'JevGraph Knowledge Graph Engine (chenmingtang830/jevgraph)';
                 instructions.push(
-                    `1. **Clone & Setup JevGraph via uv**:\n   Run command: \`${cmds.jevGraphCmd}\``,
-                    `2. **Verify Engine**:\n   Run: \`uv run jevgraph --help\` or verify directory at \`~/.config/jevgraph\`.`,
+                    `1. **Clone & Setup JevGraph via uv**${basePath ? ` in \`${basePath}/jevgraph\`` : ''}:\n   Run command: \`${cmds.jevGraphCmd}\``,
+                    `2. **Verify Engine**:\n   Run: \`uv run jevgraph --help\` or verify directory at ${basePath ? `\`${basePath}/jevgraph\`` : '`~/.config/jevgraph`'}.`,
                     `3. **Skills Integration**:\n   Ensure skills \`/jevgraph-build\` and \`/jevgraph-query\` are available in the IDE.`
                 );
                 break;
@@ -1051,7 +1098,7 @@ class RtkService {
             case 'ponytail':
                 title = 'Ponytail YAGNI Suite (DietrichGebert/ponytail)';
                 instructions.push(
-                    `1. **Fetch & Install Ponytail Skills**:\n   Fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.`,
+                    `1. **Fetch & Install Ponytail Skills**:\n   Fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.${basePath ? ` Also clone to \`${basePath}/ponytail\` for source inspection.` : ''}`,
                     `2. **Verify Skills**:\n   Ensure \`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\` are registered.`,
                     `3. **Configure Rules**:\n   Add Ponytail YAGNI directives to AGENTS.md / .cursorrules.`
                 );
@@ -1059,7 +1106,7 @@ class RtkService {
             case 'antislop':
                 title = 'Anti-Slop Framework (miqdadbadjuber/anti-slop)';
                 instructions.push(
-                    `1. **Fetch & Install Anti-Slop Skills**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.`,
+                    `1. **Fetch & Install Anti-Slop Skills**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.${basePath ? ` Also clone to \`${basePath}/anti-slop\` for source inspection.` : ''}`,
                     `2. **Verify Skills**:\n   Ensure \`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\` are registered.`,
                     `3. **Configure Rules**:\n   Ensure Anti-Slop hygiene rules are active in IDE agent configuration.`
                 );
@@ -1067,7 +1114,7 @@ class RtkService {
             case 'codegraph':
                 title = 'CodeGraphContext Code AST Engine (CodeGraphContext/CodeGraphContext)';
                 instructions.push(
-                    `1. **Install CodeGraphContext**:\n   Run command: \`${cmds.codeGraphCmd}\``,
+                    `1. **Install CodeGraphContext**${basePath ? ` in \`${basePath}/CodeGraphContext\`` : ''}:\n   Run command: \`${cmds.codeGraphCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`cgc --version\`.`,
                     `3. **Index Codebase**:\n   Run \`cgc index\` or \`/codegraph-index\` to build the semantic property graph.`
                 );
@@ -1076,7 +1123,7 @@ class RtkService {
             case 'fastcrw':
                 title = 'fastCRW Hybrid Scraper & Search Engine (fastcrw/crw)';
                 instructions.push(
-                    `1. **Install fastCRW CLI / Server**:\n   Run command: \`${cmds.crwCmd}\``,
+                    `1. **Install fastCRW CLI / Server**${basePath ? ` in \`${basePath}/crw\`` : ''}:\n   Run command: \`${cmds.crwCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`crw --version\` or \`crw-server --version\`.`,
                     `3. **Usage**:\n   Run \`crw <url>\` to scrape websites straight into token-efficient markdown, or run \`crw-server\` on port 3000.`
                 );
@@ -1084,17 +1131,21 @@ class RtkService {
             case 'lightpanda':
                 title = 'Lightpanda Headless Browser Engine (lightpanda-io/browser)';
                 instructions.push(
-                    `1. **Install Lightpanda Browser**:\n   Run command: \`${cmds.lightpandaCmd}\``,
+                    `1. **Install Lightpanda Browser**${basePath ? ` in \`${basePath}/browser\`` : ''}:\n   Run command: \`${cmds.lightpandaCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`lightpanda --version\` or \`npx @lightpanda/browser --version\`.`,
                     `3. **Start Local MCP Server**:\n   Run \`lightpanda mcp --port 8000\` or configure in agent's MCP settings for instant dynamic JS execution.`
                 );
                 break;
             default:
-                return this.generateAiInstallPrompt(isWindows, isMac);
+                return this.generateAiInstallPrompt(isWindows, isMac, true, true, true, true, true, true, true, true, true, basePath);
         }
 
+        const targetPathHeader = basePath
+            ? `\n> **Target Base Directory**: Install/clone into sub-folder under: \`${basePath}\`.\n`
+            : '';
+
         return [
-            `Please help me install, configure, and verify **${title}** for Token Saver on this ${osName} machine:`,
+            `Please help me install, configure, and verify **${title}** for Token Saver on this ${osName} machine:${targetPathHeader}`,
             '',
             instructions.join('\n\n'),
             '',

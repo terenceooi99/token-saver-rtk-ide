@@ -663,17 +663,19 @@ async function activate(context) {
     const installCliCmd = vscode.commands.registerCommand('tokenSaver.installCli', async () => {
         const isWindows = process.platform === 'win32';
         const isMac = process.platform === 'darwin';
-        const cmds = RtkService.getInstallCommands(isWindows, isMac);
+        const installPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
+        const cmds = RtkService.getInstallCommands(isWindows, isMac, installPath);
         RtkService.runInTerminal(cmds.combinedCmd);
     });
 
     const copyAiInstallPromptCmd = vscode.commands.registerCommand('tokenSaver.copyAiInstallPrompt', async (elementKey) => {
         const isWindows = process.platform === 'win32';
         const isMac = process.platform === 'darwin';
+        const installPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
 
         let prompt;
         if (elementKey && typeof elementKey === 'string') {
-            prompt = RtkService.generateSingleElementAiPrompt(elementKey, isWindows, isMac);
+            prompt = RtkService.generateSingleElementAiPrompt(elementKey, isWindows, isMac, installPath);
             await vscode.env.clipboard.writeText(prompt);
             vscode.window.showInformationMessage(
                 `🤖 AI setup prompt for ${elementKey.toUpperCase()} copied to clipboard! Paste it into your AI assistant chat to install automatically.`,
@@ -705,7 +707,8 @@ async function activate(context) {
                 omniMissing,
                 antiSlopMissing,
                 jevGraphMissing,
-                codeGraphMissing
+                codeGraphMissing,
+                installPath
             );
             await vscode.env.clipboard.writeText(prompt);
 
@@ -771,7 +774,8 @@ async function activate(context) {
     const copyInstallCommandsCmd = vscode.commands.registerCommand('tokenSaver.copyInstallCommands', async () => {
         const isWindows = process.platform === 'win32';
         const isMac = process.platform === 'darwin';
-        const cmds = RtkService.getInstallCommands(isWindows, isMac);
+        const installPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
+        const cmds = RtkService.getInstallCommands(isWindows, isMac, installPath);
         await vscode.env.clipboard.writeText(cmds.combinedCmd);
         vscode.window.showInformationMessage('📋 Raw install commands copied to clipboard: ' + cmds.combinedCmd);
     });

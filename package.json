@@ -2,7 +2,7 @@
   "name": "token-saver-rtk-ide",
   "displayName": "Token Saver for VS Code & Agentic IDEs",
   "description": "Smart token optimization & CLI compression proxy for VS Code, Cursor, Windsurf, Cline, Roo Code, Claude Code & Antigravity IDE using matured upstream open-sourced solutions.",
-  "version": "1.14.4",
+  "version": "1.14.5",
   "publisher": "terenceooi",
   "author": {
     "name": "Terence",
@@ -631,6 +631,11 @@
           "type": "number",
           "default": 8000,
           "description": "Local port for Lightpanda HTTP MCP server (default: 8000)."
+        },
+        "tokenSaver.upstreamInstallPath": {
+          "type": "string",
+          "default": "",
+          "description": "Base directory path for installing upstream GitHub repositories into their dedicated sub-folders (e.g. D:\\Software\\AI Agent Space)."
         }
       }
     }
