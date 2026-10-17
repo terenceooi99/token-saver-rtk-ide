@@ -1,12 +1,57 @@
 const { exec } = require('child_process');
 const vscode = require('vscode');
+const path = require('path');
+const fs = require('fs');
 
 class LightpandaService {
     /**
      * Checks if Lightpanda browser is installed and accessible.
      */
+    static getCandidateDirs() {
+        const dirs = [];
+        try {
+            const configPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
+            if (configPath) {
+                dirs.push(path.join(configPath, 'lightpanda'));
+                dirs.push(configPath);
+            }
+        } catch (_) {}
+
+        const home = require('os').homedir();
+        dirs.push(
+            'D:\\Software\\AI Agent Space\\lightpanda',
+            'D:\\Software\\lightpanda',
+            path.join(home, '.config', 'lightpanda'),
+            path.join(home, 'lightpanda')
+        );
+        return [...new Set(dirs)];
+    }
+
     static checkInstalled() {
         return new Promise((resolve) => {
+            const fs = require('fs');
+            const path = require('path');
+            const candidateDirs = this.getCandidateDirs();
+            for (const cand of candidateDirs) {
+                if (fs.existsSync(cand)) {
+                    const isWin = process.platform === 'win32';
+                    const bin = isWin ? path.join(cand, 'lightpanda.exe') : path.join(cand, 'lightpanda');
+                    const releaseBin = isWin ? path.join(cand, 'target', 'release', 'lightpanda.exe') : path.join(cand, 'target', 'release', 'lightpanda');
+                    if (fs.existsSync(bin)) {
+                        resolve({ installed: true, runner: 'lightpanda-local', version: 'lightpanda (local)', path: bin, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(releaseBin)) {
+                        resolve({ installed: true, runner: 'lightpanda-release', version: 'lightpanda (release)', path: releaseBin, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(path.join(cand, 'package.json')) || fs.existsSync(path.join(cand, 'Cargo.toml'))) {
+                        resolve({ installed: true, runner: 'source', version: 'lightpanda (source)', path: cand, cwd: cand });
+                        return;
+                    }
+                }
+            }
+
             // 1. Direct lightpanda CLI binary check
             exec('lightpanda --version', (error, stdout) => {
                 if (!error && stdout) {

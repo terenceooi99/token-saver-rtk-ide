@@ -334,36 +334,7 @@ class WebviewHelper {
                 }
                 break;
             case 'toggleAntiSlop':
-                let newAntiSlop;
-                if (message.enabled !== undefined) {
-                    newAntiSlop = message.enabled;
-                } else {
-                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
-                    const curEnabled = cfg.get('antiSlopEnabled', true);
-                    const curMode = cfg.get('antiSlopMode', 'during');
-                    newAntiSlop = !(curEnabled && curMode !== 'off');
-                }
-                try {
-                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
-                    await cfg.update('antiSlopEnabled', newAntiSlop, vscode.ConfigurationTarget.Global);
-                    if (newAntiSlop) {
-                        const curMode = cfg.get('antiSlopMode', 'during');
-                        if (curMode === 'off') {
-                            await cfg.update('antiSlopMode', 'during', vscode.ConfigurationTarget.Global);
-                        }
-                    } else {
-                        await cfg.update('antiSlopMode', 'off', vscode.ConfigurationTarget.Global);
-                    }
-                    const scope = cfg.get('targetScope', 'all');
-                    SkillInstaller.syncRules(context.globalState.get('tokenSaver.enabled', true), scope);
-                } catch (e) {
-                    // ignore
-                }
-                vscode.window.showInformationMessage(
-                    newAntiSlop
-                        ? '🛡️ Anti-Slop protection is now ENABLED.'
-                        : '⚪ Anti-Slop protection is now DISABLED.'
-                );
+                await vscode.commands.executeCommand('tokenSaver.toggleAntiSlop');
                 triggerRefresh(300);
                 break;
             case 'uninstallSkills':
@@ -387,20 +358,7 @@ class WebviewHelper {
                 triggerRefresh(300);
                 break;
             case 'toggleHeadroom':
-                const newHeadroom = message.enabled !== undefined ? message.enabled : true;
-                try {
-                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
-                    await cfg.update('headroomEnabled', newHeadroom, vscode.ConfigurationTarget.Global);
-                    const scope = cfg.get('targetScope', 'all');
-                    SkillInstaller.syncRules(context.globalState.get('tokenSaver.enabled', true), scope);
-                } catch (e) {
-                    // ignore
-                }
-                vscode.window.showInformationMessage(
-                    newHeadroom
-                        ? '⚡ Headroom context compression is now ENABLED.'
-                        : '⚪ Headroom context compression is now DISABLED.'
-                );
+                await vscode.commands.executeCommand('tokenSaver.toggleHeadroom');
                 triggerRefresh(300);
                 break;
             case 'toggleCompactDiff':

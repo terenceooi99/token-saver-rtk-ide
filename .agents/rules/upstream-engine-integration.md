@@ -41,3 +41,24 @@ To prevent floating popovers, menus, and dropdowns from failing to display or be
 - **Parent Stacking Context Elevation**: Whenever a popover or dropdown opens from within a container or card (such as `.metric-card` or `.panel-card`), the parent container MUST be assigned an elevated `z-index` (e.g. `.metric-card.popover-active { z-index: 1000 !important; }`) so that subsequent DOM siblings do not render on top of the popover.
 - **Top Layer z-index Contract**: Floating popover bodies must define an explicit elevated `z-index` (e.g. `z-index: 9999`) to guarantee clearance over backdrop filters and neighboring card overlays.
 
+## 7. Dynamic Local & Virtualenv Upstream Discovery Invariant
+To ensure tools installed in custom locations or managed via local virtual environments are properly detected:
+- **Candidate Directory Inspection**: Upstream detection checks (`checkInstalled()`) MUST NOT rely solely on global OS `PATH`. They must query `getCandidateDirs()`, inspecting:
+  1. User-configured custom path (`tokenSaver.upstreamInstallPath`)
+  2. Workspace sibling directories (e.g., `../<tool>`, `D:\Software\AI Agent Space\<tool>`)
+  3. User home configuration directories (e.g., `~/.config/<tool>`)
+- **Virtualenv & Binary Execution Resolution**: Detection must resolve local executables (`.venv/Scripts/<tool>.exe` or `.venv/bin/<tool>`) and project definitions (`uv.lock`, `pyproject.toml`, `Cargo.toml`, `package.json`), recording both the exact executable path and working directory (`cwd`) on the resolved state object.
+
+## 8. Missing Upstream Activation Guardrail Contract
+- **No Blanket "Enabled" Messages**: Toggling an upstream engine ON must verify installation status before presenting a confirmation message.
+- **Actionable Missing Upstream Warning**: If the tool is missing or uninstalled, display an actionable warning notification/modal via `promptMissingUpstream` providing:
+  - `🤖 Ask AI (Copy Prompt)`
+  - `⭮ Fetch / Sync from GitHub`
+  - `⚡ Auto-Run in Terminal`
+  - `Open Setup Hub`
+
+## 9. Top-Level Service Import Hygiene & Comprehensive Pre-Flight Test
+- **Module-Level Core Imports**: Any service file providing `checkInstalled()` or filesystem resolution MUST import `path`, `fs`, and `child_process` at the top of the file rather than relying on nested or deferred requires.
+- **Comprehensive Headless Pre-Flight**: The pre-flight node test runner must execute `Promise.all([ ...services.map(s => s.checkInstalled()), WebviewHelper.getLatestStateData(...) ])` to ensure zero runtime `ReferenceError`s or unhandled rejections across all service modules.
+
+

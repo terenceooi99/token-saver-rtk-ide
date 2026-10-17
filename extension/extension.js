@@ -238,18 +238,100 @@ async function activate(context) {
         return results;
     }
 
-    const toggleCmd = vscode.commands.registerCommand('tokenSaver.toggle', async () => {
-        const results = await setTokenSaverState(!isEnabled);
-        vscode.window.showInformationMessage(
-            isEnabled
-                ? `⚡ Token Saver is now ENABLED across ${results.length} AI agent target(s).`
-                : '⚪ Token Saver is now DISABLED. All upstream AI token-saving solutions are paused.'
+    async function promptMissingUpstream(toolKey, toolDisplayName, syncAction, aiPromptKey = null) {
+        const promptKey = aiPromptKey || toolKey;
+        const choice = await vscode.window.showWarningMessage(
+            `⚠️ ${toolDisplayName} is missing / not detected on system. Would you like to fetch from GitHub or install it now?`,
+            '🤖 Ask AI (Copy Prompt)',
+            '⭮ Fetch / Sync from GitHub',
+            '⚡ Auto-Run in Terminal',
+            'Open Setup Hub'
         );
+
+        if (choice === '🤖 Ask AI (Copy Prompt)') {
+            vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt', promptKey);
+        } else if (choice === '⭮ Fetch / Sync from GitHub') {
+            if (typeof syncAction === 'string') {
+                vscode.commands.executeCommand(syncAction);
+            } else if (typeof syncAction === 'function') {
+                syncAction();
+            }
+        } else if (choice === '⚡ Auto-Run in Terminal') {
+            vscode.commands.executeCommand('tokenSaver.installCli');
+        } else if (choice === 'Open Setup Hub') {
+            vscode.commands.executeCommand('tokenSaver.openDashboard');
+        }
+    }
+
+    async function checkAllUpstreamsInstalled() {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const omniPort = config.get('omniRoutePort', 20128);
+        const [check, headroomCheck, ponytailCheck, antiSlopCheck, jevGraphCheck, codeGraphCheck, crwCheck, omniStatus] = await Promise.all([
+            RtkService.checkInstalled(),
+            RtkService.checkHeadroomInstalled(),
+            RtkService.checkPonytailInstalled(),
+            RtkService.checkAntiSlopInstalled(),
+            RtkService.checkJevGraphInstalled(),
+            CodeGraphService.checkInstalled(),
+            CrwService.checkInstalled(),
+            OmniRouteService.getGatewayStatus(omniPort)
+        ]);
+
+        const missing = [];
+        if (!check.installed) missing.push('RTK CLI');
+        if (!headroomCheck.installed) missing.push('Headroom CCR');
+        if (!ponytailCheck.installed) missing.push('Ponytail');
+        if (!antiSlopCheck.installed) missing.push('Anti-Slop');
+        if (!jevGraphCheck.installed) missing.push('JevGraph');
+        if (!codeGraphCheck.installed) missing.push('CodeGraph');
+        if (!crwCheck.installed) missing.push('fastCRW');
+        if (!omniStatus.installed && !omniStatus.running) missing.push('OmniRoute');
+        return missing;
+    }
+
+    const toggleCmd = vscode.commands.registerCommand('tokenSaver.toggle', async () => {
+        const nextEnabled = !isEnabled;
+        const results = await setTokenSaverState(nextEnabled);
+        if (nextEnabled) {
+            const missing = await checkAllUpstreamsInstalled();
+            if (missing.length > 0) {
+                vscode.window.showWarningMessage(
+                    `⚡ Token Saver is ENABLED across ${results.length} target(s), but missing upstream tool(s): ${missing.join(', ')}.`,
+                    '🤖 Ask AI (Copy Prompt)',
+                    'Open Setup Hub'
+                ).then(sel => {
+                    if (sel === '🤖 Ask AI (Copy Prompt)') {
+                        vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
+                    } else if (sel === 'Open Setup Hub') {
+                        vscode.commands.executeCommand('tokenSaver.openDashboard');
+                    }
+                });
+            } else {
+                vscode.window.showInformationMessage(`⚡ Token Saver is now ENABLED across ${results.length} AI agent target(s).`);
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ Token Saver is now DISABLED. All upstream AI token-saving solutions are paused.');
+        }
     });
 
     const enableCmd = vscode.commands.registerCommand('tokenSaver.enable', async () => {
         await setTokenSaverState(true);
-        vscode.window.showInformationMessage('⚡ Token Saver is now ENABLED across all configured AI Agent targets.');
+        const missing = await checkAllUpstreamsInstalled();
+        if (missing.length > 0) {
+            vscode.window.showWarningMessage(
+                `⚡ Token Saver is ENABLED across all configured targets, but missing upstream tool(s): ${missing.join(', ')}.`,
+                '🤖 Ask AI (Copy Prompt)',
+                'Open Setup Hub'
+            ).then(sel => {
+                if (sel === '🤖 Ask AI (Copy Prompt)') {
+                    vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
+                } else if (sel === 'Open Setup Hub') {
+                    vscode.commands.executeCommand('tokenSaver.openDashboard');
+                }
+            });
+        } else {
+            vscode.window.showInformationMessage('⚡ Token Saver is now ENABLED across all configured AI Agent targets.');
+        }
     });
 
     const disableCmd = vscode.commands.registerCommand('tokenSaver.disable', async () => {
@@ -627,11 +709,16 @@ async function activate(context) {
         await cfg.update('ponytailMode', newMode, vscode.ConfigurationTarget.Global);
         const scope = cfg.get('targetScope', 'all');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(
-            newMode !== 'off'
-                ? `🥋 Ponytail YAGNI mode ENABLED (${newMode.toUpperCase()}).`
-                : '⚪ Ponytail YAGNI mode DISABLED.'
-        );
+        if (newMode !== 'off') {
+            const pCheck = await RtkService.checkPonytailInstalled();
+            if (!pCheck.installed) {
+                await promptMissingUpstream('ponytail', 'Ponytail YAGNI (GitHub)', 'tokenSaver.syncPonytail');
+            } else {
+                vscode.window.showInformationMessage(`🥋 Ponytail YAGNI mode ENABLED (${newMode.toUpperCase()}).`);
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ Ponytail YAGNI mode DISABLED.');
+        }
         await refreshStatus(context);
     });
 
@@ -740,14 +827,20 @@ async function activate(context) {
     const toggleAntiSlopCmd = vscode.commands.registerCommand('tokenSaver.toggleAntiSlop', async () => {
         const cfg = vscode.workspace.getConfiguration('tokenSaver');
         const current = cfg.get('antiSlopEnabled', true);
-        await cfg.update('antiSlopEnabled', !current, vscode.ConfigurationTarget.Global);
+        const next = !current;
+        await cfg.update('antiSlopEnabled', next, vscode.ConfigurationTarget.Global);
         const scope = cfg.get('targetScope', 'all');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(
-            !current
-                ? '🛡️ Anti-Slop protection is now ENABLED.'
-                : '⚪ Anti-Slop protection is now DISABLED.'
-        );
+        if (next) {
+            const aCheck = await RtkService.checkAntiSlopInstalled();
+            if (!aCheck.installed) {
+                await promptMissingUpstream('antislop', 'Anti-Slop (GitHub)', 'tokenSaver.syncAntiSlop');
+            } else {
+                vscode.window.showInformationMessage('🛡️ Anti-Slop protection is now ENABLED.');
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ Anti-Slop protection is now DISABLED.');
+        }
         await refreshStatus(context);
     });
 
@@ -814,14 +907,22 @@ async function activate(context) {
     const toggleHeadroomCmd = vscode.commands.registerCommand('tokenSaver.toggleHeadroom', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         const current = config.get('headroomEnabled', true);
-        await config.update('headroomEnabled', !current, vscode.ConfigurationTarget.Global);
+        const next = !current;
+        await config.update('headroomEnabled', next, vscode.ConfigurationTarget.Global);
         const scope = config.get('targetScope', 'all');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(
-            !current
-                ? '⚡ Headroom context compression ENABLED.'
-                : '⚪ Headroom context compression DISABLED.'
-        );
+        if (next) {
+            const hrCheck = await RtkService.checkHeadroomInstalled();
+            if (!hrCheck.installed) {
+                await promptMissingUpstream('headroom', 'Headroom CCR (headroomlabs-ai/headroom)', () => {
+                    RtkUpdater.performHeadroomUpdate();
+                });
+            } else {
+                vscode.window.showInformationMessage('⚡ Headroom context compression ENABLED.');
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ Headroom context compression DISABLED.');
+        }
         await refreshStatus(context);
     });
 
@@ -891,19 +992,36 @@ async function activate(context) {
     const toggleOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.toggleOmniRoute', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         const current = config.get('omniRouteEnabled', true);
-        await config.update('omniRouteEnabled', !current, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage(
-            !current
-                ? '🌐 OmniRoute AI Gateway feature is now ENABLED.'
-                : '⚪ OmniRoute AI Gateway feature is now DISABLED.'
-        );
+        const next = !current;
+        await config.update('omniRouteEnabled', next, vscode.ConfigurationTarget.Global);
+        if (next) {
+            const port = config.get('omniRoutePort', 20128);
+            const omniStatus = await OmniRouteService.getGatewayStatus(port);
+            if (!omniStatus.installed && !omniStatus.running) {
+                await promptMissingUpstream('omniroute', 'OmniRoute AI Gateway (diegosouzapw/OmniRoute)', () => {
+                    RtkUpdater.performOmniRouteUpdate();
+                });
+            } else {
+                vscode.window.showInformationMessage('🌐 OmniRoute AI Gateway feature is now ENABLED.');
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ OmniRoute AI Gateway feature is now DISABLED.');
+        }
         await refreshStatus(context);
     });
 
     const enableOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.enableOmniRoute', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         await config.update('omniRouteEnabled', true, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage('🌐 OmniRoute AI Gateway feature ENABLED.');
+        const port = config.get('omniRoutePort', 20128);
+        const omniStatus = await OmniRouteService.getGatewayStatus(port);
+        if (!omniStatus.installed && !omniStatus.running) {
+            await promptMissingUpstream('omniroute', 'OmniRoute AI Gateway (diegosouzapw/OmniRoute)', () => {
+                RtkUpdater.performOmniRouteUpdate();
+            });
+        } else {
+            vscode.window.showInformationMessage('🌐 OmniRoute AI Gateway feature ENABLED.');
+        }
         await refreshStatus(context);
     });
 
@@ -961,14 +1079,20 @@ async function activate(context) {
     const toggleJevGraphCmd = vscode.commands.registerCommand('tokenSaver.toggleJevGraph', async () => {
         const cfg = vscode.workspace.getConfiguration('tokenSaver');
         const current = cfg.get('jevGraphEnabled', true);
-        await cfg.update('jevGraphEnabled', !current, vscode.ConfigurationTarget.Global);
+        const next = !current;
+        await cfg.update('jevGraphEnabled', next, vscode.ConfigurationTarget.Global);
         const scope = cfg.get('targetScope', 'all');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(
-            !current
-                ? '🕸️ JevGraph Knowledge Graph optimization is now ENABLED.'
-                : '⚪ JevGraph Knowledge Graph optimization is now DISABLED.'
-        );
+        if (next) {
+            const jCheck = await RtkService.checkJevGraphInstalled();
+            if (!jCheck.installed) {
+                await promptMissingUpstream('jevgraph', 'JevGraph Knowledge Graph (chenmingtang830/jevgraph)', 'tokenSaver.syncJevGraph');
+            } else {
+                vscode.window.showInformationMessage('🕸️ JevGraph Knowledge Graph optimization is now ENABLED.');
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ JevGraph Knowledge Graph optimization is now DISABLED.');
+        }
         await refreshStatus(context);
     });
 
@@ -994,14 +1118,20 @@ async function activate(context) {
     const toggleCodeGraphCmd = vscode.commands.registerCommand('tokenSaver.toggleCodeGraph', async () => {
         const cfg = vscode.workspace.getConfiguration('tokenSaver');
         const current = cfg.get('codeGraphEnabled', true);
-        await cfg.update('codeGraphEnabled', !current, vscode.ConfigurationTarget.Global);
+        const next = !current;
+        await cfg.update('codeGraphEnabled', next, vscode.ConfigurationTarget.Global);
         const scope = cfg.get('targetScope', 'all');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(
-            !current
-                ? '🧬 CodeGraphContext semantic code graph optimization is now ENABLED.'
-                : '⚪ CodeGraphContext semantic code graph optimization is now DISABLED.'
-        );
+        if (next) {
+            const cgCheck = await CodeGraphService.checkInstalled();
+            if (!cgCheck.installed) {
+                await promptMissingUpstream('codegraph', 'CodeGraphContext (CodeGraphContext/CodeGraphContext)', 'tokenSaver.syncCodeGraph');
+            } else {
+                vscode.window.showInformationMessage('🧬 CodeGraphContext semantic code graph optimization is now ENABLED.');
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ CodeGraphContext semantic code graph optimization is now DISABLED.');
+        }
         await refreshStatus(context);
     });
 
@@ -1018,16 +1148,28 @@ async function activate(context) {
     const toggleHybridWebCmd = vscode.commands.registerCommand('tokenSaver.toggleHybridWeb', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         const current = config.get('hybridWebEnabled', true);
-        await config.update('hybridWebEnabled', !current, vscode.ConfigurationTarget.Global);
-        await config.update('crwEnabled', !current, vscode.ConfigurationTarget.Global);
-        await config.update('lightpandaEnabled', !current, vscode.ConfigurationTarget.Global);
+        const next = !current;
+        await config.update('hybridWebEnabled', next, vscode.ConfigurationTarget.Global);
+        await config.update('crwEnabled', next, vscode.ConfigurationTarget.Global);
+        await config.update('lightpandaEnabled', next, vscode.ConfigurationTarget.Global);
         const scope = config.get('targetScope', 'all');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(
-            !current
-                ? '🌐 3-Tier Hybrid Web Research & Scraping (fastCRW + Lightpanda) is now ENABLED.'
-                : '⚪ Hybrid Web Research & Scraping is now DISABLED.'
-        );
+        if (next) {
+            const crwCheck = await CrwService.checkInstalled();
+            const { LightpandaService } = require('./lightpanda-service');
+            const lpCheck = await LightpandaService.checkInstalled();
+            if (!crwCheck.installed && !lpCheck.installed) {
+                await promptMissingUpstream('crw', 'fastCRW & Lightpanda Hybrid Web', 'tokenSaver.syncCrw');
+            } else if (!crwCheck.installed) {
+                await promptMissingUpstream('crw', 'fastCRW Scraper (fastcrw/crw)', 'tokenSaver.syncCrw');
+            } else if (!lpCheck.installed) {
+                await promptMissingUpstream('lightpanda', 'Lightpanda Browser (lightpanda-io/browser)', 'tokenSaver.syncLightpanda');
+            } else {
+                vscode.window.showInformationMessage('🌐 3-Tier Hybrid Web Research & Scraping (fastCRW + Lightpanda) is now ENABLED.');
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ Hybrid Web Research & Scraping is now DISABLED.');
+        }
         await refreshStatus(context);
     });
 

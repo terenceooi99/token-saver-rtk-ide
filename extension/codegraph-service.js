@@ -7,8 +7,47 @@ class CodeGraphService {
     /**
      * Checks if CodeGraphContext (cgc) is installed and accessible.
      */
+    static getCandidateDirs() {
+        const dirs = [];
+        try {
+            const configPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
+            if (configPath) {
+                dirs.push(path.join(configPath, 'CodeGraphContext'));
+                dirs.push(configPath);
+            }
+        } catch (_) {}
+
+        const home = require('os').homedir();
+        dirs.push(
+            'D:\\Software\\AI Agent Space\\CodeGraphContext',
+            'D:\\Software\\CodeGraphContext',
+            path.join(home, '.codegraphcontext'),
+            path.join(home, 'CodeGraphContext')
+        );
+        return [...new Set(dirs)];
+    }
+
     static checkInstalled() {
         return new Promise((resolve) => {
+            // 0. Check known local installation directories
+            const candidateDirs = this.getCandidateDirs();
+            for (const cand of candidateDirs) {
+                if (fs.existsSync(cand)) {
+                    const isWin = process.platform === 'win32';
+                    const venvExe = isWin
+                        ? path.join(cand, '.venv', 'Scripts', 'cgc.exe')
+                        : path.join(cand, '.venv', 'bin', 'cgc');
+                    if (fs.existsSync(venvExe)) {
+                        resolve({ installed: true, runner: 'venv', version: 'cgc (local venv)', path: venvExe, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(path.join(cand, 'pyproject.toml')) || fs.existsSync(path.join(cand, 'cgc_entry.py'))) {
+                        resolve({ installed: true, runner: 'source', version: 'cgc (source)', path: cand, cwd: cand });
+                        return;
+                    }
+                }
+            }
+
             // 1. Direct cgc CLI binary check
             exec('cgc --version', (error, stdout) => {
                 if (!error && stdout) {

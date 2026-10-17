@@ -7,9 +7,56 @@ const https = require('https');
 const http = require('http');
 
 class JevGraphService {
+    static getCandidateDirs() {
+        const dirs = [];
+        try {
+            const configPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
+            if (configPath) {
+                dirs.push(path.join(configPath, 'jevgraph'));
+                dirs.push(configPath);
+            }
+        } catch (_) {}
+
+        const home = os.homedir();
+        dirs.push(
+            'D:\\Software\\AI Agent Space\\jevgraph',
+            'D:\\Software\\jevgraph',
+            path.join(home, '.config', 'jevgraph'),
+            path.join(home, 'jevgraph')
+        );
+        return [...new Set(dirs)];
+    }
+
     static checkInstalled() {
         return new Promise((resolve) => {
-            // 1. Check if jevgraph is directly executable
+            // 0. Check known local installation directories (custom upstreamInstallPath or well-known locations)
+            const candidateDirs = this.getCandidateDirs();
+            for (const cand of candidateDirs) {
+                if (fs.existsSync(cand)) {
+                    const isWin = process.platform === 'win32';
+                    const venvExe = isWin
+                        ? path.join(cand, '.venv', 'Scripts', 'jevgraph.exe')
+                        : path.join(cand, '.venv', 'bin', 'jevgraph');
+                    const venvPy = isWin
+                        ? path.join(cand, '.venv', 'Scripts', 'python.exe')
+                        : path.join(cand, '.venv', 'bin', 'python');
+
+                    if (fs.existsSync(venvExe)) {
+                        resolve({ installed: true, runner: 'venv', version: 'v0.5.1 (local venv)', path: venvExe, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(venvPy)) {
+                        resolve({ installed: true, runner: 'venv-python', version: 'v0.5.1 (local venv python)', path: `"${venvPy}" -m jevgraph`, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(path.join(cand, 'pyproject.toml')) || fs.existsSync(path.join(cand, 'uv.lock'))) {
+                        resolve({ installed: true, runner: 'uv-dir', version: 'v0.5.1 (uv project)', path: 'uv run jevgraph', cwd: cand });
+                        return;
+                    }
+                }
+            }
+
+            // 1. Check if jevgraph is directly executable on PATH
             exec('jevgraph --help', (error, stdout) => {
                 if (!error && stdout) {
                     resolve({ installed: true, runner: 'jevgraph', version: 'v0.5.1', path: 'jevgraph' });
@@ -109,8 +156,14 @@ class JevGraphService {
         terminal.sendText(command);
     }
 
-    static buildGraphCommand(inputFile, outputFile = 'runs/graph.json', provider = 'keyword', ontology = null, entities = null) {
-        let cmd = `jevgraph build "${inputFile}" --provider ${provider} --out "${outputFile}"`;
+    static buildGraphCommand(inputFile, outputFile = 'runs/graph.json', provider = 'keyword', ontology = null, entities = null, runnerInfo = null) {
+        let runnerPrefix = 'jevgraph';
+        if (runnerInfo && runnerInfo.path) {
+            runnerPrefix = runnerInfo.path.includes(' ') && !runnerInfo.path.startsWith('"')
+                ? `"${runnerInfo.path}"`
+                : runnerInfo.path;
+        }
+        let cmd = `${runnerPrefix} build "${inputFile}" --provider ${provider} --out "${outputFile}"`;
         if (ontology) cmd += ` --ontology "${ontology}"`;
         if (entities) cmd += ` --entities "${entities}"`;
         return cmd;
@@ -300,9 +353,10 @@ class JevGraphService {
         if (check.installed) {
             try {
                 const tempOut = path.join(os.tmpdir(), `jevgraph_${Date.now()}_${path.basename(filePath)}.json`);
-                const cmd = this.buildGraphCommand(filePath, tempOut, provider);
+                const cmd = this.buildGraphCommand(filePath, tempOut, provider, null, null, check);
                 await new Promise((resolve, reject) => {
-                    exec(cmd, { cwd: this.getWorkspaceRoot() }, (error) => {
+                    const execCwd = check.cwd || this.getWorkspaceRoot();
+                    exec(cmd, { cwd: execCwd }, (error) => {
                         if (!error && fs.existsSync(tempOut)) {
                             try {
                                 const parsed = JSON.parse(fs.readFileSync(tempOut, 'utf8'));

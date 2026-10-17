@@ -1,12 +1,59 @@
 const { exec } = require('child_process');
 const vscode = require('vscode');
+const path = require('path');
+const fs = require('fs');
 
 class CrwService {
     /**
      * Checks if fastCRW (crw CLI or crw-server) is installed and accessible.
      */
+    static getCandidateDirs() {
+        const dirs = [];
+        try {
+            const configPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
+            if (configPath) {
+                dirs.push(path.join(configPath, 'fastcrw'));
+                dirs.push(path.join(configPath, 'crw'));
+                dirs.push(configPath);
+            }
+        } catch (_) {}
+
+        const home = require('os').homedir();
+        dirs.push(
+            'D:\\Software\\AI Agent Space\\fastcrw',
+            'D:\\Software\\fastcrw',
+            'D:\\Software\\AI Agent Space\\crw',
+            path.join(home, '.config', 'crw'),
+            path.join(home, 'fastcrw')
+        );
+        return [...new Set(dirs)];
+    }
+
     static checkInstalled() {
         return new Promise((resolve) => {
+            const fs = require('fs');
+            const path = require('path');
+            const candidateDirs = this.getCandidateDirs();
+            for (const cand of candidateDirs) {
+                if (fs.existsSync(cand)) {
+                    const isWin = process.platform === 'win32';
+                    const bin = isWin ? path.join(cand, 'crw.exe') : path.join(cand, 'crw');
+                    const releaseBin = isWin ? path.join(cand, 'target', 'release', 'crw.exe') : path.join(cand, 'target', 'release', 'crw');
+                    if (fs.existsSync(bin)) {
+                        resolve({ installed: true, runner: 'crw-local', version: 'crw (local)', path: bin, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(releaseBin)) {
+                        resolve({ installed: true, runner: 'crw-release', version: 'crw (release)', path: releaseBin, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(path.join(cand, 'Cargo.toml'))) {
+                        resolve({ installed: true, runner: 'cargo-project', version: 'crw (source)', path: cand, cwd: cand });
+                        return;
+                    }
+                }
+            }
+
             // 1. Direct crw CLI binary check
             exec('crw --version', (error, stdout) => {
                 if (!error && stdout) {
