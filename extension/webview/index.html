@@ -37,6 +37,7 @@
             </div>
             <div class="header-actions">
                 <button class="btn btn-ghost" id="toggleModeBtn">Token Saver OFF</button>
+                <button class="btn btn-ghost" id="toggleRtkBtn">RTK OFF</button>
                 <button class="btn btn-ghost" id="toggleHeadroomBtn">Headroom OFF</button>
                 <button class="btn btn-ghost" id="togglePonytailBtn">Ponytail OFF</button>
                 <button class="btn btn-ghost" id="toggleAntiSlopBtn">Anti-Slop OFF</button>
@@ -240,6 +241,59 @@
                     <div class="panel-body" id="bodyIdeSync">
                         <div class="ide-grid" id="ideGridContainer">
                             <!-- Dynamic IDE cards injected by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RTK CLI Core Engine Section -->
+                <section class="panel-card rtk-core-section" id="sectionRtk">
+                    <div class="panel-header collapsible" data-target="bodyRtk">
+                        <div class="panel-header-left">
+                            <span class="collapse-chevron">▾</span>
+                            <div>
+                                <h2>⚡ RTK (Rust Token Killer) CLI Core</h2>
+                                <p class="panel-subtitle">Transparent command execution proxy cutting terminal tokens by 60%–90%</p>
+                            </div>
+                        </div>
+                        <div class="header-tags-group">
+                            <a href="https://github.com/rtk-ai/rtk" target="_blank" class="repo-badge-link"
+                                title="Upstream GitHub: rtk-ai/rtk">GitHub: rtk-ai/rtk ↗</a>
+                            <span class="panel-tag tag-orange" id="rtkStatusBadge">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="bodyRtk">
+                        <!-- RTK Engine Description & Sync -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <div class="opt-title-line">
+                                    <span class="opt-title">Automatic Command Prefixing:</span>
+                                    <button class="btn-mini-sync" id="rtkInlineSyncBtn"
+                                        title="Fetch & install latest RTK CLI from GitHub">⭮ Sync from GitHub</button>
+                                </div>
+                                <span class="opt-desc">Directs AI coding agents to prefix all terminal and shell commands with <code>rtk</code> (e.g. <code>rtk git status</code>, <code>rtk npm test</code>, <code>rtk cargo test</code>, <code>rtk pytest</code>, <code>rtk vitest</code>), saving massive LLM prompt tokens while preserving critical errors and exit codes.</span>
+                            </div>
+                        </div>
+
+                        <!-- Deactivation Impact Callout -->
+                        <div class="warning-feature-item" style="margin-top: 10px; margin-bottom: 12px; background: rgba(255, 159, 10, 0.08); border-color: rgba(255, 159, 10, 0.25);">
+                            <span class="warning-feature-icon" style="color: var(--apple-orange);">ℹ️</span>
+                            <div class="warning-feature-content">
+                                <span class="warning-feature-title" style="color: var(--apple-orange);">If RTK / Token Saver is turned OFF:</span>
+                                <span class="warning-feature-desc">AI agent terminal command compression (60%–90% savings) is suspended, and rule blocks in <code>.cursorrules</code>, <code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, etc., are deactivated so AI models bypass AST knowledge graphs and context compression.</span>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Grid -->
+                        <div class="jev-quick-actions">
+                            <button class="btn btn-sm btn-primary" id="rtkTerminalScoreboardBtn"
+                                title="Run rtk gain interactively in terminal">🖥️ Terminal Scoreboard</button>
+                            <button class="btn btn-sm btn-ghost" id="rtkDoctorBtn"
+                                title="Run RTK diagnostic doctor in terminal">🩺 RTK Doctor</button>
+                            <button class="btn btn-sm btn-ghost" id="rtkCopyInstallBtn"
+                                title="Copy raw RTK CLI installation commands">📋 Copy Install Cmd</button>
+                            <button class="btn btn-sm btn-ghost" id="rtkLatencyBtn"
+                                title="Test RTK proxy response time & latency">⏱️ Test Latency</button>
                         </div>
                     </div>
                 </section>
@@ -1074,6 +1128,51 @@
                 <a href="https://github.com/lightpanda-io/browser" target="_blank">Lightpanda Browser</a>
             </span>
         </footer>
+    </div>
+
+    <!-- RTK / Token Saver Deactivation Warning Modal -->
+    <div class="modal-overlay" id="rtkWarningModal" role="dialog" aria-modal="true" aria-labelledby="rtkWarningTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-header-icon">⚠️</span>
+                <h3 id="rtkWarningTitle">Deactivate RTK & Token Saving?</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-lead">
+                    Turning <strong>RTK / Token Saver OFF</strong> disables automated prompt token compression and strips active AI optimization rules across your IDE agent targets.
+                </p>
+                <div class="modal-warning-list">
+                    <div class="warning-feature-item">
+                        <span class="warning-feature-icon">🚫</span>
+                        <div class="warning-feature-content">
+                            <span class="warning-feature-title">Shell Command Compression Suspended</span>
+                            <span class="warning-feature-desc">AI agents will no longer prefix commands with <code>rtk</code> (e.g. <code>git status</code>, <code>npm test</code>, <code>cargo test</code>, <code>pytest</code>), forfeiting <strong>60%–90%</strong> prompt token savings.</span>
+                        </div>
+                    </div>
+                    <div class="warning-feature-item">
+                        <span class="warning-feature-icon">🧹</span>
+                        <div class="warning-feature-content">
+                            <span class="warning-feature-title">AI Directives & Skills Inactive</span>
+                            <span class="warning-feature-desc">Upstream directives are removed from <code>.cursorrules</code>, <code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, <code>AGENTS.md</code>, etc. AI agents will stop consulting semantic AST knowledge graphs, compact diffs, and Headroom context compression.</span>
+                        </div>
+                    </div>
+                    <div class="warning-feature-item">
+                        <span class="warning-feature-icon">💸</span>
+                        <div class="warning-feature-content">
+                            <span class="warning-feature-title">Higher LLM Token Costs & Context Burn</span>
+                            <span class="warning-feature-desc">Terminal dumps and multi-line file diffs will consume full context window capacity without condensation.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="warning-note">
+                    💡 <em>You can re-enable RTK and Token Saver at any time with 1-click from the header toggle or status bar.</em>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="rtkWarningCancelBtn">Cancel (Keep ON)</button>
+                <button class="btn btn-danger" id="rtkWarningConfirmBtn">Turn OFF Anyway</button>
+            </div>
+        </div>
     </div>
 
     <script src="{{scriptUri}}"></script>

@@ -243,6 +243,10 @@ class WebviewHelper {
             case 'installCli':
                 vscode.commands.executeCommand('tokenSaver.installCli');
                 break;
+            case 'runRtkDoctor':
+                const RtkService = require('./rtk-service');
+                RtkService.runInTerminal('rtk doctor');
+                break;
             case 'copyAiInstallPrompt':
                 await vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt', message.elementKey);
                 webview.postMessage({

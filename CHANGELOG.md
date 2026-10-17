@@ -2,6 +2,20 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.3] - 2026-10-17
+### Fixed & Improved
+- **Header Action Button Installation Status Guardrails**:
+  - Fixed header action buttons (`CodeGraph`, `Headroom`, `Ponytail`, `Anti-Slop`, `OmniRoute`, `JevGraph`, `Hybrid Web`) showing `ON` even when underlying binaries or skills were not installed locally.
+  - Header buttons now strictly require both configuration enabled **and** local installation/readiness before displaying `ON` (`btn-primary`).
+  - When uninstalled or not synced, header buttons reliably display `OFF` (`btn-ghost`) and provide descriptive hover tooltips indicating the missing local installation.
+- **Dedicated RTK (Rust Token Killer) CLI Core Card & Header Toggle**:
+  - Restored dedicated `⚡ RTK (Rust Token Killer) CLI Core` card section in the dashboard immediately following IDE Rule Sync, with upstream link to `rtk-ai/rtk`, live status badge, and quick action triggers (`Terminal Scoreboard`, `RTK Doctor`, `Copy Install Cmd`, `Test Latency`).
+  - Added dedicated header button (`toggleRtkBtn` -> `RTK ON` / `RTK OFF`) in the dashboard header alongside the Master Token Saver switch, allowing users to toggle RTK proxy mode with installed status verification.
+- **RTK Deactivation Warning Confirmation & Impact Notice**:
+  - Implemented an interactive warning confirmation modal (`rtkWarningModal`) that alerts users when clicking to turn RTK or Token Saver OFF from the header.
+  - Clearly explains features that become disabled: suspension of shell command compression (loss of 60%–90% terminal token savings), deactivation of IDE AI agent rule directives (`.cursorrules`, `CLAUDE.md`, `copilot-instructions.md`, `AGENTS.md`), bypass of semantic AST knowledge graphs, and resulting higher LLM token burn.
+  - Added a persistent informative callout banner inside the dedicated RTK section card summarizing the exact downstream impact of turning RTK off.
+
 ## [1.14.2] - 2026-10-17
 ### Added & Improved
 - **Token Saver Master Switch**:

@@ -5,6 +5,7 @@ const vscode = acquireVsCodeApi();
 const dashboardContainer = document.getElementById('dashboardContainer');
 const statusPill = document.getElementById('statusPill');
 const statusText = document.getElementById('statusText');
+const toggleRtkBtn = document.getElementById('toggleRtkBtn');
 const toggleModeBtn = document.getElementById('toggleModeBtn');
 const toggleHeadroomBtn = document.getElementById('toggleHeadroomBtn');
 const togglePonytailBtn = document.getElementById('togglePonytailBtn');
@@ -14,6 +15,15 @@ const toggleJevGraphBtn = document.getElementById('toggleJevGraphBtn');
 const toggleCodeGraphBtn = document.getElementById('toggleCodeGraphBtn');
 const toggleHybridWebBtn = document.getElementById('toggleHybridWebBtn');
 const toggleCrwBtn = toggleHybridWebBtn || document.getElementById('toggleCrwBtn');
+const rtkStatusBadge = document.getElementById('rtkStatusBadge');
+const rtkInlineSyncBtn = document.getElementById('rtkInlineSyncBtn');
+const rtkTerminalScoreboardBtn = document.getElementById('rtkTerminalScoreboardBtn');
+const rtkDoctorBtn = document.getElementById('rtkDoctorBtn');
+const rtkCopyInstallBtn = document.getElementById('rtkCopyInstallBtn');
+const rtkLatencyBtn = document.getElementById('rtkLatencyBtn');
+const rtkWarningModal = document.getElementById('rtkWarningModal');
+const rtkWarningCancelBtn = document.getElementById('rtkWarningCancelBtn');
+const rtkWarningConfirmBtn = document.getElementById('rtkWarningConfirmBtn');
 const footerVersionBadge = document.getElementById('footerVersionBadge');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
@@ -714,9 +724,94 @@ document.querySelectorAll('.panel-header.collapsible').forEach(header => {
     });
 });
 
+// RTK / Token Saver Deactivation Warning Modal Logic
+let pendingDeactivateCommand = null;
+
+function showRtkWarningModal(command = 'toggleMode') {
+    pendingDeactivateCommand = command;
+    if (rtkWarningModal) {
+        rtkWarningModal.classList.add('open');
+    }
+}
+
+function hideRtkWarningModal() {
+    pendingDeactivateCommand = null;
+    if (rtkWarningModal) {
+        rtkWarningModal.classList.remove('open');
+    }
+}
+
+if (rtkWarningCancelBtn) {
+    rtkWarningCancelBtn.addEventListener('click', () => {
+        hideRtkWarningModal();
+    });
+}
+
+if (rtkWarningConfirmBtn) {
+    rtkWarningConfirmBtn.addEventListener('click', () => {
+        const cmd = pendingDeactivateCommand || 'toggleMode';
+        hideRtkWarningModal();
+        vscode.postMessage({ command: cmd });
+    });
+}
+
+if (rtkWarningModal) {
+    rtkWarningModal.addEventListener('click', (e) => {
+        if (e.target === rtkWarningModal) {
+            hideRtkWarningModal();
+        }
+    });
+}
+
 // General Action Event Listeners
+if (toggleRtkBtn) {
+    toggleRtkBtn.addEventListener('click', () => {
+        const isCurrentlyActive = toggleRtkBtn.classList.contains('btn-primary');
+        if (isCurrentlyActive) {
+            showRtkWarningModal('toggleMode');
+        } else {
+            vscode.postMessage({ command: 'toggleMode' });
+        }
+    });
+}
+
+if (rtkInlineSyncBtn) {
+    rtkInlineSyncBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'installCli' });
+    });
+}
+
+if (rtkTerminalScoreboardBtn) {
+    rtkTerminalScoreboardBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openScoreboardTerminal' });
+    });
+}
+
+if (rtkDoctorBtn) {
+    rtkDoctorBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'runRtkDoctor' });
+    });
+}
+
+if (rtkCopyInstallBtn) {
+    rtkCopyInstallBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'copyInstallCommands' });
+    });
+}
+
+if (rtkLatencyBtn) {
+    rtkLatencyBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'testLatency' });
+    });
+}
+
 toggleModeBtn.addEventListener('click', () => {
-    vscode.postMessage({ command: 'toggleMode' });
+    const isCurrentlyActive = toggleModeBtn.classList.contains('btn-primary');
+    if (isCurrentlyActive) {
+        showRtkWarningModal('toggleMode');
+    } else {
+        vscode.postMessage({ command: 'toggleMode' });
+    }
 });
 
 if (toggleHeadroomBtn) {
@@ -1472,6 +1567,20 @@ function renderDashboardState(data) {
             statusText.textContent = 'TOKEN SAVER INACTIVE';
         }
     }
+    // RTK Header Button
+    if (toggleRtkBtn) {
+        const isRtkInstalled = Boolean(installed);
+        const isRtkOn = Boolean(isEnabled) && isRtkInstalled;
+        if (isRtkOn) {
+            toggleRtkBtn.textContent = 'RTK ON';
+            toggleRtkBtn.className = 'btn btn-primary';
+            toggleRtkBtn.title = 'RTK CLI transparent command compression proxy is active';
+        } else {
+            toggleRtkBtn.textContent = 'RTK OFF';
+            toggleRtkBtn.className = 'btn btn-ghost';
+            toggleRtkBtn.title = !isRtkInstalled ? 'RTK CLI is not installed locally' : 'RTK CLI token compression is paused';
+        }
+    }
     if (isEnabled) {
         toggleModeBtn.textContent = 'Token Saver ON';
         toggleModeBtn.className = 'btn btn-primary';
@@ -1482,86 +1591,108 @@ function renderDashboardState(data) {
 
     // Headroom Button
     if (toggleHeadroomBtn) {
-        const isHeadroom = Boolean(data.headroomEnabled);
+        const hrInstalled = Boolean(data.headroomInstalled);
+        const isHeadroom = Boolean(data.headroomEnabled) && hrInstalled;
         if (isHeadroom) {
             toggleHeadroomBtn.textContent = 'Headroom ON';
             toggleHeadroomBtn.className = 'btn btn-primary';
+            toggleHeadroomBtn.title = 'Headroom context compression is active';
         } else {
             toggleHeadroomBtn.textContent = 'Headroom OFF';
             toggleHeadroomBtn.className = 'btn btn-ghost';
+            toggleHeadroomBtn.title = !hrInstalled ? 'Headroom is not installed locally' : 'Headroom is disabled';
         }
     }
 
     // Ponytail Button in Header
     if (togglePonytailBtn) {
-        const isPonytail = (data.ponytailMode || 'full') !== 'off';
+        const pInstalled = Boolean(data.ponytailInstalled);
+        const isPonytail = ((data.ponytailMode || 'full') !== 'off') && pInstalled;
         if (isPonytail) {
             togglePonytailBtn.textContent = 'Ponytail ON';
             togglePonytailBtn.className = 'btn btn-primary';
+            togglePonytailBtn.title = 'Ponytail token saving is active';
         } else {
             togglePonytailBtn.textContent = 'Ponytail OFF';
             togglePonytailBtn.className = 'btn btn-ghost';
+            togglePonytailBtn.title = !pInstalled ? 'Ponytail skills are not synced locally' : 'Ponytail mode is off';
         }
     }
 
     // Anti-Slop Button in Header
     if (toggleAntiSlopBtn) {
-        const isAntiSlop = Boolean(data.antiSlopEnabled !== false && (data.antiSlopMode || 'during') !== 'off');
+        const aInstalled = Boolean(data.antiSlopInstalled);
+        const isAntiSlop = Boolean(data.antiSlopEnabled !== false && (data.antiSlopMode || 'during') !== 'off') && aInstalled;
         if (isAntiSlop) {
             toggleAntiSlopBtn.textContent = 'Anti-Slop ON';
             toggleAntiSlopBtn.className = 'btn btn-primary';
+            toggleAntiSlopBtn.title = 'Anti-Slop token filter is active';
         } else {
             toggleAntiSlopBtn.textContent = 'Anti-Slop OFF';
             toggleAntiSlopBtn.className = 'btn btn-ghost';
+            toggleAntiSlopBtn.title = !aInstalled ? 'Anti-Slop skills are not synced locally' : 'Anti-Slop filter is disabled';
         }
     }
 
     // OmniRoute Button in Header
     if (toggleOmniRouteBtn) {
-        const isOmni = Boolean(data.omniRouteEnabled);
+        const omniInstalled = Boolean(data.omniRouteInstalled || data.omniRouteRunning);
+        const isOmni = Boolean(data.omniRouteEnabled) && omniInstalled;
         if (isOmni) {
             toggleOmniRouteBtn.textContent = 'OmniRoute ON';
             toggleOmniRouteBtn.className = 'btn btn-primary';
+            toggleOmniRouteBtn.title = data.omniRouteRunning ? 'OmniRoute AI Gateway is running' : 'OmniRoute is enabled';
         } else {
             toggleOmniRouteBtn.textContent = 'OmniRoute OFF';
             toggleOmniRouteBtn.className = 'btn btn-ghost';
+            toggleOmniRouteBtn.title = !omniInstalled ? 'OmniRoute is not installed locally' : 'OmniRoute is disabled';
         }
     }
 
     // JevGraph Button in Header
     if (toggleJevGraphBtn) {
-        const isJev = Boolean(data.jevGraphEnabled);
+        const jInstalled = Boolean(data.jevGraphInstalled);
+        const isJev = Boolean(data.jevGraphEnabled) && jInstalled;
         if (isJev) {
             toggleJevGraphBtn.textContent = 'JevGraph ON';
             toggleJevGraphBtn.className = 'btn btn-primary';
+            toggleJevGraphBtn.title = 'JevGraph knowledge graph optimization is active';
         } else {
             toggleJevGraphBtn.textContent = 'JevGraph OFF';
             toggleJevGraphBtn.className = 'btn btn-ghost';
+            toggleJevGraphBtn.title = !jInstalled ? 'JevGraph is not installed locally' : 'JevGraph is disabled';
         }
     }
 
     // CodeGraph Button in Header
     if (toggleCodeGraphBtn) {
-        const isCodeGraph = Boolean(data.codeGraphEnabled);
+        const cgInstalled = Boolean(data.codeGraphInstalled);
+        const isCodeGraph = Boolean(data.codeGraphEnabled) && cgInstalled;
         if (isCodeGraph) {
             toggleCodeGraphBtn.textContent = 'CodeGraph ON';
             toggleCodeGraphBtn.className = 'btn btn-primary';
+            toggleCodeGraphBtn.title = 'CodeGraphContext semantic code graph is active';
         } else {
             toggleCodeGraphBtn.textContent = 'CodeGraph OFF';
             toggleCodeGraphBtn.className = 'btn btn-ghost';
+            toggleCodeGraphBtn.title = !cgInstalled ? 'CodeGraphContext is not installed locally' : 'CodeGraphContext is disabled';
         }
     }
 
     // Hybrid Web Button in Header
     const hybridBtn = toggleHybridWebBtn || toggleCrwBtn;
     if (hybridBtn) {
-        const isHybrid = data.hybridWebEnabled !== undefined ? Boolean(data.hybridWebEnabled) : Boolean(data.crwEnabled);
+        const hwInstalled = Boolean(data.crwInstalled || data.lightpandaInstalled);
+        const isHybridEnabled = data.hybridWebEnabled !== undefined ? Boolean(data.hybridWebEnabled) : Boolean(data.crwEnabled);
+        const isHybrid = isHybridEnabled && hwInstalled;
         if (isHybrid) {
             hybridBtn.textContent = 'Hybrid Web ON';
             hybridBtn.className = 'btn btn-primary';
+            hybridBtn.title = 'Hybrid Web research engine (fastCRW / Lightpanda) is active';
         } else {
             hybridBtn.textContent = 'Hybrid Web OFF';
             hybridBtn.className = 'btn btn-ghost';
+            hybridBtn.title = !hwInstalled ? 'fastCRW / Lightpanda is not installed locally' : 'Hybrid Web is disabled';
         }
     }
 
@@ -2170,6 +2301,20 @@ function renderDashboardState(data) {
     // Weekly Auto Sync Option State
     if (weeklySyncCheckbox && data.weeklyAutoSync !== undefined) {
         weeklySyncCheckbox.checked = Boolean(data.weeklyAutoSync);
+    }
+
+    // RTK Status Badge
+    if (rtkStatusBadge) {
+        if (installed && isEnabled) {
+            rtkStatusBadge.textContent = `Active (${version || 'Ready'})`;
+            rtkStatusBadge.className = 'panel-tag tag-orange';
+        } else if (installed && !isEnabled) {
+            rtkStatusBadge.textContent = 'Paused';
+            rtkStatusBadge.className = 'panel-tag';
+        } else {
+            rtkStatusBadge.textContent = 'Not Installed';
+            rtkStatusBadge.className = 'panel-tag tag-amber';
+        }
     }
 
     // Output & Context Token Optimization
