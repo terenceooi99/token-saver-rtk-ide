@@ -2,6 +2,14 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.7] - 2026-10-17
+### Added & Improved
+- **Interactive Initial Loading Overlay & Upstream Check Progress Bar**:
+  - Implemented an animated backdrop-filtered loading overlay (`#initialLoadingOverlay`) that appears seamlessly upon dashboard initialization.
+  - Features real-time sequential checking status indicators across all upstream GitHub integrations (`RTK`, `Headroom`, `Ponytail`, `Anti-Slop`, `OmniRoute`, `JevGraph`, `CodeGraph`, `fastCRW`, and `Lightpanda`).
+  - Automatically transitions each upstream tag from checking (`pulse`) to verified (`✓`) or missing (`✗`) upon receiving the state data payload, followed by a graceful fade-out exit.
+  - Added full light theme adaptation with high-contrast surfaces and refined box-shadow elevations.
+
 ## [1.14.6] - 2026-10-17
 ### Added & Improved
 - **Universal Tool Management & Maintenance Rules (`/tool-management-rules`)**:
