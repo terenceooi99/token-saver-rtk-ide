@@ -118,6 +118,35 @@ const antiSlopDiagSyncBtn = document.getElementById('antiSlopDiagSyncBtn');
 const antiSlopDiagUninstallBtn = document.getElementById('antiSlopDiagUninstallBtn');
 
 // Setup Hub Elements
+const initialLoadingOverlay = document.getElementById('initialLoadingOverlay');
+let initialCheckCompleted = false;
+const initialLoadingTags = document.querySelectorAll('.initial-loading-tag');
+const initialLoadingDesc = document.querySelector('.initial-loading-desc');
+
+// Start progressive animated checking across upstream GitHub tags
+if (initialLoadingTags && initialLoadingTags.length > 0) {
+    const upstreamTagOrder = ['rtk', 'headroom', 'ponytail', 'antislop', 'omniroute', 'jevgraph', 'codegraph', 'crw', 'lightpanda'];
+    let stepIndex = 0;
+
+    const advanceCheckStep = () => {
+        if (initialCheckCompleted) return;
+        if (stepIndex < upstreamTagOrder.length) {
+            const currentId = upstreamTagOrder[stepIndex];
+            const tagEl = document.querySelector(`.initial-loading-tag[data-upstream-id="${currentId}"]`);
+            if (tagEl) {
+                tagEl.classList.add('checking');
+                if (initialLoadingDesc) {
+                    initialLoadingDesc.textContent = `Checking ${tagEl.textContent.trim()} (${stepIndex + 1}/${upstreamTagOrder.length})...`;
+                }
+            }
+            stepIndex++;
+            setTimeout(advanceCheckStep, 380);
+        }
+    };
+    // Kick off first step
+    setTimeout(advanceCheckStep, 150);
+}
+
 const setupBanner = document.getElementById('setupBanner');
 const setupBannerDesc = document.getElementById('setupBannerDesc');
 const setupMissingTags = document.getElementById('setupMissingTags');
@@ -1590,6 +1619,47 @@ window.addEventListener('message', (event) => {
 });
 
 function renderDashboardState(data) {
+    if (!initialCheckCompleted && initialLoadingOverlay) {
+        initialCheckCompleted = true;
+
+        // Apply definitive verified or missing status color to each upstream tag
+        const tagMap = {
+            'rtk': Boolean(data.installed),
+            'headroom': Boolean(data.headroomInstalled),
+            'ponytail': Boolean(data.ponytailInstalled),
+            'antislop': Boolean(data.antiSlopInstalled),
+            'omniroute': Boolean(data.omniRouteInstalled),
+            'jevgraph': Boolean(data.jevGraphInstalled),
+            'codegraph': Boolean(data.codeGraphInstalled),
+            'crw': Boolean(data.crwInstalled),
+            'lightpanda': Boolean(data.lightpandaInstalled)
+        };
+
+        Object.entries(tagMap).forEach(([id, isInstalled]) => {
+            const tagEl = document.querySelector(`.initial-loading-tag[data-upstream-id="${id}"]`);
+            if (tagEl) {
+                tagEl.classList.remove('checking');
+                tagEl.classList.add(isInstalled ? 'verified' : 'missing');
+                tagEl.innerHTML = `${isInstalled ? '✓' : '✗'} ${tagEl.textContent.replace(/^[✓✗]\s*/, '')}`;
+            }
+        });
+
+        if (initialLoadingDesc) {
+            initialLoadingDesc.textContent = 'Initial check complete. Synchronizing dashboard view...';
+        }
+
+        setTimeout(() => {
+            if (initialLoadingOverlay) {
+                initialLoadingOverlay.classList.add('fade-out');
+                setTimeout(() => {
+                    if (initialLoadingOverlay) {
+                        initialLoadingOverlay.style.display = 'none';
+                    }
+                }, 400);
+            }
+        }, 500);
+    }
+
     const { isEnabled, installed, version, binaryPath, metrics, scope, ideStatus, isSidebar } = data;
 
     isSidebarMode = !!isSidebar;

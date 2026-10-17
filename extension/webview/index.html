@@ -11,6 +11,34 @@
 </head>
 
 <body>
+    <!-- Initial Loading Overlay with Progress Bar for Upstream Checks -->
+    <div class="initial-loading-overlay" id="initialLoadingOverlay" role="status" aria-live="polite">
+        <div class="initial-loading-card">
+            <div class="initial-loading-brand">
+                <img src="{{iconUri}}" class="initial-loading-icon" alt="Token Saver"
+                    onerror="this.style.display='none';" />
+            </div>
+            <div class="initial-loading-content">
+                <h2 class="initial-loading-title">Checking Upstream Tools</h2>
+                <p class="initial-loading-desc">Verifying local installations and upstream GitHub layers...</p>
+                <div class="initial-progress-track">
+                    <div class="initial-progress-bar"></div>
+                </div>
+                <div class="initial-loading-footer">
+                    <span class="initial-loading-tag" data-upstream-id="rtk">RTK</span>
+                    <span class="initial-loading-tag" data-upstream-id="headroom">Headroom</span>
+                    <span class="initial-loading-tag" data-upstream-id="ponytail">Ponytail</span>
+                    <span class="initial-loading-tag" data-upstream-id="antislop">Anti-Slop</span>
+                    <span class="initial-loading-tag" data-upstream-id="omniroute">OmniRoute</span>
+                    <span class="initial-loading-tag" data-upstream-id="jevgraph">JevGraph</span>
+                    <span class="initial-loading-tag" data-upstream-id="codegraph">CodeGraph</span>
+                    <span class="initial-loading-tag" data-upstream-id="crw">fastCRW</span>
+                    <span class="initial-loading-tag" data-upstream-id="lightpanda">Lightpanda</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard-container" id="dashboardContainer">
         <!-- Header -->
         <header class="dashboard-header">
