@@ -24,6 +24,7 @@ class WebviewHelper {
     }
 
     static async getLatestStateData(context, isSidebar = false) {
+        SkillInstaller.setContext(context);
         const config = vscode.workspace.getConfiguration('tokenSaver');
         const isEnabled = context.globalState.get('tokenSaver.enabled', config.get('enableOnStartup', true));
         const weeklyAutoSync = context.globalState.get('tokenSaver.weeklyAutoSync', config.get('weeklyAutoSync', true));
@@ -183,14 +184,20 @@ class WebviewHelper {
                 break;
             case 'syncSingleTarget':
                 if (message.targetId) {
-                    SkillInstaller.syncRules(true, [message.targetId]);
-                    vscode.window.showInformationMessage(`⚡ Synced RTK rule for ${message.targetId}`);
+                    const isMasterOn = context.globalState.get('tokenSaver.enabled', true);
+                    SkillInstaller.syncRules(isMasterOn, [message.targetId]);
+                    vscode.window.showInformationMessage(
+                        isMasterOn
+                            ? `⚡ Synced Token Saver rule for ${message.targetId}`
+                            : `⚪ Token Saver Master Switch is OFF. Directives removed for ${message.targetId}`
+                    );
                     triggerRefresh();
                 }
                 break;
             case 'toggleTarget':
                 if (message.targetId) {
-                    SkillInstaller.syncRules(!message.currentlySynced, [message.targetId]);
+                    const isMasterOn = context.globalState.get('tokenSaver.enabled', true);
+                    SkillInstaller.syncRules(isMasterOn && !message.currentlySynced, [message.targetId]);
                     triggerRefresh();
                 }
             case 'openSyncPicker':

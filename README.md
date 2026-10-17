@@ -226,15 +226,15 @@ The extension provides full graphical and automated control directly from your *
    - Automatic non-intrusive update checks against official GitHub releases (`rtk-ai/rtk`, `headroomlabs-ai/headroom`, `DietrichGebert/ponytail`, `miqdadbadjuber/anti-slop`, `diegosouzapw/OmniRoute`, `chenmingtang830/jevgraph`, `CodeGraphContext/CodeGraphContext`, `fastcrw/crw` & `lightpanda-io/browser`).
    - 1-click update trigger for Windows (`winget`), macOS (`brew`), and Linux (`curl`), plus GitHub skill fetch for Ponytail, Anti-Slop, JevGraph, CodeGraph, fastCRW, and Lightpanda.
 7. **Dynamic Live Status Bar**:
-   - Shows real-time savings: `⚡ RTK: 48.2k saved (72%)` or `⚪ RTK: OFF`.
-   - Rich hover tooltips with cost savings and quick access to the dashboard.
+   - Shows real-time savings: `⚡ Token Saver: 48.2k saved (72%)` or `⚪ Token Saver: OFF`.
+   - Rich hover tooltips with cost savings and direct 1-click enable when OFF or interactive dashboard when ON.
 8. **Commands in Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)**:
    - `Token Saver: Open Interactive Dashboard`
    - `Token Saver: Sync Rules to All AI Agents (VS Code, Cursor, Windsurf, Cline, Claude, Antigravity)`
    - `Token Saver: Configure Target Agentic IDEs / AI Rules`
-   - `Token Saver: Toggle RTK Token Saving Mode`
-   - `Token Saver: Enable RTK Token Saving`
-   - `Token Saver: Disable RTK Token Saving`
+   - `Token Saver: Toggle Token Saver Mode`
+   - `Token Saver: Enable Token Saver`
+   - `Token Saver: Disable Token Saver`
    - `Token Saver: Check for Upstream GitHub Updates`
    - `Token Saver: Update from Upstream GitHub`
    - `Token Saver: Fetch & Sync Ponytail from GitHub`

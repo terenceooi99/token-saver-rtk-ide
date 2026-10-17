@@ -736,6 +736,24 @@ const IDE_TARGETS = [
 ];
 
 class SkillInstaller {
+    static extensionContext = null;
+
+    static setContext(context) {
+        this.extensionContext = context;
+    }
+
+    static isMasterEnabled() {
+        if (this.extensionContext) {
+            return this.extensionContext.globalState.get('tokenSaver.enabled', true);
+        }
+        try {
+            const config = vscode.workspace.getConfiguration('tokenSaver');
+            return config.get('enableOnStartup', true);
+        } catch (_) {
+            return true;
+        }
+    }
+
     static getGlobalConfigPath() {
         const homeDir = os.homedir();
         return path.join(homeDir, '.gemini', 'config');
@@ -775,6 +793,46 @@ class SkillInstaller {
         const root = this.getWorkspaceRoot();
         if (!root) return null;
         return path.join(root, '.agents', '.disabled-skills');
+    }
+
+    /**
+     * Cross-IDE Global Skills & Plugin Roots (Antigravity, Cursor, Claude Code, Universal)
+     */
+    static getGlobalSkillsRoots() {
+        const homeDir = os.homedir();
+        return [
+            // Antigravity & Gemini IDE
+            { path: path.join(homeDir, '.gemini', 'config', 'skills'), type: 'skills', scope: 'global', ide: 'Antigravity / Gemini' },
+            { path: path.join(homeDir, '.gemini', 'config', 'plugins'), type: 'plugins', scope: 'global', ide: 'Antigravity / Gemini' },
+            // Cursor IDE
+            { path: path.join(homeDir, '.cursor', 'skills'), type: 'skills', scope: 'global', ide: 'Cursor' },
+            { path: path.join(homeDir, '.cursor', 'plugins'), type: 'plugins', scope: 'global', ide: 'Cursor' },
+            // Claude Code
+            { path: path.join(homeDir, '.claude', 'skills'), type: 'skills', scope: 'global', ide: 'Claude Code' },
+            { path: path.join(homeDir, '.claude', 'plugins'), type: 'plugins', scope: 'global', ide: 'Claude Code' },
+            // Universal Agent Config Roots (~/.config/agents, ~/.agents)
+            { path: path.join(homeDir, '.config', 'agents', 'skills'), type: 'skills', scope: 'global', ide: 'Universal Agents' },
+            { path: path.join(homeDir, '.agents', 'skills'), type: 'skills', scope: 'global', ide: 'Universal Agents' }
+        ];
+    }
+
+    /**
+     * Cross-IDE Workspace Skills & Plugin Roots (Antigravity, Cursor, Claude Code, Universal)
+     */
+    static getWorkspaceSkillsRoots() {
+        const root = this.getWorkspaceRoot();
+        if (!root) return [];
+        return [
+            // Universal / Antigravity workspace
+            { path: path.join(root, '.agents', 'skills'), type: 'skills', scope: 'workspace', ide: 'Antigravity / Universal' },
+            { path: path.join(root, '.agents', 'plugins'), type: 'plugins', scope: 'workspace', ide: 'Antigravity / Universal' },
+            // Cursor workspace
+            { path: path.join(root, '.cursor', 'skills'), type: 'skills', scope: 'workspace', ide: 'Cursor' },
+            { path: path.join(root, '.cursor', 'plugins'), type: 'plugins', scope: 'workspace', ide: 'Cursor' },
+            // Claude workspace
+            { path: path.join(root, '.claude', 'skills'), type: 'skills', scope: 'workspace', ide: 'Claude Code' },
+            { path: path.join(root, '.claude', 'plugins'), type: 'plugins', scope: 'workspace', ide: 'Claude Code' }
+        ];
     }
 
     /**
@@ -1057,6 +1115,12 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         const results = [];
         const targetMap = this.getTargetPaths();
 
+        // Enforce Token Saver Master Switch Invariant:
+        // Even if individual upstream feature toggles are ON, if the master switch is OFF,
+        // no upstream token-saving rule directives are injected into IDE rule files.
+        const masterEnabled = this.isMasterEnabled();
+        const effectiveEnabled = Boolean(enabled && masterEnabled);
+
         let selectedTargets = [];
         if (targetScope === 'current') {
             selectedTargets = this.detectCurrentIde().targetIds;
@@ -1079,7 +1143,7 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             for (const filePath of filePaths) {
                 try {
                     const blockContent = this.formatWrappedRule(`RTK Token Saver Rule (${targetId})`);
-                    const result = this.safeApplyBlockToFile(filePath, blockContent, enabled);
+                    const result = this.safeApplyBlockToFile(filePath, blockContent, effectiveEnabled);
                     results.push({ target: targetId, ...result });
                 } catch (err) {
                     console.error(`Failed to sync rule for ${targetId} at ${filePath}:`, err);
@@ -1319,9 +1383,27 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
-     * Discover all skills currently present in a given scope ('global', 'workspace', or 'all')
+     * Parse skill metadata from a SKILL.md file
      */
-    static listInstalledSkillsInDir(baseDir, scopeLabel = 'workspace') {
+    static parseSkillInfo(skillMdPath, fallbackName) {
+        let name = fallbackName;
+        let description = '';
+        if (fs.existsSync(skillMdPath)) {
+            try {
+                const raw = fs.readFileSync(skillMdPath, 'utf8');
+                const nMatch = raw.match(/^name:\s*([^\n\r]+)/m);
+                if (nMatch && nMatch[1]) name = nMatch[1].trim();
+                const dMatch = raw.match(/description:\s*(?:>|\|)?\s*\n?([^\n#]+)/i);
+                if (dMatch && dMatch[1]) description = dMatch[1].trim();
+            } catch (_) {}
+        }
+        return { name, description };
+    }
+
+    /**
+     * Discover all skills currently present in a given directory
+     */
+    static listInstalledSkillsInDir(baseDir, scopeLabel = 'workspace', ideLabel = 'Standalone') {
         if (!baseDir || !fs.existsSync(baseDir)) return [];
         const results = [];
         try {
@@ -1330,24 +1412,15 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
                 if (entry.isDirectory()) {
                     const skillName = entry.name;
                     const skillMdPath = path.join(baseDir, skillName, 'SKILL.md');
-                    let description = '';
-                    if (fs.existsSync(skillMdPath)) {
-                        try {
-                            const raw = fs.readFileSync(skillMdPath, 'utf8');
-                            const descMatch = raw.match(/description:\s*(?:>|\|)?\s*\n?([^\n#]+)/i);
-                            if (descMatch && descMatch[1]) {
-                                description = descMatch[1].trim();
-                            }
-                        } catch (_) {}
-                    }
-                    if (!description) {
-                        description = SKILLS_MAP[skillName] ? 'Preinstalled AI Agent skill' : 'Custom installed skill';
-                    }
+                    const { name, description } = this.parseSkillInfo(skillMdPath, skillName);
+                    const finalDesc = description || (SKILLS_MAP[name] ? 'Preinstalled AI Agent skill' : 'Custom installed skill');
                     results.push({
-                        name: skillName,
+                        name,
                         scope: scopeLabel,
                         path: path.join(baseDir, skillName),
-                        description
+                        description: finalDesc,
+                        source: 'standalone',
+                        ide: ideLabel
                     });
                 }
             }
@@ -1358,21 +1431,65 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
-     * List all installed skills across global and/or workspace scopes
+     * List all installed skills across all supported IDEs (Antigravity, Cursor, Claude Code, Universal)
      */
     static listInstalledSkills(targetScope = 'all') {
-        const globalDir = this.getGlobalSkillsPath();
-        const wsDir = this.getWorkspaceSkillsPath();
-        const items = [];
-
+        const roots = [];
         if (targetScope === 'all' || targetScope === 'global') {
-            if (globalDir) {
-                items.push(...this.listInstalledSkillsInDir(globalDir, 'global'));
-            }
+            roots.push(...this.getGlobalSkillsRoots());
         }
         if (targetScope === 'all' || targetScope === 'workspace') {
-            if (wsDir) {
-                items.push(...this.listInstalledSkillsInDir(wsDir, 'workspace'));
+            roots.push(...this.getWorkspaceSkillsRoots());
+        }
+
+        const items = [];
+        for (const root of roots) {
+            if (!root.path || !fs.existsSync(root.path)) continue;
+            if (root.type === 'skills') {
+                items.push(...this.listInstalledSkillsInDir(root.path, root.scope, root.ide));
+            } else if (root.type === 'plugins') {
+                try {
+                    const plugins = fs.readdirSync(root.path, { withFileTypes: true });
+                    for (const plug of plugins) {
+                        if (!plug.isDirectory()) continue;
+                        const pSkills = path.join(root.path, plug.name, 'skills');
+                        if (!fs.existsSync(pSkills)) continue;
+                        // Case A: Plugin provides a direct SKILL.md under its skills folder
+                        const directSkillMd = path.join(pSkills, 'SKILL.md');
+                        if (fs.existsSync(directSkillMd)) {
+                            const { name, description } = this.parseSkillInfo(directSkillMd, plug.name);
+                            items.push({
+                                name,
+                                scope: root.scope,
+                                path: pSkills,
+                                description: description || `Plugin skill (${plug.name})`,
+                                source: `plugin: ${plug.name}`,
+                                ide: root.ide
+                            });
+                        }
+                        // Case B: Plugin provides skills in subdirectories under its skills folder
+                        const pEntries = fs.readdirSync(pSkills, { withFileTypes: true });
+                        for (const pe of pEntries) {
+                            if (pe.isDirectory()) {
+                                const sPath = path.join(pSkills, pe.name);
+                                const sMd = path.join(sPath, 'SKILL.md');
+                                if (fs.existsSync(sMd)) {
+                                    const { name, description } = this.parseSkillInfo(sMd, pe.name);
+                                    items.push({
+                                        name,
+                                        scope: root.scope,
+                                        path: sPath,
+                                        description: description || `Plugin skill (${plug.name})`,
+                                        source: `plugin: ${plug.name}`,
+                                        ide: root.ide
+                                    });
+                                }
+                            }
+                        }
+                    }
+                } catch (pErr) {
+                    console.warn(`Error scanning plugins in ${root.path}:`, pErr);
+                }
             }
         }
         return items;
@@ -1444,18 +1561,43 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         let removedGlobal = [];
         let removedWs = [];
 
+        // Discover installed skills in the target scope to locate their exact folder paths
+        const installed = this.listInstalledSkills(targetScope);
+        const nameSet = new Set(skillNames);
+        const toDelete = installed.filter(s => nameSet.has(s.name));
+
+        for (const item of toDelete) {
+            if (item.path && fs.existsSync(item.path)) {
+                try {
+                    const success = await this.moveToTrash(item.path);
+                    if (success) {
+                        if (item.scope === 'global') {
+                            removedGlobal.push(item.name);
+                        } else {
+                            removedWs.push(item.name);
+                        }
+                    }
+                } catch (delErr) {
+                    console.error(`Failed to move skill directory ${item.path} to Recycle Bin:`, delErr);
+                }
+            }
+        }
+
+        // Also check default base directories as fallback
         if (targetScope === 'all' || targetScope === 'global') {
-            removedGlobal = await this.removeSkillsFromDir(this.getGlobalSkillsPath(), skillNames);
+            const extra = await this.removeSkillsFromDir(this.getGlobalSkillsPath(), skillNames);
+            removedGlobal.push(...extra);
         }
         if (targetScope === 'all' || targetScope === 'workspace') {
-            removedWs = await this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), skillNames);
+            const extra = await this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), skillNames);
+            removedWs.push(...extra);
         }
 
         return {
             targetScope,
             skills: skillNames,
-            global: removedGlobal,
-            workspace: removedWs,
+            global: [...new Set(removedGlobal)],
+            workspace: [...new Set(removedWs)],
             total: [...new Set([...removedGlobal, ...removedWs])]
         };
     }

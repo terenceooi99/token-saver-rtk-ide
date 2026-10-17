@@ -14,20 +14,20 @@ class StatusBarManager {
         const displayStyle = config.get('statusMetricDisplay', 'compact');
 
         if (isEnabled) {
+            this.statusBarItem.command = 'tokenSaver.disable';
             if (metrics && metrics.totalSavedTokens > 0 && displayStyle !== 'iconOnly') {
-                this.statusBarItem.text = `$(zap) RTK: ${metrics.totalSavedFormatted} saved (${metrics.savedPercentage}%)`;
+                this.statusBarItem.text = `$(zap) Token Saver: ${metrics.totalSavedFormatted} saved (${metrics.savedPercentage}%)`;
             } else {
-                this.statusBarItem.text = `$(zap) RTK: ON`;
+                this.statusBarItem.text = `$(zap) Token Saver: ON`;
             }
 
             const tooltipLines = [
-                `⚡ **Token Saver (RTK) is ENABLED**`,
+                `⚡ **Token Saver is ENABLED**`,
                 `---`,
                 `• **Total Saved**: ${metrics ? metrics.totalSavedFormatted : '0'} tokens (${metrics ? metrics.savedPercentage : 0}%)`,
                 `• **Estimated Cost Saved**: ${metrics ? metrics.estimatedDollarSavings : '$0.00'}`,
-                `• **RTK Version**: ${version || 'Detected'}`,
                 `---`,
-                `👉 *Click to open Interactive Dashboard*`
+                `👉 *Click to Turn Token Saver OFF directly*`
             ];
 
             const mdTooltip = new vscode.MarkdownString(tooltipLines.join('\n\n'));
@@ -35,13 +35,14 @@ class StatusBarManager {
             this.statusBarItem.tooltip = mdTooltip;
             this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.prominentForeground');
         } else {
-            this.statusBarItem.text = `$(circle-slash) RTK: OFF`;
+            this.statusBarItem.command = 'tokenSaver.enable';
+            this.statusBarItem.text = `$(circle-slash) Token Saver: OFF`;
             const tooltipLines = [
-                `⚪ **Token Saver (RTK) is DISABLED**`,
+                `⚪ **Token Saver is DISABLED**`,
                 `---`,
-                `Commands are currently executed directly without compression.`,
+                `All upstream token-saving solutions and AI prompt directives are paused.`,
                 `---`,
-                `👉 *Click to open Interactive Dashboard & Enable*`
+                `👉 *Click to Turn Token Saver ON directly*`
             ];
             const mdTooltip = new vscode.MarkdownString(tooltipLines.join('\n\n'));
             mdTooltip.isTrusted = true;

@@ -1462,21 +1462,21 @@ function renderDashboardState(data) {
         }
     }
 
-    // Status Pill (if present) & RTK Button
+    // Status Pill (if present) & Token Saver Master Button
     if (statusPill && statusText) {
         if (isEnabled) {
             statusPill.className = 'status-pill active';
-            statusText.textContent = 'RTK ACTIVE';
+            statusText.textContent = 'TOKEN SAVER ACTIVE';
         } else {
             statusPill.className = 'status-pill inactive';
-            statusText.textContent = 'RTK INACTIVE';
+            statusText.textContent = 'TOKEN SAVER INACTIVE';
         }
     }
     if (isEnabled) {
-        toggleModeBtn.textContent = 'Turn RTK OFF';
+        toggleModeBtn.textContent = 'Turn Token Saver OFF';
         toggleModeBtn.className = 'btn btn-ghost';
     } else {
-        toggleModeBtn.textContent = 'Turn RTK ON';
+        toggleModeBtn.textContent = 'Turn Token Saver ON';
         toggleModeBtn.className = 'btn btn-primary';
     }
 

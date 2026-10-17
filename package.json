@@ -105,18 +105,18 @@
       },
       {
         "command": "tokenSaver.toggle",
-        "title": "Toggle RTK Token Saving Mode",
+        "title": "Toggle Token Saver Mode",
         "category": "Token Saver",
         "icon": "$(zap)"
       },
       {
         "command": "tokenSaver.enable",
-        "title": "Enable RTK Token Saving",
+        "title": "Enable Token Saver",
         "category": "Token Saver"
       },
       {
         "command": "tokenSaver.disable",
-        "title": "Disable RTK Token Saving",
+        "title": "Disable Token Saver",
         "category": "Token Saver"
       },
       {

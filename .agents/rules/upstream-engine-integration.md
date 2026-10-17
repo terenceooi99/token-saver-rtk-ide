@@ -29,3 +29,9 @@ Every upstream engine integration must be fully reflected across all 8 related d
 - **Fail-Safe Fallbacks**: Always safeguard dictionary lookups with fallback defaults so an unhandled check never aborts the webview pipeline.
 - **Mandatory Pre-Flight Execution Test**: After adding or modifying any engine integration in `webview-helper.js` or `rtk-service.js`, agents MUST execute a headless node runner verifying that `WebviewHelper.getLatestStateData()` resolves cleanly without `ReferenceError` or uncaught rejections before declaring completion.
 
+## 5. Cross-IDE Universal Skill Discovery & Lifecycle Invariant
+To ensure Token Saver remains universal for every user across all market IDEs (Antigravity, Cursor, Windsurf, Claude Code, Cline, Roo Code, VS Code Copilot):
+- **Universal Multi-Root Discovery**: Any skill discovery function (`listInstalledSkills`, `listDisabledSkills`) MUST scan both standalone directories (`skills/`) AND plugin packages (`plugins/*/skills/`) across all major IDE roots (Gemini/Antigravity, Cursor, Claude Code, and Universal Agent configs).
+- **Exact Path Deletion Contract**: Uninstallation and quarantine/disable actions MUST resolve and operate on the exact detected disk path of each skill (`item.path`) rather than assuming a single flat folder.
+- **Clear Provenance Tagging**: QuickPick dialogs must always annotate skills with their origin scope and package source (e.g. `[global • plugin: <name>]`, `[workspace • standalone]`).
+

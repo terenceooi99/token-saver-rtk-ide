@@ -49,6 +49,7 @@ async function checkWeeklyAutoSync(context) {
 }
 
 async function activate(context) {
+    SkillInstaller.setContext(context);
     outputChannel = vscode.window.createOutputChannel('Token Saver (RTK)');
     statusBar = new StatusBarManager();
     sidebarProvider = new SidebarProvider(context.extensionUri, context);
@@ -241,19 +242,19 @@ async function activate(context) {
         const results = await setTokenSaverState(!isEnabled);
         vscode.window.showInformationMessage(
             isEnabled
-                ? `⚡ Token Saver (RTK) is now ENABLED across ${results.length} AI agent target(s).`
-                : '⚪ Token Saver (RTK) is now DISABLED.'
+                ? `⚡ Token Saver is now ENABLED across ${results.length} AI agent target(s).`
+                : '⚪ Token Saver is now DISABLED. All upstream AI token-saving solutions are paused.'
         );
     });
 
     const enableCmd = vscode.commands.registerCommand('tokenSaver.enable', async () => {
         await setTokenSaverState(true);
-        vscode.window.showInformationMessage('⚡ Token Saver (RTK) ENABLED across all configured AI Agent targets.');
+        vscode.window.showInformationMessage('⚡ Token Saver is now ENABLED across all configured AI Agent targets.');
     });
 
     const disableCmd = vscode.commands.registerCommand('tokenSaver.disable', async () => {
         await setTokenSaverState(false);
-        vscode.window.showInformationMessage('⚪ Token Saver (RTK) DISABLED.');
+        vscode.window.showInformationMessage('⚪ Token Saver is now DISABLED. All upstream AI token-saving solutions are paused.');
     });
 
     const syncAllIdeRulesCmd = vscode.commands.registerCommand('tokenSaver.syncAllIdeRules', async () => {
@@ -285,8 +286,12 @@ async function activate(context) {
 
         if (selected) {
             const chosenIds = selected.map(s => s.targetId);
-            SkillInstaller.syncRules(true, chosenIds);
-            vscode.window.showInformationMessage(`⚡ Synced RTK rules for: ${selected.map(s => s.label).join(', ')}`);
+            SkillInstaller.syncRules(isEnabled, chosenIds);
+            vscode.window.showInformationMessage(
+                isEnabled
+                    ? `⚡ Synced Token Saver rules for: ${selected.map(s => s.label).join(', ')}`
+                    : `⚪ Token Saver Master Switch is OFF. Rules removed for: ${selected.map(s => s.label).join(', ')}`
+            );
             await refreshStatus(context);
         }
     });
@@ -411,11 +416,17 @@ async function activate(context) {
                 }
 
                 const skillQuickPickItems = uniqueSkillNames.map(name => {
-                    const found = installedSkills.find(s => s.name === name);
-                    const scopesFound = installedSkills.filter(s => s.name === name).map(s => s.scope);
+                    const allMatches = installedSkills.filter(s => s.name === name);
+                    const found = allMatches[0];
+                    const origins = [...new Set(allMatches.map(s => {
+                        if (s.source && s.source.startsWith('plugin:')) {
+                            return `${s.scope} • ${s.source}`;
+                        }
+                        return `${s.scope} • ${s.ide || 'standalone'}`;
+                    }))];
                     return {
                         label: `🧠 ${name}`,
-                        description: `[${scopesFound.join(', ')}] ${found?.description || ''}`,
+                        description: `[${origins.join(', ')}] ${found?.description || ''}`,
                         value: name,
                         picked: false
                     };
@@ -570,11 +581,17 @@ async function activate(context) {
             }
 
             const items = uniqueNames.map(name => {
-                const found = installed.find(s => s.name === name);
-                const scopesFound = installed.filter(s => s.name === name).map(s => s.scope);
+                const allMatches = installed.filter(s => s.name === name);
+                const found = allMatches[0];
+                const origins = [...new Set(allMatches.map(s => {
+                    if (s.source && s.source.startsWith('plugin:')) {
+                        return `${s.scope} • ${s.source}`;
+                    }
+                    return `${s.scope} • ${s.ide || 'standalone'}`;
+                }))];
                 return {
                     label: `🧠 ${name}`,
-                    description: `[${scopesFound.join(', ')}] ${found?.description || ''}`,
+                    description: `[${origins.join(', ')}] ${found?.description || ''}`,
                     value: name,
                     picked: false
                 };
@@ -993,7 +1010,6 @@ async function activate(context) {
         await config.update('crwEnabled', !current, vscode.ConfigurationTarget.Global);
         await config.update('lightpandaEnabled', !current, vscode.ConfigurationTarget.Global);
         const scope = config.get('targetScope', 'all');
-        const isEnabled = context.globalState.get('tokenSaver.enabled', config.get('enableOnStartup', true));
         SkillInstaller.syncRules(isEnabled, scope);
         vscode.window.showInformationMessage(
             !current
