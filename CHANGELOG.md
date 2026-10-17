@@ -2,6 +2,13 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.4] - 2026-10-17
+### Added & Improved
+- **Header Action Button Prioritization**:
+  - Reordered webview dashboard header actions so the master **`Token Saver ON / OFF`** switch is guaranteed to always be the first button on the far left, followed by **`RTK ON / OFF`** and the other upstream tool toggles.
+- **RTK & Token Saver Deactivation Warning Protection**:
+  - Added an interactive warning confirmation modal (`#rtkWarningModal`) and card impact notice alerting users of disabled features (shell command compression, AST knowledge graph queries, context compression) before deactivating RTK or Token Saver.
+
 ## [1.14.3] - 2026-10-17
 ### Fixed & Improved
 - **Header Action Button Installation Status Guardrails**:
