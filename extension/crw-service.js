@@ -127,7 +127,10 @@ class CrwService {
 
         const terminal = vscode.window.createTerminal('fastCRW Server');
         terminal.show();
-        terminal.sendText(`crw-server --port ${port} || crw serve --port ${port}`);
+        const cmd = process.platform === 'win32'
+            ? `if (Get-Command crw-server -ErrorAction SilentlyContinue) { crw-server --port ${port} } else { crw serve --port ${port} }`
+            : `crw-server --port ${port} || crw serve --port ${port}`;
+        terminal.sendText(cmd);
     }
 
     /**
@@ -144,7 +147,10 @@ class CrwService {
 
         const terminal = vscode.window.createTerminal('fastCRW Scrape');
         terminal.show();
-        terminal.sendText(`crw "${url}" || curl -s "http://localhost:3000/v1/scrape" -H "Content-Type: application/json" -d "{\\"url\\": \\"${url}\\"}"`);
+        const cmd = process.platform === 'win32'
+            ? `if (Get-Command crw -ErrorAction SilentlyContinue) { crw "${url}" } else { curl.exe -s "http://localhost:3000/v1/scrape" -H "Content-Type: application/json" -d "{\\"url\\": \\"${url}\\"}" }`
+            : `crw "${url}" || curl -s "http://localhost:3000/v1/scrape" -H "Content-Type: application/json" -d "{\\"url\\": \\"${url}\\"}"`;
+        terminal.sendText(cmd);
     }
 }
 

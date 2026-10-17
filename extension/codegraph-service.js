@@ -142,7 +142,10 @@ class CodeGraphService {
             vscode.window.showErrorMessage('❌ No active workspace folder to index with CodeGraphContext.');
             return;
         }
-        this.runInTerminal('Index', `cgc index --path "${workspacePath}" || python -m codegraphcontext index --path "${workspacePath}"`);
+        const cmd = process.platform === 'win32'
+            ? `if (Get-Command cgc -ErrorAction SilentlyContinue) { cgc index --path "${workspacePath}" } else { python -m codegraphcontext index --path "${workspacePath}" }`
+            : `cgc index --path "${workspacePath}" || python -m codegraphcontext index --path "${workspacePath}"`;
+        this.runInTerminal('Index', cmd);
     }
 
     /**
@@ -151,7 +154,10 @@ class CodeGraphService {
     static async startWatcher(targetPath) {
         const workspacePath = this.getWorkspacePath(targetPath);
         if (!workspacePath) return;
-        this.runInTerminal('Watch', `cgc watch --path "${workspacePath}" || python -m codegraphcontext watch --path "${workspacePath}"`);
+        const cmd = process.platform === 'win32'
+            ? `if (Get-Command cgc -ErrorAction SilentlyContinue) { cgc watch --path "${workspacePath}" } else { python -m codegraphcontext watch --path "${workspacePath}" }`
+            : `cgc watch --path "${workspacePath}" || python -m codegraphcontext watch --path "${workspacePath}"`;
+        this.runInTerminal('Watch', cmd);
     }
 
     /**
@@ -165,7 +171,10 @@ class CodeGraphService {
         });
 
         if (!query) return;
-        this.runInTerminal('Query', `cgc query "${query}" || python -m codegraphcontext query "${query}"`);
+        const cmd = process.platform === 'win32'
+            ? `if (Get-Command cgc -ErrorAction SilentlyContinue) { cgc query "${query}" } else { python -m codegraphcontext query "${query}" }`
+            : `cgc query "${query}" || python -m codegraphcontext query "${query}"`;
+        this.runInTerminal('Query', cmd);
     }
 
     /**

@@ -129,7 +129,10 @@ class LightpandaService {
 
         const terminal = vscode.window.createTerminal('Lightpanda MCP Server');
         terminal.show();
-        terminal.sendText(`lightpanda mcp --port ${port} || npx @lightpanda/browser mcp --port ${port} || lightpanda mcp`);
+        const cmd = process.platform === 'win32'
+            ? `if (Get-Command lightpanda -ErrorAction SilentlyContinue) { lightpanda mcp --port ${port} } else { npx @lightpanda/browser mcp --port ${port} }`
+            : `lightpanda mcp --port ${port} || npx @lightpanda/browser mcp --port ${port} || lightpanda mcp`;
+        terminal.sendText(cmd);
     }
 
     /**

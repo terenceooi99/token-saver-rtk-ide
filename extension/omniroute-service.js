@@ -103,8 +103,11 @@ class OmniRouteService {
         terminal.show();
 
         // Check if port is customized
-        const portEnv = port !== 20128 ? (process.platform === 'win32' ? `$env:PORT=${port}; ` : `PORT=${port} `) : '';
-        const runCmd = `${portEnv}npx -y omniroute || omniroute`;
+        const isWin = process.platform === 'win32';
+        const portEnv = port !== 20128 ? (isWin ? `$env:PORT=${port}; ` : `PORT=${port} `) : '';
+        const runCmd = isWin
+            ? `${portEnv}if (Get-Command omniroute -ErrorAction SilentlyContinue) { omniroute } else { npx -y omniroute }`
+            : `${portEnv}omniroute || npx -y omniroute`;
         terminal.sendText(runCmd);
 
         vscode.window.showInformationMessage(
@@ -140,7 +143,10 @@ class OmniRouteService {
             terminal = vscode.window.createTerminal(terminalName);
         }
         terminal.show();
-        terminal.sendText('npx -y omniroute doctor || omniroute doctor');
+        const cmd = process.platform === 'win32'
+            ? 'if (Get-Command omniroute -ErrorAction SilentlyContinue) { omniroute doctor } else { npx -y omniroute doctor }'
+            : 'omniroute doctor || npx -y omniroute doctor';
+        terminal.sendText(cmd);
     }
 
     static installCli() {

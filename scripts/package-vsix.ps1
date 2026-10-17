@@ -136,6 +136,10 @@ if (Test-Path $tempZip) {
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::CreateFromDirectory($stagingDir, $tempZip)
 
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+Start-Sleep -Milliseconds 250
+
 # Target outputs
 $latestVsixDir = Join-Path $projectRoot "latestvsixfile"
 if (-not (Test-Path $latestVsixDir)) {
@@ -146,7 +150,8 @@ $latestVsixFile = Join-Path $latestVsixDir "token-saver-rtk-ide.vsix"
 $versionedVsixFile = Join-Path $projectRoot "$name-$version.vsix"
 
 Copy-Item $tempZip $latestVsixFile -Force
-Move-Item $tempZip $versionedVsixFile -Force
+Copy-Item $tempZip $versionedVsixFile -Force
+Remove-Item -Force $tempZip -ErrorAction SilentlyContinue
 
 $oldVsix = Join-Path $latestVsixDir "token-saver-ide-plugin.vsix"
 if (Test-Path $oldVsix) {
