@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-17T17:53:00.155Z",
+  "last_updated": "2026-10-17T18:48:14.411Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -5172,6 +5172,15 @@
       "source": "_staging_vsix\\extension\\rules\\copilot-instructions.md",
       "line": 15,
       "evidence": "## Command Output & Token Optimization"
+    },
+    {
+      "id": "sec__1_14_9_2026_10_18",
+      "name": "[1.14.9] - 2026-10-18",
+      "type": "Section/Module",
+      "description": "Specification section from CHANGELOG.md",
+      "source": "CHANGELOG.md",
+      "line": 5,
+      "evidence": "## [1.14.9] - 2026-10-18"
     }
   ],
   "relations": [
@@ -9458,7 +9467,7 @@
   ],
   "stats": {
     "total_sources": 120,
-    "total_entities": 561,
+    "total_entities": 562,
     "total_relations": 535,
     "token_savings_estimate": "85-95%"
   }

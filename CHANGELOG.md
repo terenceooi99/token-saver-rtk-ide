@@ -2,6 +2,13 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.9] - 2026-10-18
+### Added & Improved
+- **Accurate Subdirectory Paths for fastCRW & Lightpanda AI Setup Prompts**:
+  - Aligned clone folder destinations in [rtk-service.js](file:///d:/Software/token-saver-ide-plugin/extension/rtk-service.js) so AI install prompts and setup instructions strictly use repository subdirectories (`${basePath}/fastcrw` and `${basePath}/lightpanda`) rather than generic names.
+- **Robust VSIX Compilation File-Lock Handling**:
+  - Enhanced [scripts/package-vsix.ps1](file:///d:/Software/token-saver-ide-plugin/scripts/package-vsix.ps1) with explicit .NET garbage collection finalizer cleanup and copy/remove steps to eliminate transient archive lock errors during local packaging.
+
 ## [1.14.8] - 2026-10-18
 ### Added & Improved
 - **Missing Upstream GitHub Notification Popups on Dashboard Toggle**:
