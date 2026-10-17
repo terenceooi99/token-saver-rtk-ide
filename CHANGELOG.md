@@ -2,6 +2,21 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.2] - 2026-10-17
+### Added & Improved
+- **Token Saver Master Switch**:
+  - Rebranded master toggle from `Turn RTK ON / OFF` to `Turn Token Saver ON / OFF` in the dashboard header.
+  - Enforced master switch invariant in rule synchronization (`SkillInstaller.syncRules`): if Token Saver master switch is **OFF**, all upstream directives and AI rule blocks are cleanly removed from all IDE target files (`.cursorrules`, `rtk.mdc`, `antislop.mdc`, `CLAUDE.md`, `copilot-instructions.md`, `antigravity-rtk-rules.md`, `AGENTS.md`), ensuring AI models will not undergo upstream solutions even if individual features remain enabled in settings.
+- **Direct 1-Click Status Bar Toggle**:
+  - Renamed status bar text from `RTK: OFF` to `Token Saver: OFF`.
+  - When Token Saver is **OFF**, clicking the status bar item directly turns Token Saver **ON** without opening the dashboard.
+  - When Token Saver is **ON**, clicking the status bar item directly turns Token Saver **OFF**.
+- **Status Bar Tooltip Cleanup**:
+  - Cleaned up hover tooltip header from `Token Saver (RTK) is ENABLED/DISABLED` to `Token Saver is ENABLED/DISABLED`.
+  - Removed RTK version info line from the status bar tooltip to eliminate clutter.
+- **Command Palette Updates**:
+  - Renamed commands to `Toggle Token Saver Mode`, `Enable Token Saver`, and `Disable Token Saver`.
+
 ## [1.14.0] - 2026-10-17
 ### Added & Improved
 - **fastCRW Hybrid Web Search & Scraping (`fastcrw/crw`)**:
