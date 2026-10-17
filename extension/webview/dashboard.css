@@ -1508,6 +1508,11 @@ body.light-theme .btn-setup-browse:hover {
     transition: var(--apple-spring);
     position: relative;
     overflow: visible;
+    z-index: 1;
+}
+
+.metric-card.popover-active {
+    z-index: 1000 !important;
 }
 
 .metric-card:hover {
@@ -1657,10 +1662,11 @@ body.light-theme .btn-setup-browse:hover {
     border-radius: var(--radius-md);
     box-shadow: var(--apple-shadow-floating), var(--apple-hairline-inset);
     padding: 6px;
-    z-index: 500;
+    z-index: 9999;
 }
 
-.cost-presets-popover.open {
+.cost-presets-popover.open,
+.cost-presets-popover.show {
     display: block;
     animation: appleMenuAppear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }

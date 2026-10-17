@@ -35,3 +35,9 @@ To ensure Token Saver remains universal for every user across all market IDEs (A
 - **Exact Path Deletion Contract**: Uninstallation and quarantine/disable actions MUST resolve and operate on the exact detected disk path of each skill (`item.path`) rather than assuming a single flat folder.
 - **Clear Provenance Tagging**: QuickPick dialogs must always annotate skills with their origin scope and package source (e.g. `[global • plugin: <name>]`, `[workspace • standalone]`).
 
+## 6. Webview Popover & Dropdown Stacking Context Invariant
+To prevent floating popovers, menus, and dropdowns from failing to display or being submerged beneath neighboring cards:
+- **State Class Parity**: Any floating element toggled in JavaScript (`.show` or `.open`) MUST be matched in CSS to support both `.open` and `.show` state classes (e.g. `.cost-presets-popover.open, .cost-presets-popover.show { display: block; }`).
+- **Parent Stacking Context Elevation**: Whenever a popover or dropdown opens from within a container or card (such as `.metric-card` or `.panel-card`), the parent container MUST be assigned an elevated `z-index` (e.g. `.metric-card.popover-active { z-index: 1000 !important; }`) so that subsequent DOM siblings do not render on top of the popover.
+- **Top Layer z-index Contract**: Floating popover bodies must define an explicit elevated `z-index` (e.g. `z-index: 9999`) to guarantee clearance over backdrop filters and neighboring card overlays.
+
