@@ -11,6 +11,11 @@ All notable changes to the **Token Saver (RTK)** project will be documented in t
   - Renamed dashboard setup banner heading to **"Installation Required"** for clean universal scope across both CLI binaries and cloned upstream repositories.
   - Aligned parameter passing order in `copyAiInstallPrompt` command ensuring all missing components (`fastCRW`, `Lightpanda`, `Headroom`, etc.) and custom paths are accurately reflected.
 
+### Fixed & Hardened
+- **Cost Saved Model Preset Popover (`⚡`) Visibility & Stacking Order**:
+  - Fixed lightning preset toggle button not opening model rate options due to `.show` / `.open` CSS state class parity.
+  - Resolved popover rendering underneath neighboring metric cards and sections by enforcing active parent card stacking context elevation (`.metric-card.popover-active { z-index: 1000 !important; }`) and popover layer contract (`z-index: 9999`).
+
 ## [1.14.5] - 2026-10-17
 ### Added & Improved
 - **Custom Upstream GitHub Install Directory**:
