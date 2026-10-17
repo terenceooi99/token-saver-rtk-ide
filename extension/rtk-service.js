@@ -1040,7 +1040,12 @@ class RtkService {
 
         const labelText = missingLabels.length > 0 ? missingLabels.join(', ') : 'necessary';
         const targetPathHeader = basePath
-            ? `\n> **Target Base Directory**: All cloned upstream GitHub repositories must be installed/cloned into sub-folders under: \`${basePath}\` (e.g. \`${basePath}/<upstream-repo-name>\`).\n`
+            ? `\n> **Target Base Directory & Hierarchy Standard (/tool-management-rules)**:\n` +
+              `> - **Target Base Path**: All cloned upstream GitHub repositories must be installed/cloned into sub-folders under: \`${basePath}\` (e.g. \`${basePath}/<upstream-repo-name>\`).\n` +
+              `> - **Zero Loose Files In Root**: Do NOT place loose scripts, configuration files, virtual environments (\`venv\`), or build caches in \`${basePath}\`. Every component must reside strictly within its dedicated sub-folder.\n` +
+              `> - **Shared Dependencies**: Multi-tool dependencies, bridge scripts, and shared environments must reside in \`${basePath}/shared/<domain-or-tool-combination>/\`.\n` +
+              `> - **Skills Standard**: All agent skills must be placed in the IDE's flat skills discovery directory (\`<SKILLS_DIR>/<skill-name>/SKILL.md\`) or linked via directory junction (\`mklink /J\`).\n` +
+              `> - **7-Day Update Protocol**: Record an initial \`update_check_state.json\` file in each tool's sub-folder (\`{ "last_check_timestamp": ${Math.floor(Date.now() / 1000)}, "tool_version": "...", "status": "up-to-date" }\`) to enforce weekly update checks.\n`
             : '';
 
         const prompt = [
@@ -1141,7 +1146,12 @@ class RtkService {
         }
 
         const targetPathHeader = basePath
-            ? `\n> **Target Base Directory**: Install/clone into sub-folder under: \`${basePath}\`.\n`
+            ? `\n> **Target Base Directory & Hierarchy Standard (/tool-management-rules)**:\n` +
+              `> - **Target Base Path**: Install/clone into dedicated sub-folder under: \`${basePath}\` (e.g. \`${basePath}/<upstream-repo-name>\`).\n` +
+              `> - **Zero Loose Files In Root**: Do NOT place loose scripts, configuration files, virtual environments (\`venv\`), or build caches in \`${basePath}\` root.\n` +
+              `> - **Shared Dependencies**: Multi-tool dependencies and shared environments must reside in \`${basePath}/shared/<domain-or-tool-combination>/\`.\n` +
+              `> - **Skills Standard**: All agent skills must be placed in the IDE's flat skills discovery directory (\`<SKILLS_DIR>/<skill-name>/SKILL.md\`) or linked via directory junction (\`mklink /J\`).\n` +
+              `> - **7-Day Update Protocol**: Record an initial \`update_check_state.json\` file in the tool sub-folder to enforce weekly update checks.\n`
             : '';
 
         return [

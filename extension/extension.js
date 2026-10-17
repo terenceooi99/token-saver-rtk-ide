@@ -690,6 +690,10 @@ async function activate(context) {
             const codeGraphCheck = await CodeGraphService.checkInstalled();
             const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
+            const crwCheck = await CrwService.checkInstalled();
+            const { LightpandaService } = require('./lightpanda-service');
+            const lightpandaCheck = await LightpandaService.checkInstalled();
+
             const omniMissing = !omniStatus.installed && !omniStatus.running;
             const rtkMissing = !check.installed;
             const headroomMissing = !headroomCheck.installed;
@@ -697,6 +701,8 @@ async function activate(context) {
             const antiSlopMissing = !antiSlopCheck.installed;
             const jevGraphMissing = !jevGraphCheck.installed;
             const codeGraphMissing = !codeGraphCheck.installed;
+            const crwMissing = !crwCheck.installed;
+            const lightpandaMissing = !lightpandaCheck.installed;
 
             prompt = RtkService.generateAiInstallPrompt(
                 isWindows,
@@ -708,6 +714,8 @@ async function activate(context) {
                 antiSlopMissing,
                 jevGraphMissing,
                 codeGraphMissing,
+                crwMissing,
+                lightpandaMissing,
                 installPath
             );
             await vscode.env.clipboard.writeText(prompt);

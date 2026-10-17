@@ -2,6 +2,15 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.6] - 2026-10-17
+### Added & Improved
+- **Universal Tool Management & Maintenance Rules (`/tool-management-rules`)**:
+  - Bundled the `tool-management-rules` skill across package, workspace (`.agents/skills/tool-management-rules/`), and `SKILLS_MAP` for multi-IDE discovery.
+  - Dynamically injects directory hierarchy standards (zero loose files in `<WORKSPACE_ROOT>`, dedicated tool sub-folders, shared multi-tool dependencies in `shared/`, flat `<SKILLS_DIR>/<skill-name>/SKILL.md`) and the 7-day automated weekly update check protocol (`update_check_state.json`) into AI installation prompts whenever a non-default install path is configured.
+- **Setup Banner Naming & Missing Diagnostics Refinement**:
+  - Renamed dashboard setup banner heading to **"Installation Required"** for clean universal scope across both CLI binaries and cloned upstream repositories.
+  - Aligned parameter passing order in `copyAiInstallPrompt` command ensuring all missing components (`fastCRW`, `Lightpanda`, `Headroom`, etc.) and custom paths are accurately reflected.
+
 ## [1.14.5] - 2026-10-17
 ### Added & Improved
 - **Custom Upstream GitHub Install Directory**:
