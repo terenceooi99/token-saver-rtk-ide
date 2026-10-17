@@ -827,8 +827,8 @@ class RtkService {
             : 'pip install "headroom-ai[all]" || pipx install headroom-ai || python3 -m pip install "headroom-ai[all]"';
 
         const omniRouteCmd = isWindows
-            ? 'if (Get-Command npm -ErrorAction SilentlyContinue) { npm install -g omniroute } else { Write-Host "ℹ️ Node.js / npm not detected (Install Node.js to use OmniRoute)" }'
-            : 'command -v npm >/dev/null 2>&1 && npm install -g omniroute || echo "ℹ️ npm not found"';
+            ? 'npm install -g omniroute'
+            : 'npm install -g omniroute';
 
         const basePath = (customInstallPath || '').trim();
         let ponytailCmd;
@@ -842,28 +842,28 @@ class RtkService {
             const ptTarget = isWindows ? `"${normalizedBase}\\ponytail"` : `"${normalizedBase}/ponytail"`;
             const jgTarget = isWindows ? `"${normalizedBase}\\jevgraph"` : `"${normalizedBase}/jevgraph"`;
             const cgcTarget = isWindows ? `"${normalizedBase}\\CodeGraphContext"` : `"${normalizedBase}/CodeGraphContext"`;
-            const crwTarget = isWindows ? `"${normalizedBase}\\crw"` : `"${normalizedBase}/crw"`;
-            const lpTarget = isWindows ? `"${normalizedBase}\\browser"` : `"${normalizedBase}/browser"`;
+            const crwTarget = isWindows ? `"${normalizedBase}\\fastcrw"` : `"${normalizedBase}/fastcrw"`;
+            const lpTarget = isWindows ? `"${normalizedBase}\\lightpanda"` : `"${normalizedBase}/lightpanda"`;
 
             ponytailCmd = isWindows
                 ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/DietrichGebert/ponytail.git ${ptTarget}`
                 : `mkdir -p "${normalizedBase}" && git clone https://github.com/DietrichGebert/ponytail.git ${ptTarget}`;
 
             jevGraphCmd = isWindows
-                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/chenmingtang830/jevgraph.git ${jgTarget}; if (Test-Path ${jgTarget}) { cd ${jgTarget}; uv sync --extra dev }`
-                : `mkdir -p "${normalizedBase}" && git clone https://github.com/chenmingtang830/jevgraph.git ${jgTarget} && cd ${jgTarget} && uv sync --extra dev`;
+                ? `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex" ; if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/chenmingtang830/jevgraph.git ${jgTarget} 2>$null; if (Test-Path ${jgTarget}) { cd ${jgTarget}; uv sync --extra dev }`
+                : `curl -LsSf https://astral.sh/uv/install.sh | sh && mkdir -p "${normalizedBase}" && git clone https://github.com/chenmingtang830/jevgraph.git ${jgTarget} 2>/dev/null; [ -d ${jgTarget} ] && cd ${jgTarget} && uv sync --extra dev`;
 
             codeGraphCmd = isWindows
-                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/CodeGraphContext/CodeGraphContext.git ${cgcTarget}; pip install -e ${cgcTarget}`
-                : `mkdir -p "${normalizedBase}" && git clone https://github.com/CodeGraphContext/CodeGraphContext.git ${cgcTarget} && pip install -e ${cgcTarget}`;
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/CodeGraphContext/CodeGraphContext.git ${cgcTarget} 2>$null; if (Test-Path ${cgcTarget}) { cd ${cgcTarget}; pip install -e . }`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/CodeGraphContext/CodeGraphContext.git ${cgcTarget} 2>/dev/null; [ -d ${cgcTarget} ] && cd ${cgcTarget} && pip install -e .`;
 
             crwCmd = isWindows
-                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/fastcrw/crw.git ${crwTarget}; cd ${crwTarget}; cargo build --release`
-                : `mkdir -p "${normalizedBase}" && git clone https://github.com/fastcrw/crw.git ${crwTarget} && cd ${crwTarget} && cargo build --release`;
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/fastcrw/crw.git ${crwTarget} 2>$null; if (Test-Path ${crwTarget}) { cd ${crwTarget}; cargo build --release }`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/fastcrw/crw.git ${crwTarget} 2>/dev/null; [ -d ${crwTarget} ] && cd ${crwTarget} && cargo build --release`;
 
             lightpandaCmd = isWindows
-                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/lightpanda-io/browser.git ${lpTarget}; cd ${lpTarget}; npm install`
-                : `mkdir -p "${normalizedBase}" && git clone https://github.com/lightpanda-io/browser.git ${lpTarget} && cd ${lpTarget} && npm install`;
+                ? `if (!(Test-Path "${normalizedBase}")) { New-Item -ItemType Directory -Force -Path "${normalizedBase}" | Out-Null }; git clone https://github.com/lightpanda-io/browser.git ${lpTarget} 2>$null; npm install -g @lightpanda/browser`
+                : `mkdir -p "${normalizedBase}" && git clone https://github.com/lightpanda-io/browser.git ${lpTarget} 2>/dev/null; npm install -g @lightpanda/browser`;
         } else {
             ponytailCmd = isWindows
                 ? 'git clone https://github.com/DietrichGebert/ponytail.git "$HOME/.config/ponytail" 2>$null || echo "Ponytail fetched"'
@@ -871,10 +871,10 @@ class RtkService {
 
             const JevGraphService = require('./jevgraph-service');
             const jevCmds = JevGraphService.getInstallCommands(isWindows);
-            jevGraphCmd = jevCmds.jevgraphSyncCmd;
+            jevGraphCmd = jevCmds.combinedCmd;
 
             codeGraphCmd = isWindows
-                ? 'python -m pip install codegraphcontext 2>$null; if (!$?) { pip install codegraphcontext }'
+                ? 'pip install codegraphcontext'
                 : 'pip install codegraphcontext || python3 -m pip install codegraphcontext';
 
             const { CrwService } = require('./crw-service');
@@ -990,13 +990,13 @@ class RtkService {
         }
 
         if (crwMissing) {
-            const locNote = basePath ? ` in \`${basePath}/crw\`` : '';
+            const locNote = basePath ? ` in \`${basePath}/fastcrw\`` : '';
             items.push(`${stepIdx}. **Install fastCRW Hybrid Scraper & Search Engine (Upstream: fastcrw/crw)**:\n   Run command${locNote}:\n   \`${cmds.crwCmd}\`\n   (Provides fast Rust crawler, scraper, and /v1/search API for AI agents).`);
             stepIdx++;
         }
 
         if (lightpandaMissing) {
-            const locNote = basePath ? ` in \`${basePath}/browser\`` : '';
+            const locNote = basePath ? ` in \`${basePath}/lightpanda\`` : '';
             items.push(`${stepIdx}. **Install Lightpanda Headless Browser Engine (Upstream: lightpanda-io/browser)**:\n   Run command${locNote}:\n   \`${cmds.lightpandaCmd}\`\n   (Provides ultra-lightweight V8 dynamic JS rendering and local MCP server for AI agents).`);
             stepIdx++;
         }
@@ -1128,7 +1128,7 @@ class RtkService {
             case 'fastcrw':
                 title = 'fastCRW Hybrid Scraper & Search Engine (fastcrw/crw)';
                 instructions.push(
-                    `1. **Install fastCRW CLI / Server**${basePath ? ` in \`${basePath}/crw\`` : ''}:\n   Run command: \`${cmds.crwCmd}\``,
+                    `1. **Install fastCRW CLI / Server**${basePath ? ` in \`${basePath}/fastcrw\`` : ''}:\n   Run command: \`${cmds.crwCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`crw --version\` or \`crw-server --version\`.`,
                     `3. **Usage**:\n   Run \`crw <url>\` to scrape websites straight into token-efficient markdown, or run \`crw-server\` on port 3000.`
                 );
@@ -1136,7 +1136,7 @@ class RtkService {
             case 'lightpanda':
                 title = 'Lightpanda Headless Browser Engine (lightpanda-io/browser)';
                 instructions.push(
-                    `1. **Install Lightpanda Browser**${basePath ? ` in \`${basePath}/browser\`` : ''}:\n   Run command: \`${cmds.lightpandaCmd}\``,
+                    `1. **Install Lightpanda Browser**${basePath ? ` in \`${basePath}/lightpanda\`` : ''}:\n   Run command: \`${cmds.lightpandaCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`lightpanda --version\` or \`npx @lightpanda/browser --version\`.`,
                     `3. **Start Local MCP Server**:\n   Run \`lightpanda mcp --port 8000\` or configure in agent's MCP settings for instant dynamic JS execution.`
                 );

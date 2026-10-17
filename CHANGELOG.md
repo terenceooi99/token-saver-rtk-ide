@@ -8,9 +8,9 @@ All notable changes to the **Token Saver (RTK)** project will be documented in t
   - Replaced dead/fixed "enabled" notifications with dynamic warning popups whenever attempting to activate an upstream tool that is not installed or detected on the system.
   - Across all upstream layers (**Ponytail**, **Anti-Slop**, **Headroom**, **OmniRoute**, **JevGraph**, **CodeGraphContext**, **fastCRW**, and **Lightpanda**), toggling an uninstalled tool now prompts users with actionable options: `🤖 Ask AI (Copy Prompt)`, `⭮ Fetch / Sync from GitHub`, `⚡ Auto-Run in Terminal`, and `Open Setup Hub`.
   - Master Token Saver toggle now inspects all upstream components on activation and alerts the user if any upstream tool is missing rather than presenting a blanket success message.
-- **Custom Workspace & Upstream Directory Discovery for JevGraph, CodeGraph & Hybrid Web**:
-  - Extended tool detection routines (`JevGraphService.checkInstalled`, `CodeGraphService.checkInstalled`, `CrwService.checkInstalled`, `LightpandaService.checkInstalled`) to discover local virtual environments (`.venv/Scripts/jevgraph.exe`), custom destination directories (`upstreamInstallPath`), and well-known installation roots (such as `D:\Software\AI Agent Space\jevgraph`).
-  - Allows seamlessly turning on JevGraph, CodeGraphContext, fastCRW, and Lightpanda without requiring them to be installed globally on OS `PATH`.
+- **Hardened Cross-Platform Terminal Commands & AI Installation Prompts**:
+  - Replaced bash pipeline `||` fallback syntax with Windows PowerShell-safe conditional inspection (`if (Get-Command ... -ErrorAction SilentlyContinue) { ... } else { ... }`) across [omniroute-service.js](file:///d:/Software/token-saver-ide-plugin/extension/omniroute-service.js), [crw-service.js](file:///d:/Software/token-saver-ide-plugin/extension/crw-service.js), [lightpanda-service.js](file:///d:/Software/token-saver-ide-plugin/extension/lightpanda-service.js), and [codegraph-service.js](file:///d:/Software/token-saver-ide-plugin/extension/codegraph-service.js) to resolve terminal parser errors.
+  - Aligned AI setup prompt generation and terminal commands in `RtkService.getInstallCommands` to match verified installation procedures for `omniroute` (`npm install -g omniroute`), `jevgraph` (`irm https://astral.sh/uv/install.ps1 | iex` + `uv sync --extra dev`), `CodeGraphContext` (`pip install -e .`), `fastcrw`, and `lightpanda`, ensuring accurate dedicated sub-folder naming and reliable one-click copy prompts.
 
 ## [1.14.7] - 2026-10-17
 ### Added & Improved

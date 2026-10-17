@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-17T17:42:19.879Z",
+  "last_updated": "2026-10-17T17:53:00.155Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -120,7 +120,8 @@
     "_staging_vsix\\extension\\skills\\rtk-tree\\SKILL.md",
     "_staging_vsix\\extension\\skills\\rtk-update\\SKILL.md",
     "_staging_vsix\\extension\\skills\\tool-management-rules\\SKILL.md",
-    "_staging_vsix\\extension\\skills\\antislop-human\\SKILL.md"
+    "_staging_vsix\\extension\\skills\\antislop-human\\SKILL.md",
+    "CHANGELOG.md"
   ],
   "entities": [
     {
@@ -9456,7 +9457,7 @@
     }
   ],
   "stats": {
-    "total_sources": 119,
+    "total_sources": 120,
     "total_entities": 561,
     "total_relations": 535,
     "token_savings_estimate": "85-95%"
