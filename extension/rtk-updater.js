@@ -498,10 +498,97 @@ class RtkUpdater {
         return newPoint;
     }
 
+    /**
+     * Creates a protective backup of vital configuration and launcher files in the shared directory
+     * before any upstream tool directory is moved to the Recycle Bin.
+     */
+    static backupVitalUpstreamArtifacts(layerKey) {
+        try {
+            const sharedBase = 'D:\\Software\\AI Agent Space\\shared';
+            const backupDir = path.join(sharedBase, '_upstream_backups');
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            const copyIfFound = (src, destName) => {
+                if (fs.existsSync(src)) {
+                    fs.copyFileSync(src, path.join(backupDir, destName));
+                }
+            };
+
+            switch (layerKey) {
+                case 'lightpanda':
+                    copyIfFound('D:\\Software\\AI Agent Space\\lightpanda\\cdp_launcher.mjs', 'lightpanda_cdp_launcher.mjs');
+                    break;
+                case 'crw':
+                    copyIfFound('D:\\Software\\AI Agent Space\\fastcrw\\config.default.toml', 'crw_config.default.toml');
+                    copyIfFound('D:\\Software\\AI Agent Space\\fastcrw\\server.json', 'crw_server.json');
+                    break;
+                case 'jevgraph':
+                    copyIfFound('D:\\Software\\AI Agent Space\\jevgraph\\pyproject.toml', 'jevgraph_pyproject.toml');
+                    break;
+                case 'omniroute':
+                    copyIfFound('D:\\Software\\AI Agent Space\\shared\\omniroute\\update_check_state.json', 'omniroute_update_state.json');
+                    break;
+                case 'all':
+                    copyIfFound('D:\\Software\\AI Agent Space\\lightpanda\\cdp_launcher.mjs', 'lightpanda_cdp_launcher.mjs');
+                    copyIfFound('D:\\Software\\AI Agent Space\\fastcrw\\config.default.toml', 'crw_config.default.toml');
+                    copyIfFound('D:\\Software\\AI Agent Space\\fastcrw\\server.json', 'crw_server.json');
+                    copyIfFound('D:\\Software\\AI Agent Space\\jevgraph\\pyproject.toml', 'jevgraph_pyproject.toml');
+                    break;
+            }
+        } catch (e) {
+            console.warn('[RtkUpdater] backupVitalUpstreamArtifacts notice:', e.message);
+        }
+    }
+
+    /**
+     * Automatically self-heals and restores vital configurations and files when a user recovers
+     * an upstream tool or restores it manually from the OS Recycle Bin.
+     */
+    static restoreVitalUpstreamArtifacts(layerKey) {
+        try {
+            const sharedBase = 'D:\\Software\\AI Agent Space\\shared';
+            const backupDir = path.join(sharedBase, '_upstream_backups');
+
+            const restoreIfMissing = (backupName, targetPath) => {
+                const bPath = path.join(backupDir, backupName);
+                if (fs.existsSync(bPath) && !fs.existsSync(targetPath)) {
+                    const parent = path.dirname(targetPath);
+                    if (!fs.existsSync(parent)) {
+                        fs.mkdirSync(parent, { recursive: true });
+                    }
+                    fs.copyFileSync(bPath, targetPath);
+                }
+            };
+
+            // Always ensure lightpanda cdp launcher is restored
+            if (layerKey === 'lightpanda' || layerKey === 'all') {
+                const { LightpandaService } = require('./lightpanda-service');
+                LightpandaService.ensureCdpLauncherBackup();
+                restoreIfMissing('lightpanda_cdp_launcher.mjs', 'D:\\Software\\AI Agent Space\\lightpanda\\cdp_launcher.mjs');
+            }
+
+            if (layerKey === 'crw' || layerKey === 'all') {
+                restoreIfMissing('crw_config.default.toml', 'D:\\Software\\AI Agent Space\\fastcrw\\config.default.toml');
+                restoreIfMissing('crw_server.json', 'D:\\Software\\AI Agent Space\\fastcrw\\server.json');
+            }
+
+            if (layerKey === 'jevgraph' || layerKey === 'all') {
+                restoreIfMissing('jevgraph_pyproject.toml', 'D:\\Software\\AI Agent Space\\jevgraph\\pyproject.toml');
+            }
+        } catch (e) {
+            console.warn('[RtkUpdater] restoreVitalUpstreamArtifacts notice:', e.message);
+        }
+    }
+
     static async performLayerUninstall(layerKey) {
         const OmniRouteService = require('./omniroute-service');
         const config = vscode.workspace.getConfiguration('tokenSaver');
         const trashedDirs = [];
+
+        // 1. Back up vital artifacts to persistent shared area before trashing
+        this.backupVitalUpstreamArtifacts(layerKey);
 
         // Helper to trash candidate dirs safely to OS Recycle Bin
         const trashDirs = async (dirs) => {
@@ -756,6 +843,9 @@ class RtkUpdater {
 
         vscode.window.showInformationMessage(`♻️ Recovering ${layerKey} upstream layer and re-enabling configuration...`);
 
+        // Automatically reconstitute vital configs and launcher files from backup
+        this.restoreVitalUpstreamArtifacts(layerKey);
+
         switch (layerKey) {
             case 'rtk':
                 await config.update('rtkEnabled', true, vscode.ConfigurationTarget.Global);
@@ -893,6 +983,9 @@ class RtkUpdater {
 
         const OmniRouteService = require('./omniroute-service');
         const config = vscode.workspace.getConfiguration('tokenSaver');
+
+        // Back up vital artifacts to persistent shared area before trashing all layers
+        this.backupVitalUpstreamArtifacts('all');
 
         // Create full restore point
         this.createRestorePoint('all', {

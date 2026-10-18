@@ -54,6 +54,11 @@ async function activate(context) {
     statusBar = new StatusBarManager();
     sidebarProvider = new SidebarProvider(context.extensionUri, context);
 
+    // Auto-heal / restore any vital upstream configuration files that were accidentally deleted or restored
+    try {
+        RtkUpdater.restoreVitalUpstreamArtifacts('all');
+    } catch (_) {}
+
     context.subscriptions.push(statusBar);
     context.subscriptions.push(outputChannel);
     context.subscriptions.push(
