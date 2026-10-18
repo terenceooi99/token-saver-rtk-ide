@@ -18,6 +18,19 @@ All notable changes to the **Token Saver (RTK)** project will be documented in t
   - **Internal Maintainer Skills Quarantine (`/publishtokensavernow` & `/publishtokensaverlocal`)**:
     - Removed internal release and local packaging skills from the public extension bundle (`SKILLS_MAP`, `skills/`, `.vscodeignore`, and `package-vsix.ps1`), ensuring they are never packaged or published to Open VSX or GitHub.
     - Quarantined to local `.agents/skills/` (safeguarded via `.gitignore`) for author-only maintenance workflows in this repo.
+  - **Auto-Detected Workspace Rule Conflict Modal**:
+    - Added dedicated confirmation pop-up modal (`workspaceRuleModal`) in the dashboard when enabling rules for a workspace target while the global rule is already active, preventing duplicate rule files and accidental repo pollution.
+  - **Initial Loading Overlay Comfort Duration**:
+    - Extended the startup upstream check overlay total on-screen time from 3.5s to 5.0s for clear visibility and readable tool health checks.
+
+### Fixed & Hardened
+- **Strict Variable Declaration Guardrail**:
+  - Fixed `ReferenceError: eccAutoCompactEnabled is not defined` during rule generation in `SkillInstaller.getCombinedRuleText()` by explicitly declaring configuration flags with `let`.
+  - Added Rule 9 and Rule 11 guardrails to `.agents/rules/upstream-engine-integration.md`.
+- **CSS Lint Hygiene**:
+  - Cleaned up empty CSS rulesets in `dashboard.css`.
+- **On-Demand VSIX Packaging Guardrail**:
+  - Disallowed automatic recompilation of `.vsix` packages during routine edits, restricting packaging strictly to `/publishtokensaverlocal` and `/publishtokensavernow`.
 
 ## [1.15.0] - 2026-10-18
 
