@@ -395,6 +395,7 @@ class RtkUpdater {
 
     static async performLightpandaSync() {
         const { LightpandaService } = require('./lightpanda-service');
+        LightpandaService.ensureCdpLauncherBackup();
         const isWindows = process.platform === 'win32';
         const isMac = process.platform === 'darwin';
         const cmds = LightpandaService.getInstallCommands(isWindows, isMac);
@@ -655,6 +656,8 @@ class RtkUpdater {
             case 'lightpanda': {
                 try {
                     const { LightpandaService } = require('./lightpanda-service');
+                    // Ensure backup exists in shared directory before sending lightpanda to Recycle Bin
+                    LightpandaService.ensureCdpLauncherBackup();
                     const cands = LightpandaService.getCandidateDirs();
                     await trashDirs(cands);
                     await config.update('lightpandaEnabled', false, vscode.ConfigurationTarget.Global);

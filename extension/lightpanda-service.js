@@ -27,10 +27,40 @@ class LightpandaService {
         return [...new Set(dirs)];
     }
 
+    /**
+     * Ensures cdp_launcher.mjs is present in both primary lightpanda and shared fallback directory.
+     * Prevents ERR_MODULE_NOT_FOUND in Stagehand MCP server when Lightpanda is moved or restored from Recycle Bin.
+     */
+    static ensureCdpLauncherBackup() {
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const primaryDir = 'D:\\Software\\AI Agent Space\\lightpanda';
+            const sharedDir = 'D:\\Software\\AI Agent Space\\shared\\stagehand-fastcrw';
+            const primaryFile = path.join(primaryDir, 'cdp_launcher.mjs');
+            const sharedBackup = path.join(sharedDir, 'cdp_launcher.mjs');
+
+            if (fs.existsSync(sharedBackup) && !fs.existsSync(primaryFile)) {
+                if (!fs.existsSync(primaryDir)) {
+                    fs.mkdirSync(primaryDir, { recursive: true });
+                }
+                fs.copyFileSync(sharedBackup, primaryFile);
+            } else if (fs.existsSync(primaryFile) && !fs.existsSync(sharedBackup)) {
+                if (!fs.existsSync(sharedDir)) {
+                    fs.mkdirSync(sharedDir, { recursive: true });
+                }
+                fs.copyFileSync(primaryFile, sharedBackup);
+            }
+        } catch (e) {
+            console.warn('[LightpandaService] ensureCdpLauncherBackup warning:', e);
+        }
+    }
+
     static checkInstalled() {
         return new Promise((resolve) => {
             const fs = require('fs');
             const path = require('path');
+            this.ensureCdpLauncherBackup();
             const candidateDirs = this.getCandidateDirs();
             for (const cand of candidateDirs) {
                 if (fs.existsSync(cand)) {
@@ -43,6 +73,10 @@ class LightpandaService {
                     }
                     if (fs.existsSync(releaseBin)) {
                         resolve({ installed: true, runner: 'lightpanda-release', version: 'lightpanda (release)', path: releaseBin, cwd: cand });
+                        return;
+                    }
+                    if (fs.existsSync(path.join(cand, 'cdp_launcher.mjs'))) {
+                        resolve({ installed: true, runner: 'cdp-launcher', version: '0.2.0-compat', path: path.join(cand, 'cdp_launcher.mjs'), cwd: cand });
                         return;
                     }
                     if (fs.existsSync(path.join(cand, 'package.json')) || fs.existsSync(path.join(cand, 'Cargo.toml'))) {
