@@ -1104,6 +1104,9 @@ class SkillInstaller {
         let hybridWebEnabled = true;
         let eccEnabled = true;
         let eccCompactToolThreshold = 50;
+        let eccAutoCompactEnabled = true;
+        let eccAutoCkEnabled = true;
+        let eccAutoCouncilEnabled = true;
 
         try {
             const config = vscode.workspace.getConfiguration('tokenSaver');

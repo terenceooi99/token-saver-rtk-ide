@@ -81,5 +81,6 @@ Whenever a new upstream engine or external tool (e.g. `fastcrw/crw`, `CodeGraphC
    - Footer upstream reference links
 2. **Zero-Noise Latency Benchmarks**: "Test Upstream Latencies" must selectively ping and display only **installed** upstream components, silently omitting/ignoring uninstalled tools so users never see failed pings or clutter for optional tools.
 3. **Footer Version Number Invariant**: The current plugin release version must always be presented beside "Token Saver" in front of "• GitHub".
+4. **On-Demand VSIX Packaging Invariant**: Never automatically compile or package `.vsix` files after routine edits. VSIX packaging must ONLY be run when explicitly requested via `/publishtokensaverlocal` or `/publishtokensavernow`.
 
 <!-- RTK_TOKEN_SAVER_END -->

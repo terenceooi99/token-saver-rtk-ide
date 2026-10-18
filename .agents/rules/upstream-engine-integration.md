@@ -59,7 +59,10 @@ To ensure tools installed in custom locations or managed via local virtual envir
 
 ## 9. Top-Level Service Import Hygiene & Comprehensive Pre-Flight Test
 - **Module-Level Core Imports**: Any service file providing `checkInstalled()` or filesystem resolution MUST import `path`, `fs`, and `child_process` at the top of the file rather than relying on nested or deferred requires.
-- **Comprehensive Headless Pre-Flight**: The pre-flight node test runner must execute `Promise.all([ ...services.map(s => s.checkInstalled()), WebviewHelper.getLatestStateData(...) ])` to ensure zero runtime `ReferenceError`s or unhandled rejections across all service modules.
+- **Strict Variable Declaration Invariant**: Whenever adding or modifying configuration flags in `SkillInstaller.getCombinedRuleText()`, all variables MUST be explicitly declared with `let` or `const`. Never assign undeclared variables, which throw runtime `ReferenceError`s in strict mode.
+- **Comprehensive Headless Pre-Flight**: The pre-flight node test runner must execute:
+  1. `Promise.all([ ...services.map(s => s.checkInstalled()), WebviewHelper.getLatestStateData(...) ])`
+  2. `SkillInstaller.getCombinedRuleText()` to verify zero runtime `ReferenceError`s or unhandled rejections during rule generation.
 
 ## 10. Extension Entrypoint (`extension.js`) Syntax & Subscription Registration Contract
 Whenever registering new commands, event listeners, or upstream features in `extension/extension.js`:
@@ -71,5 +74,7 @@ Whenever registering new commands, event listeners, or upstream features in `ext
 3. **Mandatory Entrypoint Syntax Check Before Packaging**:
    Agents MUST run `node --check ./extension/extension.js` immediately after modifying `extension.js` and BEFORE executing the VSIX package script or declaring task completion, ensuring zero unclosed callback scopes or syntax errors.
 
-
-
+## 11. On-Demand VSIX Packaging Guardrail (Zero Auto-Recompilation)
+- **No Automatic VSIX Compilation**: AI agents MUST NOT automatically execute `scripts/package-vsix.ps1`, `npm run package`, or compile `.vsix` files during routine code edits, bug fixes, or test iterations.
+- **Strict User Intent Gate**: VSIX compilation and packaging must strictly be deferred until the user explicitly invokes `/publishtokensaverlocal` or `/publishtokensavernow`.
+- **Pre-Flight Validation Without Packaging**: Routine changes must be validated using direct syntax verification (`node --check <file>`) and headless tests without rebuilding or overwriting `latestvsixfile/token-saver-rtk-ide.vsix`.

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-18T15:10:33.998Z",
+  "last_updated": "2026-10-18T15:24:47.293Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -5354,6 +5354,42 @@
       "source": "CHANGELOG.md",
       "line": 5,
       "evidence": "## [1.15.1] - 2026-10-18"
+    },
+    {
+      "id": "sec_11_on_demand_vsix_packaging_guardrail_zero_auto_recompilation_",
+      "name": "11. On-Demand VSIX Packaging Guardrail (Zero Auto-Recompilation)",
+      "type": "Section/Module",
+      "description": "Specification section from .agents\\rules\\upstream-engine-integration.md",
+      "source": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 74,
+      "evidence": "## 11. On-Demand VSIX Packaging Guardrail (Zero Auto-Recompilation)"
+    },
+    {
+      "id": "ent_no_automatic_vsix_compilation",
+      "name": "No Automatic VSIX Compilation",
+      "type": "Component/Requirement",
+      "description": "AI agents MUST NOT automatically execute `scripts/package-vsix.ps1`, `npm run package`, or compile `.vsix` files during routine code edits, bug fixes, or test iterations.",
+      "source": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 75,
+      "evidence": "- **No Automatic VSIX Compilation**: AI agents MUST NOT automatically execute `scripts/package-vsix.ps1`, `npm run package`, or compile `.vsix` files during rou"
+    },
+    {
+      "id": "ent_strict_user_intent_gate",
+      "name": "Strict User Intent Gate",
+      "type": "Component/Requirement",
+      "description": "VSIX compilation and packaging must strictly be deferred until the user explicitly invokes `/publishtokensaverlocal` or `/publishtokensavernow`.",
+      "source": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 76,
+      "evidence": "- **Strict User Intent Gate**: VSIX compilation and packaging must strictly be deferred until the user explicitly invokes `/publishtokensaverlocal` or `/publish"
+    },
+    {
+      "id": "ent_pre_flight_validation_without_packaging",
+      "name": "Pre-Flight Validation Without Packaging",
+      "type": "Component/Requirement",
+      "description": "Routine changes must be validated using direct syntax verification (`node --check <file>`) and headless tests without rebuilding or overwriting `latestvsixfile/token-saver-rtk-ide.vsix`.",
+      "source": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 77,
+      "evidence": "- **Pre-Flight Validation Without Packaging**: Routine changes must be validated using direct syntax verification (`node --check <file>`) and headless tests wit"
     }
   ],
   "relations": [
@@ -9716,12 +9752,36 @@
       "evidence": "- **Cross-IDE Linkage & Symlink Standard (Section 2.4)**: When a custom/user-defined skills directory is used, `SkillInstaller.ensureCrossIdeLinkage()` automati",
       "source_file": "CHANGELOG.md",
       "line": 13
+    },
+    {
+      "source": "sec_11_on_demand_vsix_packaging_guardrail_zero_auto_recompilation_",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_no_automatic_vsix_compilation",
+      "evidence": "- **No Automatic VSIX Compilation**: AI agents MUST NOT automatically execute `scripts/package-vsix.ps1`, `npm run package`, or compile `.vsix` files during rou",
+      "source_file": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 75
+    },
+    {
+      "source": "sec_11_on_demand_vsix_packaging_guardrail_zero_auto_recompilation_",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_strict_user_intent_gate",
+      "evidence": "- **Strict User Intent Gate**: VSIX compilation and packaging must strictly be deferred until the user explicitly invokes `/publishtokensaverlocal` or `/publish",
+      "source_file": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 76
+    },
+    {
+      "source": "sec_11_on_demand_vsix_packaging_guardrail_zero_auto_recompilation_",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_pre_flight_validation_without_packaging",
+      "evidence": "- **Pre-Flight Validation Without Packaging**: Routine changes must be validated using direct syntax verification (`node --check <file>`) and headless tests wit",
+      "source_file": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 77
     }
   ],
   "stats": {
     "total_sources": 122,
-    "total_entities": 581,
-    "total_relations": 545,
+    "total_entities": 585,
+    "total_relations": 548,
     "token_savings_estimate": "85-95%"
   }
 }
