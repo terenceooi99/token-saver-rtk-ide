@@ -4,6 +4,13 @@ All notable changes to the **Token Saver (RTK)** project will be documented in t
 
 ## [1.14.9] - 2026-10-18
 ### Added & Improved
+- **User-Friendly Step 3 OmniRoute AI Agent Prompt & Chat Routing**:
+  - Revamped Step 3 ("Connect Your Coding Agent") in the OmniRoute dashboard wizard with a dedicated **"🤖 Copy AI Agent Prompt"** dual-action button alongside **"📋 Copy Config"**.
+  - Solved Antigravity IDE custom model dropdown limitations by providing an automated prompt instructing the agent to route model completions through local OmniRoute (`http://localhost:20128/v1`) with API key `omniroute`.
+  - Implemented Dual-Strategy Auto-Combo Routing: defaults to **`auto/coding:free`** for a 100% Zero-Cost Guarantee while documenting **`auto/coding`** for uninterrupted multi-provider auto-failover.
+  - Disentangled IDE settings from gateway settings: removed phantom config keys and guided users to enable stacked token compression (**`RTK -> Caveman`**) directly in OmniRoute's Web Dashboard (*Context & Cache → Compression*).
+  - Added IDE-specific contextual notice callouts (`.preset-notice-callout`) and automatic host IDE tab highlighting (defaulting to Antigravity IDE when active).
+  - Synchronized `rtk-omniroute` skill definitions across standalone, workspace, and internal multi-IDE skill templates.
 - **Accurate Subdirectory Paths for fastCRW & Lightpanda AI Setup Prompts**:
   - Aligned clone folder destinations in [rtk-service.js](file:///d:/Software/token-saver-ide-plugin/extension/rtk-service.js) so AI install prompts and setup instructions strictly use repository subdirectories (`${basePath}/fastcrw` and `${basePath}/lightpanda`) rather than generic names.
 - **Robust VSIX Compilation File-Lock Handling**:

@@ -179,9 +179,11 @@ const omniStepOpenUiBtn = document.getElementById('omniStepOpenUiBtn');
 const omniCopyLaunchCmdBtn = document.getElementById('omniCopyLaunchCmdBtn');
 const omniPresetTabs = document.getElementById('omniPresetTabs');
 const omniPresetTitle = document.getElementById('omniPresetTitle');
+const omniPresetNotice = document.getElementById('omniPresetNotice');
 const omniPresetStepsList = document.getElementById('omniPresetStepsList');
 const omniPresetCodePreview = document.getElementById('omniPresetCodePreview');
 const omniCopyPresetBtn = document.getElementById('omniCopyPresetBtn');
+const omniCopyAiPromptBtn = document.getElementById('omniCopyAiPromptBtn');
 
 const quickOmniBtn = document.getElementById('quickOmniBtn');
 const quickOmniLabel = document.getElementById('quickOmniLabel');
@@ -275,7 +277,7 @@ let currentMultiChannelData = null;
 let currentCommandBreakdown = [];
 
 let currentOmniPresets = null;
-let activeOmniIde = 'cursor';
+let activeOmniIde = 'antigravity';
 
 function renderOmniPreset(ideKey) {
     if (!currentOmniPresets || !currentOmniPresets[ideKey]) return;
@@ -290,6 +292,16 @@ function renderOmniPreset(ideKey) {
 
     if (omniPresetTitle) {
         omniPresetTitle.textContent = preset.title || `${preset.name} Configuration`;
+    }
+
+    if (omniPresetNotice) {
+        if (preset.notice) {
+            omniPresetNotice.innerHTML = preset.notice;
+            omniPresetNotice.style.display = 'block';
+        } else {
+            omniPresetNotice.innerHTML = '';
+            omniPresetNotice.style.display = 'none';
+        }
     }
 
     if (omniPresetStepsList) {
@@ -1276,9 +1288,20 @@ if (omniCopyPresetBtn) {
         if (currentOmniPresets && currentOmniPresets[activeOmniIde]) {
             const preset = currentOmniPresets[activeOmniIde];
             const textToCopy = preset.configJson || preset.quickSnippet;
-            vscode.postMessage({ command: 'copyOmniRoutePreset', text: textToCopy, presetName: preset.name });
+            vscode.postMessage({ command: 'copyOmniRoutePreset', text: textToCopy, presetName: `${preset.name} Config` });
             omniCopyPresetBtn.textContent = '✓ Copied!';
-            setTimeout(() => { omniCopyPresetBtn.textContent = '📋 Copy Configuration'; }, 2500);
+            setTimeout(() => { omniCopyPresetBtn.textContent = '📋 Copy Config'; }, 2500);
+        }
+    });
+}
+if (omniCopyAiPromptBtn) {
+    omniCopyAiPromptBtn.addEventListener('click', () => {
+        if (currentOmniPresets && currentOmniPresets[activeOmniIde]) {
+            const preset = currentOmniPresets[activeOmniIde];
+            const promptToCopy = preset.aiPrompt || preset.configJson || preset.quickSnippet;
+            vscode.postMessage({ command: 'copyOmniRoutePresetPrompt', promptText: promptToCopy, presetName: preset.name });
+            omniCopyAiPromptBtn.textContent = '✓ Prompt Copied!';
+            setTimeout(() => { omniCopyAiPromptBtn.textContent = '🤖 Copy AI Agent Prompt'; }, 2500);
         }
     });
 }
@@ -2023,6 +2046,11 @@ function renderDashboardState(data) {
     // Vibe Coder Presets Update
     if (data.omniRoutePresets) {
         currentOmniPresets = data.omniRoutePresets;
+        if (data.detectedIde && data.detectedIde.id && currentOmniPresets[data.detectedIde.id]) {
+            if (!activeOmniIde || activeOmniIde === 'antigravity' || activeOmniIde === 'cursor') {
+                activeOmniIde = data.detectedIde.id;
+            }
+        }
         renderOmniPreset(activeOmniIde);
     }
 

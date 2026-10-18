@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-17T18:48:14.411Z",
+  "last_updated": "2026-10-18T09:01:54.289Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -121,7 +121,8 @@
     "_staging_vsix\\extension\\skills\\rtk-update\\SKILL.md",
     "_staging_vsix\\extension\\skills\\tool-management-rules\\SKILL.md",
     "_staging_vsix\\extension\\skills\\antislop-human\\SKILL.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "skills\\rtk-omniroute\\SKILL.md"
   ],
   "entities": [
     {
@@ -5181,6 +5182,69 @@
       "source": "CHANGELOG.md",
       "line": 5,
       "evidence": "## [1.14.9] - 2026-10-18"
+    },
+    {
+      "id": "sec_antigravity_ide_agent_routed_gateway_",
+      "name": "Antigravity IDE (Agent-Routed Gateway)",
+      "type": "Section/Module",
+      "description": "Specification section from skills\\rtk-omniroute\\SKILL.md",
+      "source": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 45,
+      "evidence": "### Antigravity IDE (Agent-Routed Gateway)"
+    },
+    {
+      "id": "ent_direct_ui_dropdown_workaround",
+      "name": "Direct UI Dropdown Workaround",
+      "type": "Component/Requirement",
+      "description": "Antigravity IDE's native chat model dropdown does not directly support entering custom model server URLs. Instead, connect via **1-Click AI Agent Prompt** or prompt your Antigravity agent:",
+      "source": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 46,
+      "evidence": "- **Direct UI Dropdown Workaround**: Antigravity IDE's native chat model dropdown does not directly support entering custom model server URLs. Instead, connect "
+    },
+    {
+      "id": "sec_vs_code_continue_extension_",
+      "name": "VS Code (Continue Extension)",
+      "type": "Section/Module",
+      "description": "Specification section from skills\\rtk-omniroute\\SKILL.md",
+      "source": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 50,
+      "evidence": "### VS Code (Continue Extension)"
+    },
+    {
+      "id": "ent_target_model_",
+      "name": "Target Model:",
+      "type": "Component/Requirement",
+      "description": "`auto/coding` (Auto-Combo quality-first coding chain restricted to free models only)",
+      "source": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 28,
+      "evidence": "- **Target Model:** `auto/coding` (Auto-Combo quality-first coding chain restricted to free models only)"
+    },
+    {
+      "id": "ent__auto_coding_free_",
+      "name": "`auto/coding:free`",
+      "type": "Component/Requirement",
+      "description": "(Recommended Default): 100% Zero-Cost Guarantee strictly pooling free-tier providers (pauses if free quota exhausted).",
+      "source": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 29,
+      "evidence": "- **`auto/coding:free`** (Recommended Default): 100% Zero-Cost Guarantee strictly pooling free-tier providers (pauses if free quota exhausted)."
+    },
+    {
+      "id": "ent__auto_coding_",
+      "name": "`auto/coding`",
+      "type": "Component/Requirement",
+      "description": "Uninterrupted Vibe Coding (prefers free models, auto-fails over across paid/pooled credits).",
+      "source": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 30,
+      "evidence": "- **`auto/coding`**: Uninterrupted Vibe Coding (prefers free models, auto-fails over across paid/pooled credits)."
+    },
+    {
+      "id": "ent_token_compression_",
+      "name": "Token Compression:",
+      "type": "Component/Requirement",
+      "description": "Enable `RTK -> Caveman` in OmniRoute Web Dashboard (`http://localhost:20128` → **Context & Cache → Compression**).",
+      "source": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 31,
+      "evidence": "- **Token Compression:** Enable `RTK -> Caveman` in OmniRoute Web Dashboard (`http://localhost:20128` → **Context & Cache → Compression**)."
     }
   ],
   "relations": [
@@ -9463,12 +9527,52 @@
       "evidence": "- **Antigravity IDE**: Global (`~/.gemini/config/`) and workspace (`.agents/`) rules & skills.",
       "source_file": "_staging_vsix\\extension\\changelog.md",
       "line": 310
+    },
+    {
+      "source": "sec_antigravity_ide_agent_routed_gateway_",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_direct_ui_dropdown_workaround",
+      "evidence": "- **Direct UI Dropdown Workaround**: Antigravity IDE's native chat model dropdown does not directly support entering custom model server URLs. Instead, connect ",
+      "source_file": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 46
+    },
+    {
+      "source": "sec_2_vibe_coder_3_step_setup",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_target_model_",
+      "evidence": "- **Target Model:** `auto/coding` (Auto-Combo quality-first coding chain restricted to free models only)",
+      "source_file": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 28
+    },
+    {
+      "source": "sec_2_vibe_coder_3_step_setup",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent__auto_coding_free_",
+      "evidence": "- **`auto/coding:free`** (Recommended Default): 100% Zero-Cost Guarantee strictly pooling free-tier providers (pauses if free quota exhausted).",
+      "source_file": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 29
+    },
+    {
+      "source": "sec_2_vibe_coder_3_step_setup",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent__auto_coding_",
+      "evidence": "- **`auto/coding`**: Uninterrupted Vibe Coding (prefers free models, auto-fails over across paid/pooled credits).",
+      "source_file": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 30
+    },
+    {
+      "source": "sec_2_vibe_coder_3_step_setup",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_token_compression_",
+      "evidence": "- **Token Compression:** Enable `RTK -> Caveman` in OmniRoute Web Dashboard (`http://localhost:20128` → **Context & Cache → Compression**).",
+      "source_file": "skills\\rtk-omniroute\\SKILL.md",
+      "line": 31
     }
   ],
   "stats": {
-    "total_sources": 120,
-    "total_entities": 562,
-    "total_relations": 535,
+    "total_sources": 121,
+    "total_entities": 569,
+    "total_relations": 540,
     "token_savings_estimate": "85-95%"
   }
 }

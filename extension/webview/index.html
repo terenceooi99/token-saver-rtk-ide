@@ -744,26 +744,27 @@
                                 <div class="vibe-step-card step-card-wide">
                                     <div class="step-badge">Step 3</div>
                                     <h3 class="step-title">Connect Your Coding Agent</h3>
-                                    <p class="step-desc">Point your IDE or CLI assistant to your local OmniRoute
-                                        endpoint to vibe code with auto-fallback.</p>
+                                    <p class="step-desc">Point your IDE or hand off setup to your AI agent with a single prompt to vibe code with auto-failover.</p>
 
                                     <!-- IDE Tabs Switcher -->
                                     <div class="ide-preset-tabs" id="omniPresetTabs">
-                                        <button class="preset-tab active" data-ide="cursor">🎯 Cursor</button>
+                                        <button class="preset-tab active" data-ide="antigravity">🌌 Antigravity</button>
+                                        <button class="preset-tab" data-ide="cursor">🎯 Cursor</button>
                                         <button class="preset-tab" data-ide="cline">💻 Cline / Roo</button>
                                         <button class="preset-tab" data-ide="claude">🧠 Claude Code</button>
-                                        <button class="preset-tab" data-ide="antigravity">🌌 Antigravity</button>
                                         <button class="preset-tab" data-ide="vscode">🤖 VS Code</button>
                                     </div>
 
                                     <!-- Active Preset Content Display -->
                                     <div class="preset-content-box" id="omniPresetContentBox">
                                         <div class="preset-content-header">
-                                            <span class="preset-header-title" id="omniPresetTitle">Cursor IDE
-                                                Config</span>
-                                            <button class="btn btn-sm btn-primary" id="omniCopyPresetBtn">📋 Copy
-                                                Configuration</button>
+                                            <span class="preset-header-title" id="omniPresetTitle">Antigravity IDE Config</span>
+                                            <div class="preset-actions-group">
+                                                <button class="btn btn-sm btn-primary" id="omniCopyAiPromptBtn" title="Copy ready-to-run prompt to paste directly into your AI assistant chat">🤖 Copy AI Agent Prompt</button>
+                                                <button class="btn btn-sm btn-ghost" id="omniCopyPresetBtn" title="Copy raw configuration JSON / snippet">📋 Copy Config</button>
+                                            </div>
                                         </div>
+                                        <div class="preset-notice-callout" id="omniPresetNotice" style="display: none;"></div>
                                         <ol class="preset-steps-list" id="omniPresetStepsList">
                                             <!-- Injected by JS -->
                                         </ol>

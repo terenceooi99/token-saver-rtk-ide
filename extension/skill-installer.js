@@ -486,10 +486,12 @@ OmniRoute is an open-source, local AI gateway and quota-aware router running at 
 
 1. **Launch:** Run \`npx -y omniroute\` in terminal.
 2. **Add Keys:** Go to \`http://localhost:20128\` and add your free or paid provider API keys.
-3. **Connect Your IDE:**
+3. **Connect Your IDE (or Hand Off to AI Agent)**:
    - **Base URL:** \`http://localhost:20128/v1\`
    - **API Key:** \`omniroute\` (or dashboard auth password)
-   - **Models:** \`claude-3-7-sonnet\`, \`gpt-4o\`, \`deepseek-r1\`, \`gemini-2.5-pro\`
+   - **Target Model:** \`auto/coding:free\` (100% Zero-Cost Guarantee) or \`auto/coding\` (Uninterrupted Vibe Coding).
+   - **Compression:** Enable \`RTK -> Caveman\` in OmniRoute Web Dashboard (\`http://localhost:20128\` → Context & Cache → Compression).
+   - **Antigravity Dropdown Note:** Since Antigravity chat model dropdown does not accept custom server URLs directly, instruct your Antigravity agent: *"Route my coding tasks and completions through local OmniRoute Gateway at http://localhost:20128/v1 using model auto/coding:free (or auto/coding)"*.
 `,
     'antislop': `---
 name: antislop

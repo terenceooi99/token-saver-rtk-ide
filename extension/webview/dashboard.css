@@ -3371,6 +3371,28 @@ body.is-sidebar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.preset-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preset-notice-callout {
+    background: rgba(10, 132, 255, 0.1);
+    border: 1px solid rgba(10, 132, 255, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 11.5px;
+    color: #e0f2fe;
+    line-height: 1.45;
+}
+
+.preset-notice-callout strong {
+    color: #ffffff;
 }
 
 .preset-header-title {

@@ -173,100 +173,130 @@ class OmniRouteService {
     static getIdePresets(port = 20128) {
         const baseUrl = `http://localhost:${port}/v1`;
         return {
+            antigravity: {
+                id: 'antigravity',
+                name: 'Antigravity IDE',
+                icon: '🌌',
+                title: 'Antigravity IDE AI Agent Prompt & Gateway Routing',
+                notice: '💡 <strong>Antigravity Dropdown Tip:</strong> Antigravity chat model dropdown does not support custom model URLs directly. Use the <strong>🤖 Copy AI Agent Prompt</strong> button to instruct the Antigravity agent to route tasks through OmniRoute! (Tip: Enable <strong>RTK &rarr; Caveman</strong> compression in OmniRoute Dashboard &rarr; Context &amp; Cache &rarr; Compression).',
+                steps: [
+                    'Click <strong>🤖 Copy AI Agent Prompt</strong> above and paste directly into your Antigravity chat.',
+                    'The agent will verify the local gateway at <code>http://localhost:' + port + '/v1</code> and route model requests through OmniRoute.',
+                    'Defaults to <strong><code>auto/coding:free</code></strong> for guaranteed 100% zero-cost coding across free models in combo, or switch to <strong><code>auto/coding</code></strong> for uninterrupted fallback.',
+                    'Use <code>/rtk-omniroute</code> anytime in chat to inspect routing status, pool health, and quota headroom.'
+                ],
+                aiPrompt: `Please configure and route my AI requests through the local OmniRoute AI Gateway at ${baseUrl}.\n` +
+                    `1. Ensure OmniRoute gateway is running on port ${port} (run 'npx -y omniroute' or 'omniroute start' if offline).\n` +
+                    `2. Since Antigravity IDE's native model dropdown does not support adding custom URLs, route all relevant agent coding queries, completions, and tool executions through OmniRoute's OpenAI-compatible endpoint (${baseUrl}) with API key 'omniroute'.\n` +
+                    `3. Model Selection Strategy:\n` +
+                    `   - Default (Zero-Cost Guarantee): Use model 'auto/coding:free' to strictly pool free-tier models (Gemini 2.5 Flash free, DeepSeek free, Groq free, OpenCode, Qwen). Note: If free quota is exhausted, requests pause until quota resets.\n` +
+                    `   - Alternative (Uninterrupted Vibe Coding): Use model 'auto/coding' to prioritize free models first while automatically failing over to available paid/pooled credits so your session never halts.\n` +
+                    `4. Compression Note: Enable 'RTK -> Caveman' stacked token compression directly in the OmniRoute Web Dashboard (http://localhost:${port} -> Context & Cache -> Compression) for 78–95% token savings.\n` +
+                    `5. Verify gateway connectivity using 'omniroute doctor' and activate the /rtk-omniroute skill if available.`,
+                configJson: JSON.stringify({
+                    "tokenSaver.omniRouteEnabled": true,
+                    "tokenSaver.omniRoutePort": port,
+                    "tokenSaver.omniRouteEndpoint": baseUrl,
+                    "defaultModel": "auto/coding:free",
+                    "uninterruptedModel": "auto/coding",
+                    "autoFallback": true
+                }, null, 2),
+                quickSnippet: `OmniRoute Gateway: ${baseUrl}\nDefault: auto/coding:free (Zero Cost)\nUninterrupted: auto/coding\nSkills: /rtk-omniroute`
+            },
             cursor: {
                 id: 'cursor',
                 name: 'Cursor IDE',
                 icon: '🎯',
                 title: 'Cursor OpenAI-Compatible Config',
+                notice: '💡 <strong>Cursor Setup:</strong> Paste the prompt into Cursor Composer/Chat or set model to <code>auto/coding:free</code> in Settings &rarr; Models.',
                 steps: [
-                    'Open **Cursor Settings** (`Ctrl+,` or `Cmd+,`) → **Models**',
-                    'Under **OpenAI API Key**, toggle **Override OpenAI Base URL** to ON',
-                    `Set Base URL: \`${baseUrl}\``,
-                    'Set API Key: `omniroute` (or your dashboard password)',
-                    'Add models like: `claude-3-7-sonnet`, `gpt-4o`, `deepseek-r1`, `gemini-2.5-pro`'
+                    'Open <strong>Cursor Settings</strong> (<code>Ctrl+,</code> or <code>Cmd+,</code>) &rarr; <strong>Models</strong>',
+                    'Under <strong>OpenAI API Key</strong>, toggle <strong>Override OpenAI Base URL</strong> to ON',
+                    `Set Base URL: <code>${baseUrl}</code>`,
+                    'Set API Key: <code>omniroute</code> (or your dashboard password)',
+                    'Add model: <code>auto/coding:free</code> (Zero-Cost) or <code>auto/coding</code> (Uninterrupted)'
                 ],
+                aiPrompt: `Please configure my Cursor IDE to use OmniRoute AI Gateway as its custom OpenAI-compatible provider.\n` +
+                    `1. Local Gateway Base URL: ${baseUrl}\n` +
+                    `2. API Key: omniroute\n` +
+                    `3. Target Model: 'auto/coding:free' for guaranteed zero-cost free-tier coding, or 'auto/coding' for uninterrupted multi-provider auto-failover.\n` +
+                    `Guide me or update the configuration so all AI completions route through OmniRoute's local gateway.`,
                 configJson: JSON.stringify({
                     "openai.baseUrl": baseUrl,
                     "openai.apiKey": "omniroute",
-                    "models": ["claude-3-7-sonnet", "gpt-4o", "deepseek-r1", "gemini-2.5-pro"]
+                    "models": ["auto/coding:free", "auto/coding", "auto/cheap"]
                 }, null, 2),
-                quickSnippet: `Base URL: ${baseUrl}\nAPI Key: omniroute\nModel: claude-3-7-sonnet`
+                quickSnippet: `Base URL: ${baseUrl}\nAPI Key: omniroute\nModel: auto/coding:free`
             },
             cline: {
                 id: 'cline',
                 name: 'Cline / Roo Code',
                 icon: '💻',
                 title: 'Cline & Roo Code Provider Setup',
+                notice: '💡 <strong>Cline / Roo Code:</strong> Switch provider to "OpenAI Compatible" and set model to <code>auto/coding:free</code>.',
                 steps: [
-                    'Open the **Cline / Roo Code** sidebar',
-                    'Click the ⚙️ **Settings** gear icon',
-                    'Select API Provider: **OpenAI Compatible**',
-                    `Set Base URL: \`${baseUrl}\``,
-                    'Set API Key: `omniroute`',
-                    'Set Model ID: `claude-3-7-sonnet` or `gpt-4o`'
+                    'Open the <strong>Cline / Roo Code</strong> sidebar settings (⚙️)',
+                    'Select API Provider: <strong>OpenAI Compatible</strong>',
+                    `Set Base URL: <code>${baseUrl}</code>`,
+                    'Set API Key: <code>omniroute</code>',
+                    'Set Model ID: <code>auto/coding:free</code> (Zero Cost) or <code>auto/coding</code> (Uninterrupted)'
                 ],
+                aiPrompt: `Configure Cline / Roo Code to connect to my local OmniRoute Gateway at ${baseUrl} using OpenAI Compatible provider, API key 'omniroute', and Model ID 'auto/coding:free' (or 'auto/coding' for uninterrupted fallback).`,
                 configJson: JSON.stringify({
                     "apiProvider": "openai",
                     "openAiBaseUrl": baseUrl,
                     "openAiApiKey": "omniroute",
-                    "openAiModelId": "claude-3-7-sonnet"
+                    "openAiModelId": "auto/coding:free"
                 }, null, 2),
-                quickSnippet: `Provider: OpenAI Compatible\nBase URL: ${baseUrl}\nAPI Key: omniroute\nModel: claude-3-7-sonnet`
+                quickSnippet: `Provider: OpenAI Compatible\nBase URL: ${baseUrl}\nAPI Key: omniroute\nModel: auto/coding:free`
             },
             claude: {
                 id: 'claude',
                 name: 'Claude Code CLI',
                 icon: '🧠',
                 title: 'Claude Code Local Router Setup',
+                notice: '💡 <strong>Claude Code:</strong> Run automated setup or route through OmniRoute with <code>auto/coding:free</code>.',
                 steps: [
-                    'Run the official automated configuration command:',
-                    '`npx -y omniroute setup-claude` (or set environment variables below)',
-                    'Or set in your shell environment before running `claude`:'
+                    'Run automated configuration: <code>npx -y omniroute setup-claude</code>',
+                    `Or export <code>ANTHROPIC_BASE_URL="${baseUrl}"</code> and <code>ANTHROPIC_API_KEY="omniroute"</code> before launching <code>claude</code>.`,
+                    'Uses OmniRoute auto-router with <code>auto/coding:free</code> (Zero Cost) or <code>auto/coding</code>.'
                 ],
+                aiPrompt: `Set up my Claude Code CLI to route through local OmniRoute Gateway at ${baseUrl} using model 'auto/coding:free' (Zero Cost) or 'auto/coding' (Uninterrupted). Run 'npx -y omniroute setup-claude' or configure ANTHROPIC_BASE_URL="${baseUrl}" and ANTHROPIC_API_KEY="omniroute".`,
                 configJson: process.platform === 'win32'
                     ? `$env:ANTHROPIC_BASE_URL="${baseUrl}"; $env:ANTHROPIC_API_KEY="omniroute"; claude`
                     : `export ANTHROPIC_BASE_URL="${baseUrl}"\nexport ANTHROPIC_API_KEY="omniroute"\nclaude`,
                 quickSnippet: `npx -y omniroute setup-claude`
-            },
-            antigravity: {
-                id: 'antigravity',
-                name: 'Antigravity IDE',
-                icon: '🌌',
-                title: 'Google Antigravity Local Proxy Gateway',
-                steps: [
-                    'Type `/rtk-omniroute` in the chat to automate gateway routing',
-                    `Base URL: \`${baseUrl}\``,
-                    'Supports all OpenAI / Gemini / Claude model routing with auto-failover'
-                ],
-                configJson: JSON.stringify({
-                    "tokenSaver.omniRouteEndpoint": baseUrl,
-                    "tokenSaver.omniRoutePort": port,
-                    "autoFallback": true,
-                    "compression": "rtk+caveman"
-                }, null, 2),
-                quickSnippet: `OmniRoute Gateway: ${baseUrl}\nSkills: /rtk-omniroute\nStatus: Auto-Fallback Active`
             },
             vscode: {
                 id: 'vscode',
                 name: 'VS Code (Continue / Copilot)',
                 icon: '🤖',
                 title: 'VS Code Continue Extension Config',
+                notice: '💡 <strong>Continue Extension:</strong> Add an OpenAI provider block for <code>auto/coding:free</code> pointing to OmniRoute.',
                 steps: [
-                    'Open `~/.continue/config.json` in VS Code',
-                    'Add an OpenAI-compatible model entry pointing to OmniRoute:'
+                    'Open <code>~/.continue/config.json</code> in VS Code',
+                    `Add an OpenAI-compatible model entry pointing to <code>${baseUrl}</code> with API key <code>omniroute</code> and model <code>auto/coding:free</code>.`
                 ],
+                aiPrompt: `Configure VS Code Continue (~/.continue/config.json) to add a model pointing to my local OmniRoute gateway at ${baseUrl} with apiKey 'omniroute' and model 'auto/coding:free' (Zero Cost) or 'auto/coding' (Uninterrupted).`,
                 configJson: JSON.stringify({
                     "models": [
                         {
-                            "title": "OmniRoute (Smart Fallback)",
+                            "title": "OmniRoute (Zero-Cost Free)",
                             "provider": "openai",
-                            "model": "claude-3-7-sonnet",
+                            "model": "auto/coding:free",
+                            "apiKey": "omniroute",
+                            "apiBase": baseUrl
+                        },
+                        {
+                            "title": "OmniRoute (Uninterrupted)",
+                            "provider": "openai",
+                            "model": "auto/coding",
                             "apiKey": "omniroute",
                             "apiBase": baseUrl
                         }
                     ]
                 }, null, 2),
-                quickSnippet: `Provider: openai\napiBase: ${baseUrl}\napiKey: omniroute\nmodel: claude-3-7-sonnet`
+                quickSnippet: `Provider: openai\napiBase: ${baseUrl}\napiKey: omniroute\nmodel: auto/coding:free`
             }
         };
     }

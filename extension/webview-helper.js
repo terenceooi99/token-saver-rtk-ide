@@ -505,6 +505,12 @@ class WebviewHelper {
                     webview.postMessage({ type: 'toast', message: `📋 ${message.presetName || 'Config'} copied to clipboard!` });
                 }
                 break;
+            case 'copyOmniRoutePresetPrompt':
+                if (message.promptText) {
+                    await vscode.env.clipboard.writeText(message.promptText);
+                    webview.postMessage({ type: 'toast', message: `🤖 AI setup prompt for ${message.presetName || 'IDE'} copied! Paste into chat window.` });
+                }
+                break;
             case 'openUninstallPicker':
                 await vscode.commands.executeCommand('tokenSaver.uninstallUpstream');
                 triggerRefresh(500);
