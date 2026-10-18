@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-18T15:24:47.293Z",
+  "last_updated": "2026-10-18T15:25:48.816Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -5390,6 +5390,15 @@
       "source": ".agents\\rules\\upstream-engine-integration.md",
       "line": 77,
       "evidence": "- **Pre-Flight Validation Without Packaging**: Routine changes must be validated using direct syntax verification (`node --check <file>`) and headless tests wit"
+    },
+    {
+      "id": "ent_strict_variable_declaration_invariant",
+      "name": "Strict Variable Declaration Invariant",
+      "type": "Component/Requirement",
+      "description": "Whenever adding or modifying configuration flags in `SkillInstaller.getCombinedRuleText()`, all variables MUST be explicitly declared with `let` or `const`. Never assign undeclared variables, which th",
+      "source": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 62,
+      "evidence": "- **Strict Variable Declaration Invariant**: Whenever adding or modifying configuration flags in `SkillInstaller.getCombinedRuleText()`, all variables MUST be e"
     }
   ],
   "relations": [
@@ -9776,12 +9785,20 @@
       "evidence": "- **Pre-Flight Validation Without Packaging**: Routine changes must be validated using direct syntax verification (`node --check <file>`) and headless tests wit",
       "source_file": ".agents\\rules\\upstream-engine-integration.md",
       "line": 77
+    },
+    {
+      "source": "sec_9_top_level_service_import_hygiene_comprehensive_pre_flight_test",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_strict_variable_declaration_invariant",
+      "evidence": "- **Strict Variable Declaration Invariant**: Whenever adding or modifying configuration flags in `SkillInstaller.getCombinedRuleText()`, all variables MUST be e",
+      "source_file": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 62
     }
   ],
   "stats": {
     "total_sources": 122,
-    "total_entities": 585,
-    "total_relations": 548,
+    "total_entities": 586,
+    "total_relations": 549,
     "token_savings_estimate": "85-95%"
   }
 }
