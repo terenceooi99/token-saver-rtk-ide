@@ -54,7 +54,7 @@ class WebviewHelper {
         const ideStatus = SkillInstaller.getIdeStatus();
         const omniPresets = OmniRouteService.getIdePresets(omniPort);
 
-        let extensionVersion = '1.14.5';
+        let extensionVersion = '1.16.0';
         try {
             if (context.extension && context.extension.packageJSON && context.extension.packageJSON.version) {
                 extensionVersion = context.extension.packageJSON.version;
@@ -352,6 +352,10 @@ class WebviewHelper {
                 break;
             case 'uninstallSkills':
                 await vscode.commands.executeCommand('tokenSaver.uninstallSkills');
+                triggerRefresh(300);
+                break;
+            case 'cleanWorkspaceSkills':
+                await vscode.commands.executeCommand('tokenSaver.cleanWorkspaceSkills');
                 triggerRefresh(300);
                 break;
             case 'temporaryDisableSkills':

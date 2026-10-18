@@ -34,4 +34,3 @@ Write-Host "  - /rtk-update            (Sync & update RTK CLI from upstream GitH
 Write-Host "  - /rtk-savedtokenon      (Turn on automated RTK prefixing)"
 Write-Host "  - /rtk-savedtokenoff     (Turn off automated RTK prefixing)"
 Write-Host "  - /rtk-gain              (Show token savings dashboard)"
-Write-Host "  - /publishtokensavernow  (Automate version bump & publish to Open VSX)"

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-18T12:40:00.208Z",
+  "last_updated": "2026-10-18T15:10:33.998Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -5327,6 +5327,33 @@
       "source": "CHANGELOG.md",
       "line": 30,
       "evidence": "- **RTK Service Expansion** (`rtk-service.js`): additional install-path probing for cross-platform RTK binary discovery."
+    },
+    {
+      "id": "sec__1_16_0_2026_10_18",
+      "name": "[1.16.0] - 2026-10-18",
+      "type": "Section/Module",
+      "description": "Specification section from CHANGELOG.md",
+      "source": "CHANGELOG.md",
+      "line": 5,
+      "evidence": "## [1.16.0] - 2026-10-18"
+    },
+    {
+      "id": "ent_cross_ide_linkage_symlink_standard_section_2_4_",
+      "name": "Cross-IDE Linkage & Symlink Standard (Section 2.4)",
+      "type": "Component/Requirement",
+      "description": "When a custom/user-defined skills directory is used, `SkillInstaller.ensureCrossIdeLinkage()` automatically creates a directory junction / symlink or mirrors skills into the active IDE's discovery fol",
+      "source": "CHANGELOG.md",
+      "line": 13,
+      "evidence": "- **Cross-IDE Linkage & Symlink Standard (Section 2.4)**: When a custom/user-defined skills directory is used, `SkillInstaller.ensureCrossIdeLinkage()` automati"
+    },
+    {
+      "id": "sec__1_15_1_2026_10_18",
+      "name": "[1.15.1] - 2026-10-18",
+      "type": "Section/Module",
+      "description": "Specification section from CHANGELOG.md",
+      "source": "CHANGELOG.md",
+      "line": 5,
+      "evidence": "## [1.15.1] - 2026-10-18"
     }
   ],
   "relations": [
@@ -9681,12 +9708,20 @@
       "evidence": "- **RTK Service Expansion** (`rtk-service.js`): additional install-path probing for cross-platform RTK binary discovery.",
       "source_file": "CHANGELOG.md",
       "line": 30
+    },
+    {
+      "source": "sec_added_improved",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_cross_ide_linkage_symlink_standard_section_2_4_",
+      "evidence": "- **Cross-IDE Linkage & Symlink Standard (Section 2.4)**: When a custom/user-defined skills directory is used, `SkillInstaller.ensureCrossIdeLinkage()` automati",
+      "source_file": "CHANGELOG.md",
+      "line": 13
     }
   ],
   "stats": {
     "total_sources": 122,
-    "total_entities": 578,
-    "total_relations": 544,
+    "total_entities": 581,
+    "total_relations": 545,
     "token_savings_estimate": "85-95%"
   }
 }

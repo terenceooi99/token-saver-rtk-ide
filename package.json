@@ -2,7 +2,7 @@
   "name": "token-saver-rtk-ide",
   "displayName": "Token Saver for VS Code & Agentic IDEs",
   "description": "Smart token optimization & CLI compression proxy for VS Code, Cursor, Windsurf, Cline, Roo Code, Claude Code & Antigravity IDE using matured upstream open-sourced solutions.",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "publisher": "terenceooi",
   "author": {
     "name": "Terence",
@@ -286,6 +286,12 @@
       {
         "command": "tokenSaver.uninstallSkills",
         "title": "Uninstall Skill Sets (Global or Workspace)",
+        "category": "Token Saver",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "tokenSaver.cleanWorkspaceSkills",
+        "title": "Clean Up Dumped Skills from Project Workspace (.agents/skills)",
         "category": "Token Saver",
         "icon": "$(trash)"
       },
@@ -588,10 +594,20 @@
           "default": "http://localhost:20128/v1",
           "description": "OpenAI-compatible endpoint URL for OmniRoute local proxy."
         },
+        "tokenSaver.skillsInstallPath": {
+          "type": "string",
+          "default": "",
+          "description": "User-defined directory path for installing agent skills according to /tool-management-rules (e.g. D:\\Software\\AI Agent Space\\skills or $AGENT_TOOLS_ROOT). If empty, falls back to tokenSaver.upstreamInstallPath, environment variables ($AGENT_TOOLS_ROOT, $AI_WORKSPACE_DIR), or the IDE global default path."
+        },
+        "tokenSaver.autoCleanWorkspaceSkills": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically clean up redundant Token Saver skills from individual project repositories (.agents/skills) to keep repos clean, relying on global or user-defined paths per /tool-management-rules."
+        },
         "tokenSaver.autoInstallSkills": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically install Antigravity & Agent chat skills (/rtk-*, /ponytail & /antislop) on startup so Way 1 (Chat Commands) and Way 2 (Dashboard & Status Bar) are both available simultaneously."
+          "description": "Automatically install Antigravity & Agent chat skills (/rtk-*, /ponytail, /antislop, etc.) to the global default path or user-defined path on startup according to /tool-management-rules (never dumps into individual project repos)."
         },
         "tokenSaver.targetScope": {
           "type": "string",

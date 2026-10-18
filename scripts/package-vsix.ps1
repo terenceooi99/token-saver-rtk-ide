@@ -114,6 +114,19 @@ foreach ($item in $itemsToCopy) {
     }
 }
 
+# Ensure internal maintainer skills are never included in the VSIX package
+$excludeSkills = @(
+    (Join-Path $stagingExtensionDir ".agents\skills\publishtokensavernow"),
+    (Join-Path $stagingExtensionDir ".agents\skills\publishtokensaverlocal"),
+    (Join-Path $stagingExtensionDir "skills\publishtokensavernow"),
+    (Join-Path $stagingExtensionDir "skills\publishtokensaverlocal")
+)
+foreach ($dir in $excludeSkills) {
+    if (Test-Path $dir) {
+        Remove-Item -Recurse -Force $dir -ErrorAction SilentlyContinue
+    }
+}
+
 # Copy documentation files
 if (Test-Path (Join-Path $projectRoot "README.md")) {
     Copy-Item (Join-Path $projectRoot "README.md") (Join-Path $stagingExtensionDir "readme.md") -Force

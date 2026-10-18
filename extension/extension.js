@@ -150,13 +150,25 @@ async function activate(context) {
     }
 
     // Auto-install skills (Way 1: Chat / Slash Commands) & sync Multi-IDE rules (Way 2: Dashboard & Status Bar)
-    // Ensures Way 1 & Way 2 are both available simultaneously out-of-the-box upon plugin installation
+    // Installs to global default path or user-defined path per /tool-management-rules without dumping into project repos
     if (autoInstallSkills) {
         try {
             SkillInstaller.installAllSkills();
         } catch (err) {
             outputChannel.appendLine(`Notice: Skill auto-installer: ${err.message}`);
         }
+    }
+
+    // Auto-clean redundant dumped skills from workspace repo if enabled to prevent project repo pollution
+    if (config.get('autoCleanWorkspaceSkills', true)) {
+        setTimeout(async () => {
+            try {
+                const wsClean = await SkillInstaller.cleanWorkspaceDumpedSkills();
+                if (wsClean.totalRemoved > 0 && outputChannel) {
+                    outputChannel.appendLine(`[Token Saver] Cleaned ${wsClean.totalRemoved} redundant dumped skills from project repo to keep repo clean (installed in global/user-defined path per /tool-management-rules).`);
+                }
+            } catch (_) {}
+        }, 2000);
     }
 
     SkillInstaller.syncRules(isEnabled, targetScope);
@@ -402,24 +414,43 @@ async function activate(context) {
     const installSkillsCmd = vscode.commands.registerCommand('tokenSaver.installSkills', async () => {
         try {
             const results = SkillInstaller.installAllSkills();
-            const dests = results.map(r => r.destination).join(' and ');
+            const dests = results.map(r => `${r.scope}: ${r.destination}`).join(' and ');
             vscode.window.showInformationMessage(
-                `🧠 Successfully installed all 27 AI Agent skills (/rtk-*, /ponytail-*, /antislop-*) to: ${dests}!`
+                `🧠 Successfully installed all 38 AI Agent skills to global default / user-defined path: ${dests}! (Project workspace left clean per /tool-management-rules)`
             );
         } catch (err) {
             vscode.window.showErrorMessage(`Failed to install skills: ${err.message}`);
         }
     });
 
+    const cleanWorkspaceSkillsCmd = vscode.commands.registerCommand('tokenSaver.cleanWorkspaceSkills', async () => {
+        try {
+            const res = await SkillInstaller.cleanWorkspaceDumpedSkills();
+            if (res.totalRemoved > 0) {
+                vscode.window.showInformationMessage(
+                    `🧹 Successfully cleaned ${res.totalRemoved} dumped skills from project workspace (.agents/skills) to Recycle Bin! All skills remain active via global default or user-defined path per /tool-management-rules.`,
+                    'Open Recycle Bin'
+                ).then(sel => {
+                    if (sel === 'Open Recycle Bin') SkillInstaller.openRecycleBin();
+                });
+            } else {
+                vscode.window.showInformationMessage('✓ Project workspace is clean (no redundant dumped skills in .agents/skills).');
+            }
+            await refreshStatus(context);
+        } catch (err) {
+            vscode.window.showErrorMessage(`Failed to clean workspace skills: ${err.message}`);
+        }
+    });
+
     const uninstallSkillsCmd = vscode.commands.registerCommand('tokenSaver.uninstallSkills', async () => {
         // Step 1: Choose Action & Scope
         const scopes = [
-            { label: '🏠 Global Config Only', description: 'Preinstalled in user IDE: ~/.gemini/config/skills/', value: 'global' },
-            { label: '📁 Workspace Only', description: 'Based within current project: .agents/skills/', value: 'workspace' },
-            { label: '🌐 Global & Workspace (All Targets)', description: 'Clean both ~/.gemini/config and .agents', value: 'all' },
-            { label: '♻️ Recover Uninstalled Skills (Global IDE)', description: 'Restore / Re-install all preinstalled agent skills to ~/.gemini/config/skills/', value: 'recover_global' },
-            { label: '♻️ Recover Uninstalled Skills (Project Workspace)', description: 'Restore / Re-install all preinstalled agent skills to .agents/skills/', value: 'recover_workspace' },
-            { label: '♻️ Recover Uninstalled Skills (All - Global & Project)', description: 'Restore / Re-install all agent skills to both Global IDE and Workspace', value: 'recover_all' },
+            { label: '🧹 Clean Up Dumped Skills in Project Workspace', description: 'Remove redundant dumped skills from .agents/skills/ to keep project clean', value: 'clean_workspace' },
+            { label: '🏠 Global Config Only', description: 'Preinstalled in user IDE: ~/.gemini/config/skills/ or detected IDE', value: 'global' },
+            { label: '🛠️ User-Defined Path Only', description: 'Skills directory configured via /tool-management-rules', value: 'user_defined' },
+            { label: '📁 Workspace Only (Legacy)', description: 'Based within current project: .agents/skills/', value: 'workspace' },
+            { label: '🌐 All Target Scopes', description: 'Clean global, user-defined, and workspace directories', value: 'all' },
+            { label: '♻️ Recover Uninstalled Skills (Global / User-Defined)', description: 'Restore all preinstalled agent skills to global default or user-defined path', value: 'recover_global' },
             { label: '🗑️ Open OS Recycle Bin / Trash', description: 'Inspect or restore deleted skill folders directly in OS file manager', value: 'open_recycle_bin' }
         ];
 
@@ -428,6 +459,12 @@ async function activate(context) {
         });
         if (!selectedScope) return;
 
+        // Handle direct workspace cleaning
+        if (selectedScope.value === 'clean_workspace') {
+            await vscode.commands.executeCommand('tokenSaver.cleanWorkspaceSkills');
+            return;
+        }
+
         // Handle direct recovery or opening recycle bin
         if (selectedScope.value === 'open_recycle_bin') {
             SkillInstaller.openRecycleBin();
@@ -435,12 +472,11 @@ async function activate(context) {
         }
 
         if (selectedScope.value === 'recover_global' || selectedScope.value === 'recover_workspace' || selectedScope.value === 'recover_all') {
-            const target = selectedScope.value === 'recover_global' ? 'global' : (selectedScope.value === 'recover_workspace' ? 'workspace' : 'all');
             try {
-                const results = SkillInstaller.installSkills(target);
+                const results = SkillInstaller.installAllSkills();
                 const dests = results.map(r => r.destination).join(' and ');
                 vscode.window.showInformationMessage(
-                    `♻️ Successfully recovered and restored all 31 AI Agent skills to: ${dests}!`,
+                    `♻️ Successfully recovered and restored all 38 AI Agent skills to: ${dests}!`,
                     'Open Recycle Bin'
                 ).then(sel => {
                     if (sel === 'Open Recycle Bin') SkillInstaller.openRecycleBin();
@@ -1378,6 +1414,7 @@ async function activate(context) {
         uninstallAntiSlopCmd,
         installSkillsCmd,
         uninstallSkillsCmd,
+        cleanWorkspaceSkillsCmd,
         temporaryDisableSkillsCmd,
         reEnableAllSkillsCmd,
         syncGlobalRulesCmd,

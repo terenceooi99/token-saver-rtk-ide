@@ -13,3 +13,7 @@ Token OpenVXS.txt
 *.pat
 .env
 .env.*
+
+# Internal maintainer skills (used only in this repo, not on GitHub or Open VSX)
+.agents/skills/publishtokensaver*
+skills/publishtokensaver*

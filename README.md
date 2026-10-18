@@ -347,8 +347,7 @@ You can also synchronize rules directly from terminal:
 
 3. **Automated Tag & CI Release**:
    ```bash
-   # Or trigger 1-click automated release tagging via chat:
-   /publishtokensavernow
+   powershell -ExecutionPolicy Bypass -File scripts/publish-tokensaver.ps1
    ```
 
 ---

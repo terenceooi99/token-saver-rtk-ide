@@ -2,6 +2,23 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.15.1] - 2026-10-18
+
+### Added & Improved
+- **Universal Skills Hierarchy & Zero-Repo-Pollution Standard (Upstream: `/tool-management-rules`)**:
+  - Eliminated redundant dumping of skills into individual project repositories (`.agents/skills/`) when opening or initializing projects, preventing code repo pollution and untracked file clutter.
+  - Dynamically resolves skills target path adhering strictly to `/tool-management-rules`:
+    1. **User / Environment Override (Highest Priority)**: Configured path via `tokenSaver.skillsInstallPath`, environment variables (`$AGENT_TOOLS_ROOT`, `$AI_WORKSPACE_DIR`), or `tokenSaver.upstreamInstallPath` (e.g. `D:\Software\AI Agent Space\skills`).
+    2. **Global Default Path (System Fallback)**: Active IDE global skills directory (Antigravity/Gemini: `~/.gemini/config/skills/`, Cursor: `~/.cursor/skills/`, Claude: `~/.claude/skills/`).
+  - **Cross-IDE Linkage & Symlink Standard (Section 2.4)**: When a custom/user-defined skills directory is used, `SkillInstaller.ensureCrossIdeLinkage()` automatically creates a directory junction / symlink or mirrors skills into the active IDE's discovery folder so agent slash commands (`/rtk-*`, `/ponytail-*`, `/antislop-*`, etc.) work natively out of the box.
+  - **Project Repo Dumped Skills Cleaner (`tokenSaver.cleanWorkspaceSkills`)**:
+    - Added dedicated command and startup auto-cleaner (`tokenSaver.autoCleanWorkspaceSkills`) to safely purge previously dumped Token Saver skills from project workspace `.agents/skills` to OS Recycle Bin, keeping user repos clean while skills remain active globally.
+  - **Enhanced Uninstallation & Recovery Dialog**:
+    - QuickPick menu now includes a direct 1-click option to clean workspace dumped skills, separate global config vs user-defined path vs workspace scopes, and restore to global/user-defined locations.
+  - **Internal Maintainer Skills Quarantine (`/publishtokensavernow` & `/publishtokensaverlocal`)**:
+    - Removed internal release and local packaging skills from the public extension bundle (`SKILLS_MAP`, `skills/`, `.vscodeignore`, and `package-vsix.ps1`), ensuring they are never packaged or published to Open VSX or GitHub.
+    - Quarantined to local `.agents/skills/` (safeguarded via `.gitignore`) for author-only maintenance workflows in this repo.
+
 ## [1.15.0] - 2026-10-18
 
 ### Added & Improved

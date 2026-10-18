@@ -1856,10 +1856,10 @@ function renderDashboardState(data) {
             initialLoadingDesc.textContent = 'Initial check complete. Synchronizing dashboard view...';
         }
 
-        // Smooth auto fade-out: guarantees exactly 3.5 seconds TOTAL on-screen time (including checking process)
+        // Smooth auto fade-out: guarantees exactly 5.0 seconds TOTAL on-screen time (including checking process)
         // so users get adequate time to read the sponsor notice without artificial lag
         const elapsedMs = Date.now() - initialOverlayStartTime;
-        const remainingDelayMs = Math.max(1200, 3500 - elapsedMs);
+        const remainingDelayMs = Math.max(1200, 5000 - elapsedMs);
 
         setTimeout(() => {
             if (initialLoadingOverlay) {

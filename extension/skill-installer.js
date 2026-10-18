@@ -299,31 +299,6 @@ Inspects git diffs using compact 1-line context (\`-U1\`) filtered through the R
 - Run \`rtk git diff -U1\` to review unstaged changes with minimal context tokens.
 - Run \`rtk git diff --cached -U1\` for staged reviews.
 `,
-    'publishtokensavernow': `---
-name: publishtokensavernow
-description: >
-  Automates bumping version, tagging, and publishing Token Saver (RTK) extension to Open VSX and GitHub Releases.
-  Activate when the user types /publishtokensavernow, "publish tokensaver now", "publish to openvsx", or asks to
-  publish a new release of this extension.
----
-
-# Publish Token Saver Now (/publishtokensavernow)
-
-Run publishing workflow for Token Saver (RTK) extension to Open VSX and create a corresponding GitHub Release.
-`,
-    'publishtokensaverlocal': `---
-name: publishtokensaverlocal
-description: >
-  Compiles and packages the local VS Code / IDE extension into a .vsix file and replaces
-  latestvsixfile/token-saver-rtk-ide.vsix for internal testing without publishing to GitHub or Open VSX.
-  Activate when the user types /publishtokensaverlocal, "publish tokensaver local", "compile local vsix",
-  "build local vsix", or asks to package the latest extension locally.
----
-
-# Package Token Saver Locally (/publishtokensaverlocal)
-
-Compiles the extension locally into \`latestvsixfile/token-saver-rtk-ide.vsix\` and \`token-saver-rtk-ide-<version>.vsix\` without bumping git tags, pushing commits, or triggering GitHub Actions.
-`,
     'rtk-doctor': `---
 name: rtk-doctor
 description: >
@@ -906,8 +881,103 @@ class SkillInstaller {
         return path.join(this.getGlobalConfigPath(), 'rules', 'antigravity-rtk-rules.md');
     }
 
+    /**
+     * Resolve the User-Defined Skills Directory according to /tool-management-rules
+     * Priority:
+     * 1. VS Code configuration: `tokenSaver.skillsInstallPath`
+     * 2. Environment variables: `AGENT_TOOLS_ROOT` or `AI_WORKSPACE_DIR`
+     * 3. VS Code configuration: `tokenSaver.upstreamInstallPath`
+     * Returns resolved skills directory path or null if not configured.
+     */
+    static getUserDefinedSkillsPath() {
+        let customPath = '';
+        try {
+            const config = vscode.workspace.getConfiguration('tokenSaver');
+            customPath = (config.get('skillsInstallPath', '') || '').trim();
+            if (!customPath) {
+                const envRoot = process.env.AGENT_TOOLS_ROOT || process.env.AI_WORKSPACE_DIR;
+                if (envRoot && envRoot.trim()) {
+                    const cleanEnv = envRoot.trim();
+                    customPath = path.basename(cleanEnv).toLowerCase() === 'skills' ? cleanEnv : path.join(cleanEnv, 'skills');
+                }
+            }
+            if (!customPath) {
+                const upstreamPath = (config.get('upstreamInstallPath', '') || '').trim();
+                if (upstreamPath) {
+                    customPath = path.basename(upstreamPath).toLowerCase() === 'skills' ? upstreamPath : path.join(upstreamPath, 'skills');
+                }
+            }
+        } catch (_) {}
+
+        if (customPath) {
+            if (customPath.startsWith('~')) {
+                customPath = path.join(os.homedir(), customPath.slice(1));
+            }
+            return path.resolve(customPath);
+        }
+        return null;
+    }
+
+    /**
+     * Resolve the Global Default Path (System Fallback) for the active IDE according to /tool-management-rules
+     */
     static getGlobalSkillsPath() {
-        return path.join(this.getGlobalConfigPath(), 'skills');
+        const homeDir = os.homedir();
+        const ide = this.detectCurrentIde();
+
+        if (ide && ide.id === 'cursor') {
+            return path.join(homeDir, '.cursor', 'skills');
+        } else if (ide && ide.id === 'claude') {
+            return path.join(homeDir, '.claude', 'skills');
+        }
+
+        // Antigravity / Gemini or Universal default
+        return path.join(homeDir, '.gemini', 'config', 'skills');
+    }
+
+    /**
+     * Ensure Cross-IDE Linkage or synchronization between user-defined skills path
+     * and the active IDE's native skills discovery directory as specified in /tool-management-rules Section 2.4
+     */
+    static ensureCrossIdeLinkage(userDefinedDir, ideSkillsDir) {
+        if (!userDefinedDir || !ideSkillsDir) return false;
+        const resolvedUser = path.resolve(userDefinedDir);
+        const resolvedIde = path.resolve(ideSkillsDir);
+        if (resolvedUser === resolvedIde) return true;
+
+        try {
+            const ideParent = path.dirname(resolvedIde);
+            if (!fs.existsSync(ideParent)) {
+                fs.mkdirSync(ideParent, { recursive: true });
+            }
+
+            // Case A: ideSkillsDir does not exist -> create directory junction (Windows) or symlink (Unix)
+            if (!fs.existsSync(resolvedIde)) {
+                try {
+                    const linkType = process.platform === 'win32' ? 'junction' : 'dir';
+                    fs.symlinkSync(resolvedUser, resolvedIde, linkType);
+                    return true;
+                } catch (symErr) {
+                    console.warn(`Could not create symlink/junction from ${resolvedIde} to ${resolvedUser}:`, symErr.message);
+                }
+            } else {
+                // If ideSkillsDir is already a symlink/junction, check if it points to userDefinedDir
+                try {
+                    const stat = fs.lstatSync(resolvedIde);
+                    if (stat.isSymbolicLink()) {
+                        return true;
+                    }
+                } catch (_) {}
+            }
+
+            // Case B: ideSkillsDir already exists as a regular folder ->
+            // Copy skills into ideSkillsDir so the active IDE discovers them natively without overwriting existing unrelated skills
+            this.writeSkillsToDir(resolvedIde);
+            return true;
+        } catch (err) {
+            console.warn('Notice: Cross-IDE skills linkage:', err.message);
+            return false;
+        }
     }
 
     static getGlobalDisabledSkillsPath() {
@@ -943,7 +1013,7 @@ class SkillInstaller {
      */
     static getGlobalSkillsRoots() {
         const homeDir = os.homedir();
-        return [
+        const roots = [
             // Antigravity & Gemini IDE
             { path: path.join(homeDir, '.gemini', 'config', 'skills'), type: 'skills', scope: 'global', ide: 'Antigravity / Gemini' },
             { path: path.join(homeDir, '.gemini', 'config', 'plugins'), type: 'plugins', scope: 'global', ide: 'Antigravity / Gemini' },
@@ -957,6 +1027,13 @@ class SkillInstaller {
             { path: path.join(homeDir, '.config', 'agents', 'skills'), type: 'skills', scope: 'global', ide: 'Universal Agents' },
             { path: path.join(homeDir, '.agents', 'skills'), type: 'skills', scope: 'global', ide: 'Universal Agents' }
         ];
+
+        const userDefined = this.getUserDefinedSkillsPath();
+        if (userDefined) {
+            roots.unshift({ path: userDefined, type: 'skills', scope: 'user_defined', ide: 'User Defined (/tool-management-rules)' });
+        }
+
+        return roots;
     }
 
     /**
@@ -1355,9 +1432,10 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         }
     }
 
-    static writeSkillsToDir(baseDir) {
+    static writeSkillsToDir(baseDir, filterSkillNames = null) {
         if (!baseDir) return [];
         const installed = [];
+        const filterSet = Array.isArray(filterSkillNames) ? new Set(filterSkillNames) : null;
         
         // 1. If package skills folder exists, copy all skills from extension package directory
         const packageSkillsDir = path.join(__dirname, '..', 'skills');
@@ -1365,7 +1443,7 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             try {
                 const subDirs = fs.readdirSync(packageSkillsDir, { withFileTypes: true });
                 for (const sub of subDirs) {
-                    if (sub.isDirectory()) {
+                    if (sub.isDirectory() && (!filterSet || filterSet.has(sub.name))) {
                         const srcSkill = path.join(packageSkillsDir, sub.name);
                         const destSkill = path.join(baseDir, sub.name);
                         this.copyDirRecursive(srcSkill, destSkill);
@@ -1379,6 +1457,7 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
 
         // 2. Ensure all skills in SKILLS_MAP are installed
         for (const [skillName, skillContent] of Object.entries(SKILLS_MAP)) {
+            if (filterSet && !filterSet.has(skillName)) continue;
             if (!installed.includes(skillName)) {
                 const skillFolder = path.join(baseDir, skillName);
                 if (!fs.existsSync(skillFolder)) {
@@ -1396,65 +1475,187 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
 
     /**
      * Install skills for Antigravity / Agentic systems
+     * Defaults to global default path or user-defined path per /tool-management-rules
      */
     static installSkills(targetScope = 'all') {
         if (targetScope === 'all') {
             return this.installAllSkills();
         }
 
-        const baseDir = targetScope === 'workspace' 
-            ? this.getWorkspaceSkillsPath() 
-            : this.getGlobalSkillsPath();
-
-        if (!baseDir) {
-            throw new Error('No target directory available for scope: ' + targetScope);
+        if (targetScope === 'user_defined') {
+            const userDir = this.getUserDefinedSkillsPath();
+            if (userDir) {
+                const installed = this.writeSkillsToDir(userDir);
+                const globalDir = this.getGlobalSkillsPath();
+                if (globalDir) this.ensureCrossIdeLinkage(userDir, globalDir);
+                return [{
+                    scope: 'user_defined',
+                    destination: userDir,
+                    installedSkills: installed
+                }];
+            }
         }
 
-        const installed = this.writeSkillsToDir(baseDir);
-        return [{
-            scope: targetScope,
-            destination: baseDir,
-            installedSkills: installed
-        }];
+        if (targetScope === 'global') {
+            const globalDir = this.getGlobalSkillsPath();
+            if (!globalDir) throw new Error('No global target directory available for active IDE');
+            const installed = this.writeSkillsToDir(globalDir);
+            return [{
+                scope: 'global',
+                destination: globalDir,
+                installedSkills: installed
+            }];
+        }
+
+        // Fallback for explicit legacy workspace requests
+        const wsDir = this.getWorkspaceSkillsPath();
+        if (targetScope === 'workspace' && wsDir) {
+            const installed = this.writeSkillsToDir(wsDir);
+            return [{
+                scope: 'workspace',
+                destination: wsDir,
+                installedSkills: installed
+            }];
+        }
+
+        return this.installAllSkills();
     }
 
     /**
-     * Install skills across all available scopes (both global ~/.gemini/config/skills and workspace .agents/skills)
+     * Install skills to global default path or user-defined path according to /tool-management-rules.
+     * Enforces the zero-project-repo-pollution policy: NEVER dumps skills into the active workspace repository.
      */
     static installAllSkills() {
         const results = [];
-        
-        // 1. Global Antigravity Config
-        try {
-            const globalDir = this.getGlobalSkillsPath();
-            if (globalDir) {
+        const userDefinedDir = this.getUserDefinedSkillsPath();
+        const globalDir = this.getGlobalSkillsPath();
+
+        // 1. User-Defined Path (Highest Priority per /tool-management-rules)
+        if (userDefinedDir) {
+            try {
+                const installed = this.writeSkillsToDir(userDefinedDir);
+                results.push({
+                    scope: 'user_defined',
+                    destination: userDefinedDir,
+                    installedSkills: installed
+                });
+                // Ensure Cross-IDE Linkage or sync to native IDE skills discovery directory
+                if (globalDir && path.resolve(userDefinedDir) !== path.resolve(globalDir)) {
+                    this.ensureCrossIdeLinkage(userDefinedDir, globalDir);
+                    const globalInstalled = this.writeSkillsToDir(globalDir);
+                    results.push({
+                        scope: 'global',
+                        destination: globalDir,
+                        installedSkills: globalInstalled
+                    });
+                }
+            } catch (err) {
+                console.warn('Failed to install skills to user-defined path:', err);
+            }
+        } else if (globalDir) {
+            // 2. Global Default Path (System Fallback per /tool-management-rules)
+            try {
                 const installed = this.writeSkillsToDir(globalDir);
                 results.push({
                     scope: 'global',
                     destination: globalDir,
                     installedSkills: installed
                 });
-            }
-        } catch (err) {
-            console.warn('Failed to install global skills:', err);
-        }
-
-        // 2. Workspace Config (.agents/skills)
-        const wsDir = this.getWorkspaceSkillsPath();
-        if (wsDir) {
-            try {
-                const installed = this.writeSkillsToDir(wsDir);
-                results.push({
-                    scope: 'workspace',
-                    destination: wsDir,
-                    installedSkills: installed
-                });
             } catch (err) {
-                console.warn('Failed to install workspace skills:', err);
+                console.warn('Failed to install global IDE skills:', err);
             }
         }
 
         return results;
+    }
+
+    /**
+     * Install specific subset of skills to global default path or user-defined path
+     */
+    static installSpecificSkills(skillNames = [], targetScope = 'all') {
+        const results = [];
+        const userDefinedDir = this.getUserDefinedSkillsPath();
+        const globalDir = this.getGlobalSkillsPath();
+
+        const targets = [];
+        if (targetScope === 'user_defined' && userDefinedDir) {
+            targets.push({ scope: 'user_defined', dir: userDefinedDir });
+        } else if (targetScope === 'global' && globalDir) {
+            targets.push({ scope: 'global', dir: globalDir });
+        } else {
+            // all
+            if (userDefinedDir) targets.push({ scope: 'user_defined', dir: userDefinedDir });
+            if (globalDir && (!userDefinedDir || path.resolve(userDefinedDir) !== path.resolve(globalDir))) {
+                targets.push({ scope: 'global', dir: globalDir });
+            }
+        }
+
+        for (const t of targets) {
+            try {
+                const installed = this.writeSkillsToDir(t.dir, skillNames);
+                results.push({
+                    scope: t.scope,
+                    destination: t.dir,
+                    installedSkills: installed
+                });
+                if (t.scope === 'user_defined' && globalDir && path.resolve(t.dir) !== path.resolve(globalDir)) {
+                    this.ensureCrossIdeLinkage(t.dir, globalDir);
+                }
+            } catch (err) {
+                console.warn(`Failed to install specific skills to ${t.dir}:`, err);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Remove redundant Token Saver skills dumped into the workspace (.agents/skills),
+     * moving them safely to the OS Recycle Bin / Trash. Leaves custom non-plugin skills intact.
+     */
+    static async cleanWorkspaceDumpedSkills() {
+        const wsDir = this.getWorkspaceSkillsPath();
+        if (!wsDir || !fs.existsSync(wsDir)) {
+            return { removed: [], totalRemoved: 0 };
+        }
+
+        const knownSkills = new Set(Object.keys(SKILLS_MAP));
+        const packageSkillsDir = path.join(__dirname, '..', 'skills');
+        if (fs.existsSync(packageSkillsDir)) {
+            try {
+                const entries = fs.readdirSync(packageSkillsDir, { withFileTypes: true });
+                for (const e of entries) {
+                    if (e.isDirectory()) knownSkills.add(e.name);
+                }
+            } catch (_) {}
+        }
+
+        const removed = [];
+        try {
+            const entries = fs.readdirSync(wsDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory() && knownSkills.has(entry.name)) {
+                    const skillPath = path.join(wsDir, entry.name);
+                    const moved = await this.moveToTrash(skillPath);
+                    if (moved) {
+                        removed.push(entry.name);
+                    }
+                }
+            }
+
+            try {
+                const remaining = fs.readdirSync(wsDir);
+                if (remaining.length === 0) {
+                    fs.rmSync(wsDir, { recursive: true, force: true });
+                }
+            } catch (_) {}
+        } catch (err) {
+            console.warn('Notice: Error cleaning workspace dumped skills:', err);
+        }
+
+        return {
+            removed,
+            totalRemoved: removed.length
+        };
     }
 
     static checkSkillsInstalled(targetScope = 'all') {
@@ -1471,8 +1672,10 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         };
 
         const globalFound = checkDir(this.getGlobalSkillsPath());
+        const userDefinedDir = this.getUserDefinedSkillsPath();
+        const userDefinedFound = userDefinedDir ? checkDir(userDefinedDir) : [];
         const wsFound = checkDir(this.getWorkspaceSkillsPath());
-        const allFound = [...new Set([...globalFound, ...wsFound])];
+        const allFound = [...new Set([...globalFound, ...userDefinedFound, ...wsFound])];
         const totalExpected = Object.keys(SKILLS_MAP).length;
 
         if (targetScope === 'global') {
@@ -1482,6 +1685,16 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
                 total: totalExpected,
                 skills: globalFound,
                 isComplete: globalFound.length >= totalExpected
+            };
+        }
+
+        if (targetScope === 'user_defined') {
+            return {
+                installed: userDefinedFound.length > 0,
+                count: userDefinedFound.length,
+                total: totalExpected,
+                skills: userDefinedFound,
+                isComplete: userDefinedFound.length >= totalExpected
             };
         }
 
@@ -1500,8 +1713,9 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             count: allFound.length,
             total: totalExpected,
             skills: allFound,
-            isComplete: allFound.length >= totalExpected,
+            isComplete: (globalFound.length >= totalExpected || userDefinedFound.length >= totalExpected || allFound.length >= totalExpected),
             hasGlobal: globalFound.length > 0,
+            hasUserDefined: userDefinedFound.length > 0,
             hasWorkspace: wsFound.length > 0
         };
     }
@@ -1781,6 +1995,11 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             const extra = await this.removeSkillsFromDir(this.getGlobalSkillsPath(), skillNames);
             removedGlobal.push(...extra);
         }
+        const userDefined = this.getUserDefinedSkillsPath();
+        if ((targetScope === 'all' || targetScope === 'user_defined') && userDefined) {
+            const extra = await this.removeSkillsFromDir(userDefined, skillNames);
+            removedGlobal.push(...extra);
+        }
         if (targetScope === 'all' || targetScope === 'workspace') {
             const extra = await this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), skillNames);
             removedWs.push(...extra);
@@ -1860,6 +2079,11 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
 
         if (targetScope === 'all' || targetScope === 'global') {
             removedGlobal = await this.removeSkillsFromDir(this.getGlobalSkillsPath(), targetSkills);
+        }
+        const userDefined = this.getUserDefinedSkillsPath();
+        if ((targetScope === 'all' || targetScope === 'user_defined') && userDefined) {
+            const extra = await this.removeSkillsFromDir(userDefined, targetSkills);
+            removedGlobal.push(...extra);
         }
         if (targetScope === 'all' || targetScope === 'workspace') {
             removedWs = await this.removeSkillsFromDir(this.getWorkspaceSkillsPath(), targetSkills);
