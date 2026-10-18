@@ -157,6 +157,7 @@ class WebviewHelper {
             scope: config.get('targetScope', 'all'),
             ideStatus,
             detectedIde: ideStatus.detectedIde,
+            isGlobalRuleSynced: SkillInstaller.isGlobalRuleSynced(),
             isSidebar
         };
     }

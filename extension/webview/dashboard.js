@@ -26,6 +26,15 @@ const rtkLatencyBtn = document.getElementById('rtkLatencyBtn');
 const rtkWarningModal = document.getElementById('rtkWarningModal');
 const rtkWarningCancelBtn = document.getElementById('rtkWarningCancelBtn');
 const rtkWarningConfirmBtn = document.getElementById('rtkWarningConfirmBtn');
+const workspaceRuleModal = document.getElementById('workspaceRuleModal');
+const workspaceRuleTitle = document.getElementById('workspaceRuleTitle');
+const workspaceRuleLead = document.getElementById('workspaceRuleLead');
+const workspaceRulePath = document.getElementById('workspaceRulePath');
+const workspaceRuleCancelBtn = document.getElementById('workspaceRuleCancelBtn');
+const workspaceRuleConfirmBtn = document.getElementById('workspaceRuleConfirmBtn');
+let pendingWorkspaceTargetId = null;
+let latestGlobalRuleSynced = false;
+let latestIdeList = [];
 const footerVersionBadge = document.getElementById('footerVersionBadge');
 const popOutBtn = document.getElementById('popOutBtn');
 const minimizeBtn = document.getElementById('minimizeBtn');
@@ -874,6 +883,60 @@ if (rtkWarningModal) {
     });
 }
 
+function showWorkspaceRuleModal(ide) {
+    pendingWorkspaceTargetId = ide ? ide.id : null;
+    if (workspaceRulePath) {
+        workspaceRulePath.textContent = (ide && ide.path) ? ide.path : (ide ? ide.name : '.agents/rules/antigravity-rtk-rules.md');
+    }
+    if (workspaceRuleModal) {
+        workspaceRuleModal.classList.add('open');
+    }
+}
+
+function hideWorkspaceRuleModal() {
+    pendingWorkspaceTargetId = null;
+    if (workspaceRuleModal) {
+        workspaceRuleModal.classList.remove('open');
+    }
+}
+
+if (workspaceRuleCancelBtn) {
+    workspaceRuleCancelBtn.addEventListener('click', () => {
+        hideWorkspaceRuleModal();
+    });
+}
+
+if (workspaceRuleConfirmBtn) {
+    workspaceRuleConfirmBtn.addEventListener('click', () => {
+        const targetId = pendingWorkspaceTargetId;
+        hideWorkspaceRuleModal();
+        if (targetId === '__ALL__') {
+            if (syncAllIdesBtn) {
+                syncAllIdesBtn.textContent = 'Syncing...';
+            }
+            vscode.postMessage({ command: 'syncAllIdeRules' });
+            setTimeout(() => {
+                if (syncAllIdesBtn) {
+                    syncAllIdesBtn.textContent = '⚡ Sync All';
+                }
+            }, 800);
+        } else if (targetId) {
+            vscode.postMessage({
+                command: 'syncSingleTarget',
+                targetId: targetId
+            });
+        }
+    });
+}
+
+if (workspaceRuleModal) {
+    workspaceRuleModal.addEventListener('click', (e) => {
+        if (e.target === workspaceRuleModal) {
+            hideWorkspaceRuleModal();
+        }
+    });
+}
+
 // General Action Event Listeners
 if (toggleRtkBtn) {
     toggleRtkBtn.addEventListener('click', () => {
@@ -1070,6 +1133,21 @@ if (eccDiagUninstallBtn) {
 }
 
 syncAllIdesBtn.addEventListener('click', () => {
+    const isGlobalActive = Boolean(latestGlobalRuleSynced) || (latestIdeList && latestIdeList.some(item => item.type === 'global' && item.synced));
+    const hasUnsyncedWorkspace = latestIdeList && latestIdeList.some(item => (item.type === 'workspace' || (item.id && item.id.includes('workspace'))) && !item.synced);
+
+    if (isGlobalActive && hasUnsyncedWorkspace) {
+        pendingWorkspaceTargetId = '__ALL__';
+        if (workspaceRulePath) {
+            const unsyncedTargets = latestIdeList.filter(item => (item.type === 'workspace' || (item.id && item.id.includes('workspace'))) && !item.synced);
+            workspaceRulePath.textContent = unsyncedTargets.map(t => t.path || t.name).join(', ');
+        }
+        if (workspaceRuleModal) {
+            workspaceRuleModal.classList.add('open');
+        }
+        return;
+    }
+
     syncAllIdesBtn.textContent = 'Syncing...';
     vscode.postMessage({ command: 'syncAllIdeRules' });
     setTimeout(() => {
@@ -2117,6 +2195,9 @@ function renderDashboardState(data) {
         syncAllIdesBtn.textContent = totalTargets > 1 ? '⚡ Sync All' : '⚡ Sync Rule';
     }
 
+    latestGlobalRuleSynced = Boolean(data.isGlobalRuleSynced);
+    latestIdeList = ideStatus || [];
+
     // Render IDE Grid (Current IDE targets only)
     renderIdeGrid(ideStatus || []);
 
@@ -2950,6 +3031,11 @@ function renderIdeGrid(ideList) {
         syncBtn.className = 'btn-ide-sync';
         syncBtn.textContent = ide.synced ? '⭮ Re-Sync Rule' : '⚡ Enable Rule';
         syncBtn.addEventListener('click', () => {
+            const isGlobalActive = Boolean(latestGlobalRuleSynced) || (ideList && ideList.some(item => item.type === 'global' && item.synced));
+            if (!ide.synced && (ide.type === 'workspace' || (ide.id && ide.id.includes('workspace'))) && isGlobalActive) {
+                showWorkspaceRuleModal(ide);
+                return;
+            }
             vscode.postMessage({
                 command: 'syncSingleTarget',
                 targetId: ide.id

@@ -881,6 +881,17 @@ class SkillInstaller {
         return path.join(this.getGlobalConfigPath(), 'rules', 'antigravity-rtk-rules.md');
     }
 
+    static isGlobalRuleSynced() {
+        try {
+            const globalRule = this.getGlobalRulePath();
+            if (fs.existsSync(globalRule)) {
+                const content = fs.readFileSync(globalRule, 'utf8');
+                return content.includes('rtk') || content.includes(RTK_BLOCK_START);
+            }
+        } catch (_) {}
+        return false;
+    }
+
     /**
      * Resolve the User-Defined Skills Directory according to /tool-management-rules
      * Priority:

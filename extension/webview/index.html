@@ -1347,6 +1347,48 @@
         </div>
     </div>
 
+    <!-- Workspace Rule Confirmation Modal (when Global Rule is already active) -->
+    <div class="modal-overlay" id="workspaceRuleModal" role="dialog" aria-modal="true" aria-labelledby="workspaceRuleTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-header-icon" style="background: rgba(10, 132, 255, 0.16); color: var(--apple-blue); border-color: rgba(10, 132, 255, 0.3);">ℹ️</span>
+                <h3 id="workspaceRuleTitle">Global Rule Already Active</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-lead" id="workspaceRuleLead">
+                    The <strong>Global Rule</strong> is already active and protecting all projects across your IDE. AI agents automatically inherit RTK token-saving rules without local project files.
+                </p>
+                <div class="modal-warning-list">
+                    <div class="modal-info-item amber">
+                        <span class="warning-feature-icon">📁</span>
+                        <div class="warning-feature-content">
+                            <span class="warning-feature-title">Local Workspace Rule File</span>
+                            <span class="warning-feature-desc" id="workspaceRuleTargetDesc">
+                                Enabling this rule will write <code id="workspaceRulePath">.agents/rules/antigravity-rtk-rules.md</code> into this project repository.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="warning-feature-icon">🛡️</span>
+                        <div class="warning-feature-content">
+                            <span class="warning-feature-title">Zero Repo Pollution Recommendation</span>
+                            <span class="warning-feature-desc">
+                                If you want to keep this repository clean and avoid creating extra tracked or untracked rule files, you can rely entirely on the <strong>Global Rule</strong>.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="warning-note">
+                    💡 <em>Workspace rules are only needed if you want repository-specific rule overrides or want teammates cloning this repo to share rules.</em>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="workspaceRuleCancelBtn">Cancel (Keep Global Only)</button>
+                <button class="btn btn-primary" id="workspaceRuleConfirmBtn">Enable in Workspace</button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{scriptUri}}"></script>
 </body>
 
