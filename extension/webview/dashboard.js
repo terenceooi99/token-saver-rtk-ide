@@ -748,6 +748,19 @@ if (themeToggleBtn) {
     });
 }
 
+// Secondary sections that auto-tuck in compact mode to make visual length difference dramatic
+const SECONDARY_SECTION_IDS = [
+    'sectionIdeSync',
+    'sectionOutputOpt',
+    'sectionAntiSlop',
+    'sectionJevGraph',
+    'sectionCodeGraph',
+    'sectionHybridWeb',
+    'sectionEcc',
+    'sectionOmniRoute',
+    'sectionHealth'
+];
+
 // Minimize & Pop Out Event Listeners
 if (minimizeBtn) {
     minimizeBtn.addEventListener('click', () => {
@@ -759,8 +772,22 @@ if (minimizeBtn) {
             isCompact = !isCompact;
             dashboardContainer.classList.toggle('is-compact', isCompact);
             minimizeBtn.classList.toggle('active', isCompact);
-            minimizeBtn.title = isCompact ? "Expand Full View" : "Minimize / Compact View";
+            minimizeBtn.title = isCompact ? "Expand Full View (Show All Details)" : "Minimize / Compact View";
             minimizeBtn.innerHTML = isCompact ? "🗖" : "🗕";
+
+            if (isCompact) {
+                // In compact mode: automatically tuck secondary sections into sleek single-line summary bars
+                SECONDARY_SECTION_IDS.forEach(id => {
+                    const sec = document.getElementById(id);
+                    if (sec) sec.classList.add('collapsed');
+                });
+            } else {
+                // In expand full view: expand all sections to show full depth and controls
+                document.querySelectorAll('.panel-card.collapsed').forEach(card => {
+                    card.classList.remove('collapsed');
+                });
+            }
+
             persistState();
         }
     });

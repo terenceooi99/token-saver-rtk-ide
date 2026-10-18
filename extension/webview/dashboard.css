@@ -1821,8 +1821,14 @@ body.light-theme .btn-setup-browse:hover {
     transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.panel-header.collapsed .collapse-chevron {
+.panel-header.collapsed .collapse-chevron,
+.panel-card.collapsed .collapse-chevron {
     transform: rotate(-90deg);
+}
+
+.panel-card.collapsed {
+    padding-bottom: 12px;
+    gap: 0;
 }
 
 h2 {
@@ -1863,8 +1869,9 @@ h2 {
     box-sizing: border-box;
 }
 
-.panel-body.collapsed {
-    display: none;
+.panel-body.collapsed,
+.panel-card.collapsed .panel-body {
+    display: none !important;
 }
 
 /* ==========================================================================
@@ -3096,25 +3103,82 @@ body.is-sidebar {
     }
 }
 
-/* Compact Dashboard Mode */
+/* Compact Dashboard Mode: Sleek, high-density HUD view */
 .dashboard-container.is-compact {
     gap: 8px;
+    transition: var(--apple-spring);
 }
 .dashboard-container.is-compact .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
 }
+@media (max-width: 600px) {
+    .dashboard-container.is-compact .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 .dashboard-container.is-compact .metric-card {
-    padding: 8px 10px;
+    padding: 7px 10px;
+    border-radius: var(--radius-md);
+}
+.dashboard-container.is-compact .metric-title {
+    font-size: 10.5px;
 }
 .dashboard-container.is-compact .metric-value {
-    font-size: 16px;
+    font-size: 15px;
+    margin-top: 2px;
 }
 .dashboard-container.is-compact .metric-footer,
+.dashboard-container.is-compact .progress-bar-bg,
 .dashboard-container.is-compact .btn-preset-toggle,
 .dashboard-container.is-compact .cost-presets-popover,
 .dashboard-container.is-compact .raw-output-box {
     display: none !important;
+}
+
+/* Compact Panel Cards: Streamlined header, hidden verbose text */
+.dashboard-container.is-compact .panel-card {
+    padding: 10px 14px;
+    gap: 8px;
+    border-radius: var(--radius-md);
+}
+.dashboard-container.is-compact .panel-subtitle,
+.dashboard-container.is-compact .engine-desc,
+.dashboard-container.is-compact .step-desc,
+.dashboard-container.is-compact .opt-desc,
+.dashboard-container.is-compact .wizard-sub {
+    display: none !important;
+}
+.dashboard-container.is-compact .vibe-steps-grid {
+    margin-top: 6px !important;
+    gap: 8px !important;
+}
+.dashboard-container.is-compact .vibe-step-card {
+    padding: 8px 10px;
+}
+.dashboard-container.is-compact .step-title {
+    font-size: 12px;
+}
+.dashboard-container.is-compact .engine-sync-row {
+    padding: 6px 10px;
+}
+.dashboard-container.is-compact .ide-grid {
+    gap: 6px;
+}
+.dashboard-container.is-compact .ide-card {
+    padding: 8px 10px;
+}
+.dashboard-container.is-compact .command-pill-row {
+    margin-top: 6px !important;
+    padding: 3px 6px !important;
+}
+
+/* Header button active state for compact mode toggle */
+#minimizeBtn.active {
+    background: var(--apple-cyan-surface);
+    color: var(--apple-cyan);
+    border-color: rgba(100, 210, 255, 0.4);
+    box-shadow: 0 0 8px rgba(100, 210, 255, 0.25);
 }
 
 /* ==========================================================================
