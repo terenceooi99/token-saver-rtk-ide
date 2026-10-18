@@ -410,12 +410,16 @@ function applyCostPrice(price, notifyBackend = true) {
     }
 }
 
-// Restore saved state
+// Restore saved state (Defaults to fully expanded view)
 const savedState = vscode.getState() || {};
-if (savedState.isCompact) {
+if (savedState.isCompact === true) {
     isCompact = true;
     dashboardContainer.classList.add('is-compact');
+} else {
+    isCompact = false;
+    dashboardContainer.classList.remove('is-compact');
 }
+
 if (savedState.collapsedSections && Array.isArray(savedState.collapsedSections)) {
     savedState.collapsedSections.forEach(sectionId => {
         const sec = document.getElementById(sectionId);

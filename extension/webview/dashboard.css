@@ -3173,6 +3173,20 @@ body.is-sidebar {
     padding: 3px 6px !important;
 }
 
+/* In Compact Mode: Hide the RTK deactivation impact callout block */
+.dashboard-container.is-compact #sectionRtk .warning-feature-item {
+    display: none !important;
+}
+
+/* In Compact Mode: Prune Savings Breakdown to only leave Ecosystem Savings Distribution */
+.dashboard-container.is-compact #sectionSavings .channels-grid-container,
+.dashboard-container.is-compact #sectionSavings .raw-output-box {
+    display: none !important;
+}
+.dashboard-container.is-compact #sectionSavings .multi-channel-distro-box {
+    margin-bottom: 0 !important;
+}
+
 /* Header button active state for compact mode toggle */
 #minimizeBtn.active {
     background: var(--apple-cyan-surface);
@@ -3504,7 +3518,7 @@ body.is-sidebar {
 }
 
 .btn-action-omni {
-    border-left: 3px solid #af52de !important;
+    /* Keep standard border for uniform appearance */
 }
 
 .btn-action-danger {
@@ -4218,7 +4232,7 @@ body.light-theme .initial-loading-tag.missing {
 
 /* ECC Section Theme Styling */
 .ecc-section {
-    border-left: 3px solid rgba(100, 210, 255, 0.6);
+    /* Uniform standard border across all panel cards */
 }
 
 .ecc-section .repo-badge-link {
@@ -4233,7 +4247,7 @@ body.light-theme .initial-loading-tag.missing {
 }
 
 body.light-theme .ecc-section {
-    border-left: 3px solid #0071e3;
+    /* Uniform standard border */
 }
 
 
