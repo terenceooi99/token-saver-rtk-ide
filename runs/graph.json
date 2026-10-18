@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-18T09:01:54.289Z",
+  "last_updated": "2026-10-18T09:09:11.532Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -5245,6 +5245,15 @@
       "source": "skills\\rtk-omniroute\\SKILL.md",
       "line": 31,
       "evidence": "- **Token Compression:** Enable `RTK -> Caveman` in OmniRoute Web Dashboard (`http://localhost:20128` → **Context & Cache → Compression**)."
+    },
+    {
+      "id": "sec__1_14_10_2026_10_18",
+      "name": "[1.14.10] - 2026-10-18",
+      "type": "Section/Module",
+      "description": "Specification section from CHANGELOG.md",
+      "source": "CHANGELOG.md",
+      "line": 5,
+      "evidence": "## [1.14.10] - 2026-10-18"
     }
   ],
   "relations": [
@@ -9571,7 +9580,7 @@
   ],
   "stats": {
     "total_sources": 121,
-    "total_entities": 569,
+    "total_entities": 570,
     "total_relations": 540,
     "token_savings_estimate": "85-95%"
   }

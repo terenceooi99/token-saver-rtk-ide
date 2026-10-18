@@ -2,6 +2,18 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.10] - 2026-10-18
+### Added & Improved
+- **OmniRoute Vibe Coder Preset UI & Agent Handoff Streamlining**:
+  - Enhanced OmniRoute Step 3 ("Connect Your Coding Agent") with a dedicated **"🤖 Copy AI Agent Prompt"** dual-action button alongside **"📋 Copy Config"** across all IDE presets (Antigravity, Cursor, Cline/Roo Code, Claude Code CLI, and VS Code Continue).
+  - Configured intelligent host IDE tab detection and automatic highlighting, prioritizing Antigravity IDE and Cursor based on active workspace telemetry.
+  - Added dedicated contextual notice callouts (`.preset-notice-callout`) guiding users through IDE-specific nuances (e.g. Antigravity chat model routing, Cursor OpenAI overrides, and Claude Code environment variables).
+  - Established Dual-Strategy Auto-Combo Routing: defaults to **`auto/coding:free`** for a 100% Zero-Cost Guarantee while supporting **`auto/coding`** for uninterrupted multi-provider auto-failover.
+  - Guided users to configure stacked token compression (**`RTK -> Caveman`**) inside OmniRoute's Web Dashboard (*Context & Cache → Compression*).
+  - Synchronized `/rtk-omniroute` skill reference files and AST graphs across workspace, package, and global skill repositories.
+- **Upstream Engine Integration & Latency Diagnostics Guardrails**:
+  - Aligned dashboard footer version badge and verified pre-flight integrity contracts.
+
 ## [1.14.9] - 2026-10-18
 ### Added & Improved
 - **User-Friendly Step 3 OmniRoute AI Agent Prompt & Chat Routing**:
