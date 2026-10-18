@@ -431,155 +431,454 @@ class RtkUpdater {
         }
     }
 
+    /**
+     * Restore Point Manifest Management for Upstream GitHub Layers.
+     * Stored in workspace .agents/restore_points/ or global ~/.gemini/restore_points/
+     */
+    static getRestorePointsDir() {
+        const folders = vscode.workspace.workspaceFolders;
+        if (folders && folders.length > 0) {
+            const wsDir = path.join(folders[0].uri.fsPath, '.agents', 'restore_points');
+            try {
+                if (!fs.existsSync(wsDir)) fs.mkdirSync(wsDir, { recursive: true });
+                return wsDir;
+            } catch (_) {}
+        }
+        const homeDir = path.join(os.homedir(), '.gemini', 'restore_points');
+        try {
+            if (!fs.existsSync(homeDir)) fs.mkdirSync(homeDir, { recursive: true });
+        } catch (_) {}
+        return homeDir;
+    }
+
+    static getRestoreManifestPath() {
+        return path.join(this.getRestorePointsDir(), 'upstream_restore_points.json');
+    }
+
+    static getRestorePoints() {
+        try {
+            const manifestPath = this.getRestoreManifestPath();
+            if (fs.existsSync(manifestPath)) {
+                const raw = fs.readFileSync(manifestPath, 'utf8');
+                const list = JSON.parse(raw);
+                if (Array.isArray(list)) return list;
+            }
+        } catch (e) {
+            console.warn('Failed to read restore points manifest:', e);
+        }
+        return [];
+    }
+
+    static saveRestorePoints(points) {
+        try {
+            const manifestPath = this.getRestoreManifestPath();
+            fs.writeFileSync(manifestPath, JSON.stringify(points.slice(0, 50), null, 2), 'utf8');
+        } catch (e) {
+            console.error('Failed to write restore points manifest:', e);
+        }
+    }
+
+    static createRestorePoint(layerKey, details = {}) {
+        const points = this.getRestorePoints();
+        const newPoint = {
+            id: `rp_${Date.now()}_${layerKey}`,
+            timestamp: new Date().toISOString(),
+            dateFormatted: new Date().toLocaleString(),
+            layerKey,
+            name: details.name || layerKey,
+            repo: details.repo || null,
+            candidateDirs: details.candidateDirs || [],
+            trashedDirs: details.trashedDirs || [],
+            stateBefore: details.stateBefore || {}
+        };
+        // Prepend newest
+        points.unshift(newPoint);
+        this.saveRestorePoints(points);
+        return newPoint;
+    }
+
     static async performLayerUninstall(layerKey) {
         const OmniRouteService = require('./omniroute-service');
         const config = vscode.workspace.getConfiguration('tokenSaver');
+        const trashedDirs = [];
+
+        // Helper to trash candidate dirs safely to OS Recycle Bin
+        const trashDirs = async (dirs) => {
+            for (const d of dirs) {
+                if (d && fs.existsSync(d)) {
+                    const ok = await SkillInstaller.moveToTrash(d);
+                    if (ok) trashedDirs.push(d);
+                }
+            }
+        };
 
         switch (layerKey) {
-            case 'rtk':
-                vscode.window.showInformationMessage('🗑️ Launching RTK CLI uninstaller...');
+            case 'rtk': {
+                this.createRestorePoint('rtk', {
+                    name: 'RTK CLI (rtk-ai/rtk)',
+                    repo: 'rtk-ai/rtk',
+                    stateBefore: { rtkEnabled: config.get('rtkEnabled', true) }
+                });
+                vscode.window.showInformationMessage('🗑️ Moving RTK CLI to Recycle Bin & launching uninstaller...');
                 RtkService.uninstallRtk();
                 break;
-            case 'headroom':
-                vscode.window.showInformationMessage('🗑️ Launching Headroom CCR Python uninstaller...');
+            }
+            case 'headroom': {
+                this.createRestorePoint('headroom', {
+                    name: 'Headroom CCR (headroomlabs-ai/headroom)',
+                    repo: 'headroomlabs-ai/headroom',
+                    stateBefore: { headroomEnabled: config.get('headroomEnabled', true) }
+                });
+                vscode.window.showInformationMessage('🗑️ Moving Headroom CCR to Recycle Bin & launching uninstaller...');
                 RtkService.uninstallHeadroom();
                 break;
-            case 'ponytail':
+            }
+            case 'ponytail': {
                 try {
                     const res = await SkillInstaller.uninstallPonytailSkills();
                     await config.update('ponytailMode', 'off', vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    this.createRestorePoint('ponytail', {
+                        name: 'Ponytail YAGNI Suite (DietrichGebert/ponytail)',
+                        repo: 'DietrichGebert/ponytail',
+                        trashedDirs: res.total || [],
+                        stateBefore: { ponytailMode: 'full' }
+                    });
                     vscode.window.showInformationMessage(
-                        `🥋 Uninstalled Ponytail YAGNI suite (${res.total.length} skills moved to Recycle Bin). Ponytail mode set to OFF.`
+                        `🥋 Uninstalled Ponytail YAGNI suite (${res.total.length} skills moved to Recycle Bin). Ponytail mode set to OFF. Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Ponytail skills: ${e.message}`);
                 }
                 break;
-            case 'antislop':
+            }
+            case 'antislop': {
                 try {
                     const res = await SkillInstaller.uninstallAntiSlopSkills();
                     await config.update('antiSlopEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    this.createRestorePoint('antislop', {
+                        name: 'Anti-Slop Framework (miqdadbadjuber/anti-slop)',
+                        repo: 'miqdadbadjuber/anti-slop',
+                        trashedDirs: res.total || [],
+                        stateBefore: { antiSlopEnabled: true }
+                    });
                     vscode.window.showInformationMessage(
-                        `🛡️ Uninstalled Anti-Slop suite (${res.total.length} skills moved to Recycle Bin). Anti-Slop disabled.`
+                        `🛡️ Uninstalled Anti-Slop suite (${res.total.length} skills moved to Recycle Bin). Anti-Slop disabled. Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Anti-Slop skills: ${e.message}`);
                 }
                 break;
-            case 'jevgraph':
+            }
+            case 'jevgraph': {
                 try {
                     const JevGraphService = require('./jevgraph-service');
-                    const isWindows = process.platform === 'win32';
-                    const cmds = JevGraphService.getUninstallCommands(isWindows);
-                    JevGraphService.runInTerminal(cmds.combinedUninstallCmd);
+                    const cands = JevGraphService.getCandidateDirs();
+                    await trashDirs(cands);
                     const res = await SkillInstaller.uninstallJevGraphSkills();
                     await config.update('jevGraphEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    this.createRestorePoint('jevgraph', {
+                        name: 'JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
+                        repo: 'chenmingtang830/jevgraph',
+                        candidateDirs: cands,
+                        trashedDirs: [...trashedDirs, ...(res.total || [])],
+                        stateBefore: { jevGraphEnabled: true }
+                    });
+                    const isWindows = process.platform === 'win32';
+                    const cmds = JevGraphService.getUninstallCommands(isWindows);
+                    JevGraphService.runInTerminal(cmds.combinedUninstallCmd);
                     vscode.window.showInformationMessage(
-                        `🕸️ Uninstalled JevGraph engine & moved ${res.total.length} skills to Recycle Bin. JevGraph optimization disabled.`
+                        `🕸️ Uninstalled JevGraph engine & moved directory and ${res.total.length} skills to Recycle Bin. Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall JevGraph: ${e.message}`);
                 }
                 break;
-            case 'codegraph':
+            }
+            case 'codegraph': {
                 try {
                     const { CodeGraphService } = require('./codegraph-service');
-                    const isWindows = process.platform === 'win32';
-                    const cmds = CodeGraphService.getUninstallCommands(isWindows);
+                    const cands = CodeGraphService.getCandidateDirs();
+                    await trashDirs(cands);
                     await config.update('codeGraphEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    this.createRestorePoint('codegraph', {
+                        name: 'CodeGraphContext (CodeGraphContext/CodeGraphContext)',
+                        repo: 'CodeGraphContext/CodeGraphContext',
+                        candidateDirs: cands,
+                        trashedDirs,
+                        stateBefore: { codeGraphEnabled: true }
+                    });
+                    const isWindows = process.platform === 'win32';
+                    const cmds = CodeGraphService.getUninstallCommands(isWindows);
                     RtkService.runInTerminal(cmds.primaryCmd);
                     vscode.window.showInformationMessage(
-                        '🧬 CodeGraphContext uninstaller started in terminal and rule disabled.'
+                        '🧬 CodeGraphContext directory moved to Recycle Bin and uninstaller started. Restore point saved.'
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall CodeGraphContext: ${e.message}`);
                 }
                 break;
-            case 'crw':
+            }
+            case 'crw': {
                 try {
                     const { CrwService } = require('./crw-service');
-                    const isWindows = process.platform === 'win32';
-                    const cmds = CrwService.getUninstallCommands(isWindows);
+                    const cands = CrwService.getCandidateDirs();
+                    await trashDirs(cands);
                     await config.update('crwEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    this.createRestorePoint('crw', {
+                        name: 'fastCRW Static Scraper (fastcrw/crw)',
+                        repo: 'fastcrw/crw',
+                        candidateDirs: cands,
+                        trashedDirs,
+                        stateBefore: { crwEnabled: true }
+                    });
+                    const isWindows = process.platform === 'win32';
+                    const cmds = CrwService.getUninstallCommands(isWindows);
                     RtkService.runInTerminal(cmds.primaryCmd);
                     vscode.window.showInformationMessage(
-                        '🕷️ fastCRW uninstaller started in terminal and hybrid search rule disabled.'
+                        '🕷️ fastCRW directory moved to Recycle Bin and uninstaller started. Restore point saved.'
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall fastCRW: ${e.message}`);
                 }
                 break;
-            case 'lightpanda':
+            }
+            case 'lightpanda': {
                 try {
                     const { LightpandaService } = require('./lightpanda-service');
-                    const isWindows = process.platform === 'win32';
-                    const cmds = LightpandaService.getUninstallCommands(isWindows);
+                    const cands = LightpandaService.getCandidateDirs();
+                    await trashDirs(cands);
                     await config.update('lightpandaEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    this.createRestorePoint('lightpanda', {
+                        name: 'Lightpanda Browser (lightpanda-io/browser)',
+                        repo: 'lightpanda-io/browser',
+                        candidateDirs: cands,
+                        trashedDirs,
+                        stateBefore: { lightpandaEnabled: true }
+                    });
+                    const isWindows = process.platform === 'win32';
+                    const cmds = LightpandaService.getUninstallCommands(isWindows);
                     RtkService.runInTerminal(cmds.primaryCmd);
                     vscode.window.showInformationMessage(
-                        '🐼 Lightpanda Browser uninstaller started in terminal and MCP fallback disabled.'
+                        '🐼 Lightpanda Browser directory moved to Recycle Bin and uninstaller started. Restore point saved.'
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Lightpanda: ${e.message}`);
                 }
                 break;
-            case 'ecc':
+            }
+            case 'ecc': {
                 try {
+                    const { EccService } = require('./ecc-service');
+                    const cands = EccService.getCandidateDirs();
+                    await trashDirs(cands);
                     const res = await SkillInstaller.uninstallEccSkills();
                     await config.update('eccEnabled', false, vscode.ConfigurationTarget.Global);
                     const scope = config.get('targetScope', 'all');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    this.createRestorePoint('ecc', {
+                        name: 'ECC Harness Optimization (affaan-m/ECC)',
+                        repo: 'affaan-m/ECC',
+                        candidateDirs: cands,
+                        trashedDirs: [...trashedDirs, ...(res.total || [])],
+                        stateBefore: { eccEnabled: true }
+                    });
                     vscode.window.showInformationMessage(
-                        `🧠 Uninstalled ECC skills (${res.total.length} skills removed). Strategic compaction and ECC directives disabled.`
+                        `🧠 Uninstalled ECC skills (${res.total.length} skills moved to Recycle Bin). Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall ECC: ${e.message}`);
                 }
                 break;
-            case 'omniroute':
+            }
+            case 'omniroute': {
                 try {
                     vscode.window.showInformationMessage('🗑️ Stopping OmniRoute & launching uninstaller...');
                     OmniRouteService.uninstallCli();
                     await config.update('omniRouteEnabled', false, vscode.ConfigurationTarget.Global);
-                    vscode.window.showInformationMessage('🌐 OmniRoute Gateway uninstalled and feature disabled.');
+                    this.createRestorePoint('omniroute', {
+                        name: 'OmniRoute AI Gateway (diegosouzapw/OmniRoute)',
+                        repo: 'diegosouzapw/OmniRoute',
+                        stateBefore: { omniRouteEnabled: true }
+                    });
+                    vscode.window.showInformationMessage('🌐 OmniRoute Gateway uninstalled to Recycle Bin and feature disabled. Restore point saved.');
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall OmniRoute: ${e.message}`);
                 }
                 break;
-            case 'rules_skills':
+            }
+            case 'rules_skills': {
                 try {
                     SkillInstaller.removeAllRules();
                     const sRes = await SkillInstaller.uninstallAllSkills();
+                    this.createRestorePoint('rules_skills', {
+                        name: 'Injected Multi-IDE Rules & Skills',
+                        trashedDirs: sRes.total || [],
+                        stateBefore: {}
+                    });
                     vscode.window.showInformationMessage(
-                        `🧹 Cleared all injected Multi-IDE rules and moved ${sRes.total.length} Antigravity/Agent skills to Recycle Bin.`
+                        `🧹 Cleared all injected Multi-IDE rules and moved ${sRes.total.length} Antigravity/Agent skills to Recycle Bin. Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to clean rules/skills: ${e.message}`);
                 }
                 break;
-            case 'all':
+            }
+            case 'all': {
                 await this.performAllUninstall();
                 break;
+            }
             default:
                 vscode.window.showWarningMessage(`Unknown layer key: ${layerKey}`);
         }
     }
 
+    /**
+     * Recover / Restore an upstream layer from its restore point or re-synchronize from GitHub
+     */
+    static async performLayerRecover(layerKey) {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        const scope = config.get('targetScope', 'all');
+
+        vscode.window.showInformationMessage(`♻️ Recovering ${layerKey} upstream layer and re-enabling configuration...`);
+
+        switch (layerKey) {
+            case 'rtk':
+                await config.update('rtkEnabled', true, vscode.ConfigurationTarget.Global);
+                this.performUpdate();
+                break;
+            case 'headroom':
+                await config.update('headroomEnabled', true, vscode.ConfigurationTarget.Global);
+                this.performHeadroomUpdate();
+                break;
+            case 'ponytail':
+                await config.update('ponytailMode', 'full', vscode.ConfigurationTarget.Global);
+                await this.performPonytailSync();
+                break;
+            case 'antislop':
+                await config.update('antiSlopEnabled', true, vscode.ConfigurationTarget.Global);
+                await this.performAntiSlopSync();
+                break;
+            case 'omniroute':
+                await config.update('omniRouteEnabled', true, vscode.ConfigurationTarget.Global);
+                this.performOmniRouteUpdate();
+                break;
+            case 'jevgraph':
+                await config.update('jevGraphEnabled', true, vscode.ConfigurationTarget.Global);
+                await this.performJevGraphSync();
+                break;
+            case 'codegraph':
+                await config.update('codeGraphEnabled', true, vscode.ConfigurationTarget.Global);
+                await this.performCodeGraphSync();
+                break;
+            case 'crw':
+                await config.update('crwEnabled', true, vscode.ConfigurationTarget.Global);
+                await this.performCrwSync();
+                break;
+            case 'lightpanda':
+                await config.update('lightpandaEnabled', true, vscode.ConfigurationTarget.Global);
+                await this.performLightpandaSync();
+                break;
+            case 'ecc':
+                await config.update('eccEnabled', true, vscode.ConfigurationTarget.Global);
+                await this.performEccSync();
+                break;
+            case 'rules_skills':
+                SkillInstaller.installAllSkills(scope);
+                SkillInstaller.syncRules(true, scope);
+                break;
+            default:
+                vscode.window.showWarningMessage(`Unknown recovery layer key: ${layerKey}`);
+                return;
+        }
+
+        SkillInstaller.syncRules(true, scope);
+        vscode.window.showInformationMessage(`✓ Upstream layer ${layerKey} successfully restored and active.`);
+    }
+
+    /**
+     * Display a modal / QuickPick listing available Restore Points to recover from
+     */
+    static async showRestorePointsPicker() {
+        const points = this.getRestorePoints();
+        if (points.length === 0) {
+            const act = await vscode.window.showInformationMessage(
+                'ℹ️ No restore points recorded yet. Would you like to open the OS Recycle Bin?',
+                'Open Recycle Bin',
+                'Cancel'
+            );
+            if (act === 'Open Recycle Bin') {
+                await this.openOsRecycleBin();
+            }
+            return;
+        }
+
+        const items = points.map(rp => ({
+            label: `$(history) ${rp.name || rp.layerKey}`,
+            description: `${rp.dateFormatted || rp.timestamp}`,
+            detail: rp.trashedDirs && rp.trashedDirs.length > 0
+                ? `Moved to Recycle Bin: ${rp.trashedDirs.slice(0, 3).join(', ')}${rp.trashedDirs.length > 3 ? '...' : ''}`
+                : 'Click to restore configuration & re-fetch from GitHub',
+            point: rp
+        }));
+
+        items.unshift({
+            label: '$(trash) Open OS Recycle Bin / Trash',
+            description: 'View and manually restore deleted folders from Windows Recycle Bin',
+            detail: 'Opens the system Recycle Bin in File Explorer',
+            point: null,
+            action: 'recycle_bin'
+        });
+
+        const sel = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select a Restore Point to recover or view Recycle Bin:'
+        });
+
+        if (!sel) return;
+
+        if (sel.action === 'recycle_bin') {
+            await this.openOsRecycleBin();
+            return;
+        }
+
+        if (sel.point) {
+            await this.performLayerRecover(sel.point.layerKey);
+        }
+    }
+
+    /**
+     * Safely open the OS Recycle Bin window
+     */
+    static async openOsRecycleBin() {
+        if (process.platform === 'win32') {
+            const { exec } = require('child_process');
+            exec('start shell:RecycleBinFolder', (err) => {
+                if (err) vscode.window.showErrorMessage(`Failed to open Recycle Bin: ${err.message}`);
+            });
+        } else if (process.platform === 'darwin') {
+            const { exec } = require('child_process');
+            exec('open ~/.Trash', (err) => {
+                if (err) vscode.window.showErrorMessage(`Failed to open Trash: ${err.message}`);
+            });
+        } else {
+            vscode.window.showInformationMessage('Recycle Bin location: ~/.local/share/Trash');
+        }
+    }
+
     static async performAllUninstall() {
         const confirm = await vscode.window.showWarningMessage(
-            '⚠️ Are you sure you want to completely UNINSTALL all upstream GitHub layers (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute) and clean all injected rules & skills?',
+            '⚠️ Are you sure you want to completely UNINSTALL all upstream GitHub layers (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute) and clean all injected rules & skills? All folders will be moved safely to your Recycle Bin with a Restore Point saved.',
             { modal: true },
             'Yes, Uninstall Everything',
             'Cancel'
@@ -591,6 +890,22 @@ class RtkUpdater {
 
         const OmniRouteService = require('./omniroute-service');
         const config = vscode.workspace.getConfiguration('tokenSaver');
+
+        // Create full restore point
+        this.createRestorePoint('all', {
+            name: 'All Upstream GitHub Layers (Full Backup)',
+            stateBefore: {
+                ponytailMode: config.get('ponytailMode'),
+                antiSlopEnabled: config.get('antiSlopEnabled'),
+                headroomEnabled: config.get('headroomEnabled'),
+                omniRouteEnabled: config.get('omniRouteEnabled'),
+                jevGraphEnabled: config.get('jevGraphEnabled'),
+                codeGraphEnabled: config.get('codeGraphEnabled'),
+                crwEnabled: config.get('crwEnabled'),
+                lightpandaEnabled: config.get('lightpandaEnabled'),
+                eccEnabled: config.get('eccEnabled')
+            }
+        });
 
         // 1. Remove rules & skills (safely moved to Recycle Bin)
         try {
@@ -606,6 +921,11 @@ class RtkUpdater {
             await config.update('antiSlopEnabled', false, vscode.ConfigurationTarget.Global);
             await config.update('headroomEnabled', false, vscode.ConfigurationTarget.Global);
             await config.update('omniRouteEnabled', false, vscode.ConfigurationTarget.Global);
+            await config.update('jevGraphEnabled', false, vscode.ConfigurationTarget.Global);
+            await config.update('codeGraphEnabled', false, vscode.ConfigurationTarget.Global);
+            await config.update('crwEnabled', false, vscode.ConfigurationTarget.Global);
+            await config.update('lightpandaEnabled', false, vscode.ConfigurationTarget.Global);
+            await config.update('eccEnabled', false, vscode.ConfigurationTarget.Global);
         } catch (e) {
             // ignore
         }
@@ -619,16 +939,72 @@ class RtkUpdater {
         RtkService.runInTerminal(cmds.combinedUninstallCmd);
 
         vscode.window.showInformationMessage(
-            '🧹 Full clean uninstall started in terminal. Injected rules and skills have been removed.'
+            '🧹 Full clean uninstall started in terminal. Folders moved to OS Recycle Bin and restore point saved.'
         );
     }
 
     static async showUninstallPicker() {
+        const restorePoints = this.getRestorePoints();
+        const rpCountLabel = restorePoints.length > 0 ? ` (${restorePoints.length} saved)` : '';
+
         const picks = [
             {
+                label: `$(history) ♻️ Restore Points & Recovery List...${rpCountLabel}`,
+                description: 'Recover uninstalled upstream layers from Restore Points or GitHub',
+                detail: 'View recent uninstallation restore points or browse the OS Recycle Bin',
+                actionKey: 'restore_points'
+            },
+            {
+                label: '$(trash) Open OS Recycle Bin / Trash',
+                description: 'Open the Windows Recycle Bin or Mac Trash directly',
+                detail: 'View deleted files and manually restore files if needed',
+                actionKey: 'open_recycle_bin'
+            },
+            {
                 label: '$(trash) All Upstream GitHub Layers (Full Clean Purge)',
-                description: 'Uninstall RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, and remove all injected rules & skills',
+                description: 'Move all upstream folders to Recycle Bin and create full Restore Point',
+                detail: 'RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW, Lightpanda & ECC',
                 layerKey: 'all'
+            },
+            {
+                label: '$(browser) Lightpanda Headless Browser (lightpanda-io/browser)',
+                description: 'Move local directory to Recycle Bin and disable dynamic MCP fallback',
+                layerKey: 'lightpanda'
+            },
+            {
+                label: '$(globe) fastCRW Static Scraper & Search (fastcrw/crw)',
+                description: 'Move local directory to Recycle Bin and disable fastCRW markdown feature',
+                layerKey: 'crw'
+            },
+            {
+                label: '$(database) CodeGraphContext Semantic Graph (CodeGraphContext/CodeGraphContext)',
+                description: 'Move local directory to Recycle Bin and disable code graph feature',
+                layerKey: 'codegraph'
+            },
+            {
+                label: '$(type-hierarchy) JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
+                description: 'Move local directory & skills to Recycle Bin and disable feature',
+                layerKey: 'jevgraph'
+            },
+            {
+                label: '$(circuit-board) ECC Harness Optimization (affaan-m/ECC)',
+                description: 'Move ECC skills & candidate directory to Recycle Bin and disable feature',
+                layerKey: 'ecc'
+            },
+            {
+                label: '$(shield) Anti-Slop Framework (miqdadbadjuber/anti-slop)',
+                description: 'Move /antislop-* skills to Recycle Bin and disable Anti-Slop rule injection',
+                layerKey: 'antislop'
+            },
+            {
+                label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
+                description: 'Move /ponytail-* skills to Recycle Bin and turn off Ponytail mode',
+                layerKey: 'ponytail'
+            },
+            {
+                label: '$(globe) OmniRoute AI Gateway (diegosouzapw/OmniRoute)',
+                description: 'Stop gateway, move configuration to Recycle Bin, and disable feature',
+                layerKey: 'omniroute'
             },
             {
                 label: '$(terminal) RTK CLI Binary (rtk-ai/rtk)',
@@ -641,57 +1017,23 @@ class RtkUpdater {
                 layerKey: 'headroom'
             },
             {
-                label: '$(shield) Anti-Slop Framework (miqdadbadjuber/anti-slop)',
-                description: 'Remove /antislop-* skills and disable Anti-Slop rule injection',
-                layerKey: 'antislop'
-            },
-            {
-                label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
-                description: 'Remove /ponytail-* skills and turn off Ponytail mode',
-                layerKey: 'ponytail'
-            },
-            {
-                label: '$(globe) OmniRoute AI Gateway (diegosouzapw/OmniRoute)',
-                description: 'Stop gateway, npm uninstall -g omniroute, and disable feature',
-                layerKey: 'omniroute'
-            },
-            {
-                label: '$(type-hierarchy) JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
-                description: 'Remove ~/.config/jevgraph, remove /jevgraph-* skills, and disable feature',
-                layerKey: 'jevgraph'
-            },
-            {
-                label: '$(database) CodeGraphContext Semantic Graph (CodeGraphContext/CodeGraphContext)',
-                description: 'pip uninstall codegraphcontext, remove /codegraph-* skills, and disable feature',
-                layerKey: 'codegraph'
-            },
-            {
-                label: '$(globe) fastCRW Static Scraper & Search (fastcrw/crw)',
-                description: 'cargo uninstall crw/crw-server and disable fastCRW markdown feature',
-                layerKey: 'crw'
-            },
-            {
-                label: '$(browser) Lightpanda Headless Browser (lightpanda-io/browser)',
-                description: 'npm uninstall -g @lightpanda/browser and remove Lightpanda dynamic MCP fallback',
-                layerKey: 'lightpanda'
-            },
-            {
-                label: '$(circuit-board) ECC Harness Optimization (affaan-m/ECC)',
-                description: 'Remove /strategic-compact, /ck, /council, /agent-evaluator skills and disable ECC feature',
-                layerKey: 'ecc'
-            },
-            {
                 label: '$(clear-all) Injected Multi-IDE Rules & Skills',
-                description: 'Strip all rule blocks from AGENTS.md, .cursorrules, etc. and remove .agents/skills',
+                description: 'Strip all rule blocks and move .agents/skills to Recycle Bin',
                 layerKey: 'rules_skills'
             }
         ];
 
         const sel = await vscode.window.showQuickPick(picks, {
-            placeHolder: 'Select an upstream GitHub layer or feature to uninstall:'
+            placeHolder: 'Select an upstream GitHub layer to uninstall, recover, or manage Restore Points:'
         });
 
-        if (sel) {
+        if (!sel) return;
+
+        if (sel.actionKey === 'restore_points') {
+            await this.showRestorePointsPicker();
+        } else if (sel.actionKey === 'open_recycle_bin') {
+            await this.openOsRecycleBin();
+        } else if (sel.layerKey) {
             await this.performLayerUninstall(sel.layerKey);
         }
     }

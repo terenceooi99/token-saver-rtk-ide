@@ -153,7 +153,92 @@ class JevGraphService {
             terminal = vscode.window.createTerminal(terminalName);
         }
         terminal.show();
-        terminal.sendText(command);
+
+        const cmdsToRun = [];
+        const parseCommands = (item) => {
+            if (!item) return;
+            if (Array.isArray(item)) {
+                item.forEach(sub => parseCommands(sub));
+                return;
+            }
+            if (typeof item !== 'string') return;
+            const str = item.trim();
+            if (!str) return;
+
+            // Split top-level statements separated by semicolons or &&, preserving quotes and braces/parentheses
+            const parts = [];
+            let current = '';
+            let inSingleQuote = false;
+            let inDoubleQuote = false;
+            let braceDepth = 0;
+            let parenDepth = 0;
+
+            for (let i = 0; i < str.length; i++) {
+                const char = str[i];
+                const nextChar = str[i + 1];
+
+                if (char === "'" && !inDoubleQuote) {
+                    inSingleQuote = !inSingleQuote;
+                    current += char;
+                } else if (char === '"' && !inSingleQuote) {
+                    inDoubleQuote = !inDoubleQuote;
+                    current += char;
+                } else if (!inSingleQuote && !inDoubleQuote) {
+                    if (char === '{') {
+                        braceDepth++;
+                        current += char;
+                    } else if (char === '}') {
+                        if (braceDepth > 0) braceDepth--;
+                        current += char;
+                    } else if (char === '(') {
+                        parenDepth++;
+                        current += char;
+                    } else if (char === ')') {
+                        if (parenDepth > 0) parenDepth--;
+                        current += char;
+                    } else if (braceDepth === 0 && parenDepth === 0 && char === ';') {
+                        if (current.trim()) parts.push(current.trim());
+                        current = '';
+                    } else if (braceDepth === 0 && parenDepth === 0 && char === '&' && nextChar === '&') {
+                        if (current.trim()) parts.push(current.trim());
+                        current = '';
+                        i++; // skip second &
+                    } else {
+                        current += char;
+                    }
+                } else {
+                    current += char;
+                }
+            }
+            if (current.trim()) parts.push(current.trim());
+
+            for (let part of parts) {
+                part = part.trim();
+                if (part) {
+                    cmdsToRun.push(part);
+                }
+            }
+        };
+
+        parseCommands(command);
+
+        if (cmdsToRun.length === 0) {
+            return;
+        }
+
+        cmdsToRun.forEach((cmd, idx) => {
+            if (idx === 0) {
+                terminal.sendText(cmd);
+            } else {
+                setTimeout(() => {
+                    try {
+                        terminal.sendText(cmd);
+                    } catch (e) {
+                        // ignore
+                    }
+                }, idx * 300);
+            }
+        });
     }
 
     static buildGraphCommand(inputFile, outputFile = 'runs/graph.json', provider = 'keyword', ontology = null, entities = null, runnerInfo = null) {

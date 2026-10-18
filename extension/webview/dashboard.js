@@ -990,8 +990,13 @@ if (eccDiagSyncBtn) {
 }
 
 if (eccDiagUninstallBtn) {
-    eccDiagUninstallBtn.addEventListener('click', () => {
-        vscode.postMessage({ command: 'uninstallLayer', layer: 'ecc' });
+    eccDiagUninstallBtn.addEventListener('click', (e) => {
+        if (e) e.stopPropagation();
+        const isRecover = eccDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'ecc'
+        });
     });
 }
 
@@ -1409,31 +1414,51 @@ if (headerUninstallBtn) {
 if (omniDiagUninstallBtn) {
     omniDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'omniroute' });
+        const isRecover = omniDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'omniroute'
+        });
     });
 }
 if (rtkDiagUninstallBtn) {
     rtkDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'rtk' });
+        const isRecover = rtkDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'rtk'
+        });
     });
 }
 if (headroomDiagUninstallBtn) {
     headroomDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'headroom' });
+        const isRecover = headroomDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'headroom'
+        });
     });
 }
 if (ponytailDiagUninstallBtn) {
     ponytailDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'ponytail' });
+        const isRecover = ponytailDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'ponytail'
+        });
     });
 }
 if (antiSlopDiagUninstallBtn) {
     antiSlopDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'antislop' });
+        const isRecover = antiSlopDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'antislop'
+        });
     });
 }
 
@@ -1533,7 +1558,11 @@ if (jevGraphDiagSyncBtn) {
 if (jevGraphDiagUninstallBtn) {
     jevGraphDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'jevgraph' });
+        const isRecover = jevGraphDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'jevgraph'
+        });
     });
 }
 
@@ -1558,7 +1587,11 @@ if (codeGraphDiagSyncBtn) {
 if (codeGraphDiagUninstallBtn) {
     codeGraphDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'codegraph' });
+        const isRecover = codeGraphDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'codegraph'
+        });
     });
 }
 
@@ -1623,7 +1656,11 @@ if (crwDiagSyncBtn) {
 if (crwDiagUninstallBtn) {
     crwDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'crw' });
+        const isRecover = crwDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'crw'
+        });
     });
 }
 
@@ -1648,7 +1685,11 @@ if (lightpandaDiagSyncBtn) {
 if (lightpandaDiagUninstallBtn) {
     lightpandaDiagUninstallBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        vscode.postMessage({ command: 'uninstallLayer', layerKey: 'lightpanda' });
+        const isRecover = lightpandaDiagUninstallBtn.dataset.mode === 'recover';
+        vscode.postMessage({
+            command: isRecover ? 'recoverLayer' : 'uninstallLayer',
+            layerKey: 'lightpanda'
+        });
     });
 }
 
@@ -1914,7 +1955,9 @@ function renderDashboardState(data) {
     if (hybridBtn) {
         const hwInstalled = Boolean(data.crwInstalled || data.lightpandaInstalled);
         const isHybridEnabled = data.hybridWebEnabled !== undefined ? Boolean(data.hybridWebEnabled) : Boolean(data.crwEnabled);
-        const isHybrid = isHybridEnabled && hwInstalled;
+        const crwActive = Boolean(data.crwInstalled) && (data.crwEnabled !== false);
+        const lpActive = Boolean(data.lightpandaInstalled) && (data.lightpandaEnabled !== false);
+        const isHybrid = isHybridEnabled && (crwActive || lpActive);
         if (isHybrid) {
             hybridBtn.textContent = 'Hybrid Web ON';
             hybridBtn.className = 'btn btn-primary';
@@ -2166,6 +2209,23 @@ function renderDashboardState(data) {
         }
     }
 
+    // Helper function to update action button between Uninstall (🗑️) and Recover (♻️)
+    function updateDiagActionButton(btn, isInstalled, layerName) {
+        if (!btn) return;
+        btn.style.display = 'inline-block';
+        if (isInstalled) {
+            btn.dataset.mode = 'uninstall';
+            btn.className = 'btn-diag-mini btn-diag-trash';
+            btn.textContent = '🗑️';
+            btn.title = `Uninstall ${layerName} to OS Recycle Bin`;
+        } else {
+            btn.dataset.mode = 'recover';
+            btn.className = 'btn-diag-mini btn-diag-recover';
+            btn.textContent = '♻️ Recover';
+            btn.title = `Recover ${layerName} from Restore Point or GitHub`;
+        }
+    }
+
     // Diagnostics OmniRoute row
     if (diagOmniStatus) {
         if (!omniEnabled) {
@@ -2185,9 +2245,7 @@ function renderDashboardState(data) {
     if (omniDiagStartBtn) {
         omniDiagStartBtn.textContent = omniRunning ? '🌐 Open UI' : '⚡ Start';
     }
-    if (omniDiagUninstallBtn) {
-        omniDiagUninstallBtn.style.display = omniInstalled ? 'inline-block' : 'none';
-    }
+    updateDiagActionButton(omniDiagUninstallBtn, omniInstalled, 'OmniRoute');
 
     // Diagnostics RTK CLI row
     if (diagCliStatus) {
@@ -2206,7 +2264,7 @@ function renderDashboardState(data) {
         rtkDiagActions.style.display = 'inline-flex';
         if (rtkDiagAiBtn) rtkDiagAiBtn.style.display = installed ? 'none' : 'inline-block';
         if (rtkDiagRunBtn) rtkDiagRunBtn.style.display = installed ? 'none' : 'inline-block';
-        if (rtkDiagUninstallBtn) rtkDiagUninstallBtn.style.display = installed ? 'inline-block' : 'none';
+        updateDiagActionButton(rtkDiagUninstallBtn, installed, 'RTK CLI');
     }
 
     if (diagHeadroomStatus) {
@@ -2232,7 +2290,7 @@ function renderDashboardState(data) {
         const hrInstalled = Boolean(data.headroomInstalled);
         if (headroomDiagAiBtn) headroomDiagAiBtn.style.display = hrInstalled ? 'none' : 'inline-block';
         if (headroomDiagRunBtn) headroomDiagRunBtn.style.display = hrInstalled ? 'none' : 'inline-block';
-        if (headroomDiagUninstallBtn) headroomDiagUninstallBtn.style.display = hrInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(headroomDiagUninstallBtn, hrInstalled, 'Headroom');
     }
 
     if (diagPonytailStatus) {
@@ -2254,7 +2312,7 @@ function renderDashboardState(data) {
         const pInstalled = Boolean(data.ponytailInstalled);
         if (ponytailDiagAiBtn) ponytailDiagAiBtn.style.display = pInstalled ? 'none' : 'inline-block';
         if (ponytailDiagSyncBtn) ponytailDiagSyncBtn.style.display = pInstalled ? 'none' : 'inline-block';
-        if (ponytailDiagUninstallBtn) ponytailDiagUninstallBtn.style.display = pInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(ponytailDiagUninstallBtn, pInstalled, 'Ponytail');
     }
 
     if (diagAntiSlopStatus) {
@@ -2277,7 +2335,7 @@ function renderDashboardState(data) {
         const aInstalled = Boolean(data.antiSlopInstalled);
         if (antiSlopDiagAiBtn) antiSlopDiagAiBtn.style.display = aInstalled ? 'none' : 'inline-block';
         if (antiSlopDiagSyncBtn) antiSlopDiagSyncBtn.style.display = aInstalled ? 'none' : 'inline-block';
-        if (antiSlopDiagUninstallBtn) antiSlopDiagUninstallBtn.style.display = aInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(antiSlopDiagUninstallBtn, aInstalled, 'Anti-Slop');
     }
 
     if (diagJevGraphStatus) {
@@ -2300,7 +2358,7 @@ function renderDashboardState(data) {
         const jInstalled = Boolean(data.jevGraphInstalled);
         if (jevGraphDiagAiBtn) jevGraphDiagAiBtn.style.display = jInstalled ? 'none' : 'inline-block';
         if (jevGraphDiagSyncBtn) jevGraphDiagSyncBtn.style.display = jInstalled ? 'none' : 'inline-block';
-        if (jevGraphDiagUninstallBtn) jevGraphDiagUninstallBtn.style.display = jInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(jevGraphDiagUninstallBtn, jInstalled, 'JevGraph');
     }
 
     if (diagCodeGraphStatus) {
@@ -2323,7 +2381,7 @@ function renderDashboardState(data) {
         const cgInstalled = Boolean(data.codeGraphInstalled);
         if (codeGraphDiagAiBtn) codeGraphDiagAiBtn.style.display = cgInstalled ? 'none' : 'inline-block';
         if (codeGraphDiagSyncBtn) codeGraphDiagSyncBtn.style.display = cgInstalled ? 'none' : 'inline-block';
-        if (codeGraphDiagUninstallBtn) codeGraphDiagUninstallBtn.style.display = cgInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(codeGraphDiagUninstallBtn, cgInstalled, 'CodeGraphContext');
     }
 
     if (diagCrwStatus) {
@@ -2346,7 +2404,7 @@ function renderDashboardState(data) {
         const crwInstalled = Boolean(data.crwInstalled);
         if (crwDiagAiBtn) crwDiagAiBtn.style.display = crwInstalled ? 'none' : 'inline-block';
         if (crwDiagSyncBtn) crwDiagSyncBtn.style.display = crwInstalled ? 'none' : 'inline-block';
-        if (crwDiagUninstallBtn) crwDiagUninstallBtn.style.display = crwInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(crwDiagUninstallBtn, crwInstalled, 'fastCRW');
     }
 
     if (diagLightpandaStatus) {
@@ -2369,7 +2427,7 @@ function renderDashboardState(data) {
         const lpInstalled = Boolean(data.lightpandaInstalled);
         if (lightpandaDiagAiBtn) lightpandaDiagAiBtn.style.display = lpInstalled ? 'none' : 'inline-block';
         if (lightpandaDiagSyncBtn) lightpandaDiagSyncBtn.style.display = lpInstalled ? 'none' : 'inline-block';
-        if (lightpandaDiagUninstallBtn) lightpandaDiagUninstallBtn.style.display = lpInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(lightpandaDiagUninstallBtn, lpInstalled, 'Lightpanda');
     }
 
     if (diagEccStatus) {
@@ -2392,7 +2450,7 @@ function renderDashboardState(data) {
         const eccInstalled = Boolean(data.eccInstalled);
         if (eccDiagAiBtn) eccDiagAiBtn.style.display = eccInstalled ? 'none' : 'inline-block';
         if (eccDiagSyncBtn) eccDiagSyncBtn.style.display = eccInstalled ? 'none' : 'inline-block';
-        if (eccDiagUninstallBtn) eccDiagUninstallBtn.style.display = eccInstalled ? 'inline-block' : 'none';
+        updateDiagActionButton(eccDiagUninstallBtn, eccInstalled, 'ECC');
     }
 
     if (eccActiveBadge) {
@@ -2471,7 +2529,9 @@ function renderDashboardState(data) {
             icon: '⚡',
             repo: 'rtk-ai/rtk',
             version: installed ? version : 'Not installed',
-            isInstalled: Boolean(installed)
+            isInstalled: Boolean(installed),
+            isEnabled: isEnabled !== false,
+            isActive: Boolean(installed) && (isEnabled !== false)
         },
         {
             key: 'headroom',
@@ -2479,7 +2539,9 @@ function renderDashboardState(data) {
             icon: '🧱',
             repo: 'headroomlabs-ai/headroom',
             version: data.headroomInstalled ? data.headroomVersion : 'Not installed',
-            isInstalled: Boolean(data.headroomInstalled)
+            isInstalled: Boolean(data.headroomInstalled),
+            isEnabled: data.headroomEnabled !== false,
+            isActive: Boolean(data.headroomInstalled) && (data.headroomEnabled !== false)
         },
         {
             key: 'ponytail',
@@ -2487,7 +2549,9 @@ function renderDashboardState(data) {
             icon: '🥋',
             repo: 'DietrichGebert/ponytail',
             version: data.ponytailInstalled ? `${data.ponytailVersion || 'v1.0.0'} (${data.ponytailSkillsCount || 6}/6 skills)` : 'Not synced',
-            isInstalled: Boolean(data.ponytailInstalled)
+            isInstalled: Boolean(data.ponytailInstalled),
+            isEnabled: true,
+            isActive: Boolean(data.ponytailInstalled)
         },
         {
             key: 'antislop',
@@ -2495,7 +2559,9 @@ function renderDashboardState(data) {
             icon: '🛡️',
             repo: 'miqdadbadjuber/anti-slop',
             version: data.antiSlopInstalled ? `${data.antiSlopVersion || 'v3.2.20'} (${data.antiSlopSkillsCount || 6}/6 skills)` : 'Not synced',
-            isInstalled: Boolean(data.antiSlopInstalled)
+            isInstalled: Boolean(data.antiSlopInstalled),
+            isEnabled: data.antiSlopEnabled !== false,
+            isActive: Boolean(data.antiSlopInstalled) && (data.antiSlopEnabled !== false)
         },
         {
             key: 'omniroute',
@@ -2503,7 +2569,9 @@ function renderDashboardState(data) {
             icon: '🌐',
             repo: 'diegosouzapw/OmniRoute',
             version: data.omniRouteInstalled ? `${data.omniRouteVersion || 'Ready'} (:20128)` : 'Not installed',
-            isInstalled: Boolean(data.omniRouteInstalled)
+            isInstalled: Boolean(data.omniRouteInstalled),
+            isEnabled: Boolean(data.omniRouteRunning),
+            isActive: Boolean(data.omniRouteInstalled) && Boolean(data.omniRouteRunning)
         },
         {
             key: 'jevgraph',
@@ -2511,7 +2579,9 @@ function renderDashboardState(data) {
             icon: '🕸️',
             repo: 'chenmingtang830/jevgraph',
             version: data.jevGraphInstalled ? `${data.jevGraphVersion || 'Ready'} (${data.jevGraphProvider || 'keyword'})` : 'Not installed',
-            isInstalled: Boolean(data.jevGraphInstalled)
+            isInstalled: Boolean(data.jevGraphInstalled),
+            isEnabled: data.jevGraphEnabled !== false,
+            isActive: Boolean(data.jevGraphInstalled) && (data.jevGraphEnabled !== false)
         },
         {
             key: 'codegraph',
@@ -2519,7 +2589,9 @@ function renderDashboardState(data) {
             icon: '🧬',
             repo: 'CodeGraphContext/CodeGraphContext',
             version: data.codeGraphInstalled ? `${data.codeGraphVersion || 'Ready'} (cgc)` : 'Not installed',
-            isInstalled: Boolean(data.codeGraphInstalled)
+            isInstalled: Boolean(data.codeGraphInstalled),
+            isEnabled: data.codeGraphEnabled !== false,
+            isActive: Boolean(data.codeGraphInstalled) && (data.codeGraphEnabled !== false)
         },
         {
             key: 'crw',
@@ -2527,7 +2599,9 @@ function renderDashboardState(data) {
             icon: '🕷️',
             repo: 'fastcrw/crw',
             version: data.crwInstalled ? `${data.crwVersion || 'Ready'} (crw)` : 'Not installed',
-            isInstalled: Boolean(data.crwInstalled)
+            isInstalled: Boolean(data.crwInstalled),
+            isEnabled: data.crwEnabled !== false,
+            isActive: Boolean(data.crwInstalled) && (data.crwEnabled !== false)
         },
         {
             key: 'lightpanda',
@@ -2535,7 +2609,9 @@ function renderDashboardState(data) {
             icon: '🐼',
             repo: 'lightpanda-io/browser',
             version: data.lightpandaInstalled ? `${data.lightpandaVersion || 'Ready'} (lightpanda)` : 'Not installed',
-            isInstalled: Boolean(data.lightpandaInstalled)
+            isInstalled: Boolean(data.lightpandaInstalled),
+            isEnabled: data.lightpandaEnabled !== false,
+            isActive: Boolean(data.lightpandaInstalled) && (data.lightpandaEnabled !== false)
         },
         {
             key: 'ecc',
@@ -2543,29 +2619,37 @@ function renderDashboardState(data) {
             icon: '🧠',
             repo: 'affaan-m/ECC',
             version: data.eccInstalled ? `${data.eccVersion || 'Ready'} (${data.eccSkillsCount || 4}/4 skills)` : 'Not synced',
-            isInstalled: Boolean(data.eccInstalled)
+            isInstalled: Boolean(data.eccInstalled),
+            isEnabled: data.eccEnabled !== false,
+            isActive: Boolean(data.eccInstalled) && (data.eccEnabled !== false)
         }
     ];
 
+    const activeLayersCount = upstreamLayers.filter(l => l.isActive).length;
     const installedLayersCount = upstreamLayers.filter(l => l.isInstalled).length;
 
     if (diagVersionSummary) {
-        diagVersionSummary.textContent = `${installedLayersCount}/${upstreamLayers.length} Layers Active`;
+        diagVersionSummary.textContent = `${activeLayersCount}/${upstreamLayers.length} Layers Active`;
+        diagVersionSummary.title = `${activeLayersCount} active, ${installedLayersCount} installed out of ${upstreamLayers.length} total layers`;
     }
 
     if (diagVersionDropdown) {
-        diagVersionDropdown.innerHTML = upstreamLayers.map(l => `
-            <div class="diag-dropdown-item ${l.isInstalled ? 'item-active' : 'item-inactive'}">
+        diagVersionDropdown.innerHTML = upstreamLayers.map(l => {
+            const statusLabel = !l.isInstalled ? 'Missing' : (l.isActive ? 'Active' : 'Disabled');
+            const badgeClass = !l.isInstalled ? 'badge-muted' : (l.isActive ? 'badge-green' : 'badge-amber');
+            return `
+            <div class="diag-dropdown-item ${l.isActive ? 'item-active' : (l.isInstalled ? 'item-disabled' : 'item-inactive')}">
                 <div class="dropdown-item-top">
                     <span class="dropdown-item-name">${l.icon} <strong>${l.name}</strong></span>
-                    <span class="dropdown-item-badge ${l.isInstalled ? 'badge-green' : 'badge-muted'}">${l.isInstalled ? 'Installed' : 'Missing'}</span>
+                    <span class="dropdown-item-badge ${badgeClass}">${statusLabel}</span>
                 </div>
                 <div class="dropdown-item-sub">
                     <span class="dropdown-item-ver">${l.version}</span>
                     <a href="https://github.com/${l.repo}" target="_blank" class="dropdown-item-repo" title="Upstream GitHub: ${l.repo}">${l.repo} ↗</a>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     if (diagVersion) {

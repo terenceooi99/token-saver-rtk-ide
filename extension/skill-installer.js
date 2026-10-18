@@ -1229,8 +1229,25 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         }
 
         // Enable / Update mode
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+        try {
+            if (!fs.existsSync(dir)) {
+                // If dir is a broken junction/symlink, existsSync returns false but mkdirSync will fail with EEXIST/ENOENT
+                try {
+                    const lstat = fs.lstatSync(dir);
+                    if (lstat.isSymbolicLink()) {
+                        fs.unlinkSync(dir);
+                    }
+                } catch (_) {}
+                fs.mkdirSync(dir, { recursive: true });
+            }
+        } catch (mkErr) {
+            // If mkdir fails because a broken symlink or junction exists, remove the broken link and recreate directory
+            try {
+                fs.rmSync(dir, { recursive: true, force: true });
+                fs.mkdirSync(dir, { recursive: true });
+            } catch (fallbackErr) {
+                console.warn(`Could not prepare directory ${dir}:`, fallbackErr);
+            }
         }
 
         if (filePath.endsWith('rtk.mdc')) {

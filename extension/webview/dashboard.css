@@ -3493,6 +3493,23 @@ body.is-sidebar {
     color: #ffffff;
 }
 
+.btn-diag-recover {
+    background: rgba(48, 209, 88, 0.12);
+    border: 1px solid rgba(48, 209, 88, 0.35);
+    color: var(--apple-green, #30d158);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: var(--apple-spring);
+}
+
+.btn-diag-recover:hover {
+    background: rgba(48, 209, 88, 0.28);
+    border-color: var(--apple-green, #30d158);
+    color: #ffffff;
+}
+
 .omni-header-toggle {
     display: inline-flex;
     align-items: center;
@@ -3609,6 +3626,11 @@ body.light-theme .diag-dropdown-item {
 .dropdown-item-badge.badge-green {
     background: rgba(48, 209, 88, 0.15);
     color: var(--apple-green);
+}
+
+.dropdown-item-badge.badge-amber {
+    background: rgba(255, 159, 10, 0.18);
+    color: var(--apple-orange, #ff9f0a);
 }
 
 .dropdown-item-badge.badge-muted {

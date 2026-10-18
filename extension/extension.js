@@ -1122,6 +1122,24 @@ async function activate(context) {
         await refreshStatus(context);
     });
 
+    const recoverUpstreamCmd = vscode.commands.registerCommand('tokenSaver.recoverUpstream', async (layerKey) => {
+        if (typeof layerKey === 'string') {
+            await RtkUpdater.performLayerRecover(layerKey);
+        } else {
+            await RtkUpdater.showRestorePointsPicker();
+        }
+        await refreshStatus(context);
+    });
+
+    const showRestorePointsCmd = vscode.commands.registerCommand('tokenSaver.showRestorePoints', async () => {
+        await RtkUpdater.showRestorePointsPicker();
+        await refreshStatus(context);
+    });
+
+    const openRecycleBinCmd = vscode.commands.registerCommand('tokenSaver.openRecycleBin', async () => {
+        await RtkUpdater.openOsRecycleBin();
+    });
+
     const uninstallRtkCmd = vscode.commands.registerCommand('tokenSaver.uninstallRtk', async () => {
         await RtkUpdater.performLayerUninstall('rtk');
         await refreshStatus(context);
@@ -1344,6 +1362,11 @@ async function activate(context) {
         toggleCrwCmd,
         syncCrwCmd,
         uninstallCrwCmd,
+        toggleHybridWebCmd,
+        syncLightpandaCmd,
+        uninstallLightpandaCmd,
+        startLightpandaMcpCmd,
+        copyLightpandaMcpConfigCmd,
         onSaveDoc,
         toggleAntiSlopCmd,
         setAntiSlopModeCmd,
@@ -1380,6 +1403,9 @@ async function activate(context) {
         runEccCouncilCmd,
         uninstallEccCmd,
         uninstallUpstreamCmd,
+        recoverUpstreamCmd,
+        showRestorePointsCmd,
+        openRecycleBinCmd,
         uninstallRtkCmd,
         uninstallHeadroomCmd,
         uninstallPonytailCmd,

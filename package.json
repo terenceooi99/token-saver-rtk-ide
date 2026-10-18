@@ -406,7 +406,25 @@
       },
       {
         "command": "tokenSaver.uninstallUpstream",
-        "title": "Uninstall Upstream GitHub Layer (RTK, Headroom, Ponytail, OmniRoute, Anti-Slop, Rules & Skills)",
+        "title": "Uninstall / Clean Upstream GitHub Layer (RTK, Headroom, Ponytail, OmniRoute, Anti-Slop, Rules & Skills)",
+        "category": "Token Saver",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "tokenSaver.recoverUpstream",
+        "title": "Recover Upstream GitHub Layer from Restore Point or GitHub",
+        "category": "Token Saver",
+        "icon": "$(history)"
+      },
+      {
+        "command": "tokenSaver.showRestorePoints",
+        "title": "Show Upstream Restore Points & Recovery List",
+        "category": "Token Saver",
+        "icon": "$(history)"
+      },
+      {
+        "command": "tokenSaver.openRecycleBin",
+        "title": "Open OS Recycle Bin / Trash",
         "category": "Token Saver",
         "icon": "$(trash)"
       },

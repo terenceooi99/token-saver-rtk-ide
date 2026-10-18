@@ -543,9 +543,22 @@ class WebviewHelper {
                 await vscode.commands.executeCommand('tokenSaver.uninstallUpstream');
                 triggerRefresh(500);
                 break;
+            case 'openRestorePoints':
+                await RtkUpdater.showRestorePointsPicker();
+                triggerRefresh(500);
+                break;
+            case 'openRecycleBin':
+                await RtkUpdater.openOsRecycleBin();
+                break;
             case 'uninstallLayer':
                 if (message.layerKey) {
                     await RtkUpdater.performLayerUninstall(message.layerKey);
+                    triggerRefresh(500);
+                }
+                break;
+            case 'recoverLayer':
+                if (message.layerKey) {
+                    await RtkUpdater.performLayerRecover(message.layerKey);
                     triggerRefresh(500);
                 }
                 break;

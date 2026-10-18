@@ -95,14 +95,16 @@ class LightpandaService {
     static getInstallCommands(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin')) {
         const repoUrl = 'https://github.com/lightpanda-io/browser.git';
         const installScriptCmd = isWindows
-            ? 'npm install -g @lightpanda/browser && npx @lightpanda/browser install'
+            ? 'npm install -g @lightpanda/browser; npx @lightpanda/browser install'
             : (isMac
                 ? 'curl -fsSL https://pkg.lightpanda.io/install.sh | bash || npm install -g @lightpanda/browser'
                 : 'curl -fsSL https://pkg.lightpanda.io/install.sh | bash || npm install -g @lightpanda/browser');
 
         return {
             installScriptCmd,
-            npmInstallCmd: 'npm install -g @lightpanda/browser && npx @lightpanda/browser install',
+            npmInstallCmd: isWindows
+                ? 'npm install -g @lightpanda/browser; npx @lightpanda/browser install'
+                : 'npm install -g @lightpanda/browser && npx @lightpanda/browser install',
             dockerCmd: 'docker run -d --name lightpanda -p 9222:9222 lightpanda/browser:nightly',
             primaryCmd: installScriptCmd,
             repoUrl
@@ -111,8 +113,8 @@ class LightpandaService {
 
     static getUninstallCommands(isWindows = (process.platform === 'win32')) {
         const uninstallCmd = isWindows
-            ? 'npm uninstall -g @lightpanda/browser; docker stop lightpanda 2>$null; docker rm lightpanda 2>$null'
-            : 'npm uninstall -g @lightpanda/browser 2>/dev/null || rm -f $(which lightpanda 2>/dev/null); docker stop lightpanda 2>/dev/null; docker rm lightpanda 2>/dev/null';
+            ? 'npm uninstall -g @lightpanda/browser; if (Get-Command docker -ErrorAction SilentlyContinue) { docker stop lightpanda 2>$null; docker rm lightpanda 2>$null }'
+            : 'npm uninstall -g @lightpanda/browser 2>/dev/null || rm -f $(which lightpanda 2>/dev/null); if command -v docker >/dev/null 2>&1; then docker stop lightpanda 2>/dev/null || true; docker rm lightpanda 2>/dev/null || true; fi';
 
         return {
             uninstallCmd,
