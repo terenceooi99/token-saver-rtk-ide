@@ -15,6 +15,7 @@ const toggleJevGraphBtn = document.getElementById('toggleJevGraphBtn');
 const toggleCodeGraphBtn = document.getElementById('toggleCodeGraphBtn');
 const toggleHybridWebBtn = document.getElementById('toggleHybridWebBtn');
 const toggleCrwBtn = toggleHybridWebBtn || document.getElementById('toggleCrwBtn');
+const toggleEccBtn = document.getElementById('toggleEccBtn');
 const rtkStatusBadge = document.getElementById('rtkStatusBadge');
 const rtkInlineSyncBtn = document.getElementById('rtkInlineSyncBtn');
 const rtkTerminalScoreboardBtn = document.getElementById('rtkTerminalScoreboardBtn');
@@ -125,7 +126,7 @@ const initialLoadingDesc = document.querySelector('.initial-loading-desc');
 
 // Start progressive animated checking across upstream GitHub tags
 if (initialLoadingTags && initialLoadingTags.length > 0) {
-    const upstreamTagOrder = ['rtk', 'headroom', 'ponytail', 'antislop', 'omniroute', 'jevgraph', 'codegraph', 'crw', 'lightpanda'];
+    const upstreamTagOrder = ['rtk', 'headroom', 'ponytail', 'antislop', 'omniroute', 'jevgraph', 'codegraph', 'crw', 'lightpanda', 'ecc'];
     let stepIndex = 0;
 
     const advanceCheckStep = () => {
@@ -254,6 +255,22 @@ const lightpandaDiagActions = document.getElementById('lightpandaDiagActions');
 const lightpandaDiagAiBtn = document.getElementById('lightpandaDiagAiBtn');
 const lightpandaDiagSyncBtn = document.getElementById('lightpandaDiagSyncBtn');
 const lightpandaDiagUninstallBtn = document.getElementById('lightpandaDiagUninstallBtn');
+
+// ECC Elements
+const sectionEcc = document.getElementById('sectionEcc');
+const eccActiveBadge = document.getElementById('eccActiveBadge');
+const eccInlineSyncBtn = document.getElementById('eccInlineSyncBtn');
+const eccCheckbox = document.getElementById('eccCheckbox');
+const eccCompactNowBtn = document.getElementById('eccCompactNowBtn');
+const eccSaveCkBtn = document.getElementById('eccSaveCkBtn');
+const eccCouncilBtn = document.getElementById('eccCouncilBtn');
+const tabChannelEcc = document.getElementById('tabChannelEcc');
+
+const diagEccStatus = document.getElementById('diagEccStatus');
+const eccDiagActions = document.getElementById('eccDiagActions');
+const eccDiagAiBtn = document.getElementById('eccDiagAiBtn');
+const eccDiagSyncBtn = document.getElementById('eccDiagSyncBtn');
+const eccDiagUninstallBtn = document.getElementById('eccDiagUninstallBtn');
 
 const uninstallUpstreamBtn = document.getElementById('uninstallUpstreamBtn');
 const headerUninstallBtn = document.getElementById('headerUninstallBtn');
@@ -917,6 +934,64 @@ if (toggleHybridWebBtn || toggleCrwBtn) {
     const btn = toggleHybridWebBtn || toggleCrwBtn;
     btn.addEventListener('click', () => {
         vscode.postMessage({ command: 'toggleHybridWeb' });
+    });
+}
+
+if (toggleEccBtn) {
+    toggleEccBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'toggleEcc' });
+    });
+}
+
+if (eccCheckbox) {
+    eccCheckbox.addEventListener('change', () => {
+        vscode.postMessage({ command: 'toggleEcc' });
+    });
+}
+
+if (eccInlineSyncBtn) {
+    eccInlineSyncBtn.addEventListener('click', () => {
+        eccInlineSyncBtn.textContent = '⭮ Syncing...';
+        vscode.postMessage({ command: 'syncEcc' });
+        setTimeout(() => { eccInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
+    });
+}
+
+if (eccCompactNowBtn) {
+    eccCompactNowBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'runStrategicCompact' });
+    });
+}
+
+if (eccSaveCkBtn) {
+    eccSaveCkBtn.addEventListener('click', () => {
+        eccSaveCkBtn.textContent = '💾 Saving...';
+        vscode.postMessage({ command: 'saveSessionCk' });
+        setTimeout(() => { eccSaveCkBtn.textContent = '💾 Save Session Milestone'; }, 2000);
+    });
+}
+
+if (eccCouncilBtn) {
+    eccCouncilBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'runEccCouncil' });
+    });
+}
+
+if (eccDiagAiBtn) {
+    eccDiagAiBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'copyAiInstallPrompt', element: 'ecc' });
+    });
+}
+
+if (eccDiagSyncBtn) {
+    eccDiagSyncBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'syncEcc' });
+    });
+}
+
+if (eccDiagUninstallBtn) {
+    eccDiagUninstallBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'uninstallLayer', layer: 'ecc' });
     });
 }
 
@@ -1851,6 +1926,21 @@ function renderDashboardState(data) {
         }
     }
 
+    // ECC Button in Header
+    if (toggleEccBtn) {
+        const eccInstalled = Boolean(data.eccInstalled);
+        const isEcc = Boolean(data.eccEnabled) && eccInstalled;
+        if (isEcc) {
+            toggleEccBtn.textContent = 'ECC ON';
+            toggleEccBtn.className = 'btn btn-primary';
+            toggleEccBtn.title = 'ECC strategic compaction & context keeper optimization is active';
+        } else {
+            toggleEccBtn.textContent = 'ECC OFF';
+            toggleEccBtn.className = 'btn btn-ghost';
+            toggleEccBtn.title = !eccInstalled ? 'ECC is not installed locally' : 'ECC is disabled';
+        }
+    }
+
     if (footerVersionBadge && data.extensionVersion) {
         footerVersionBadge.textContent = 'v' + data.extensionVersion;
     }
@@ -1931,7 +2021,8 @@ function renderDashboardState(data) {
     const isCodeGraphMissing = !data.codeGraphInstalled;
     const isCrwMissing = !data.crwInstalled;
     const isLightpandaMissing = !data.lightpandaInstalled;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing || isCrwMissing || isLightpandaMissing;
+    const isEccMissing = !data.eccInstalled;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing || isCrwMissing || isLightpandaMissing || isEccMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
@@ -1965,6 +2056,9 @@ function renderDashboardState(data) {
                 if (isLightpandaMissing) {
                     chips.push('<button type="button" class="missing-chip chip-cyan" data-element="lightpanda" data-name="Lightpanda Browser" title="Click to copy AI prompt to install Lightpanda" style="background: rgba(255, 149, 0, 0.15); color: #ff9f0a; border: 1px solid rgba(255, 149, 0, 0.3);"><span class="chip-content">🐼 Lightpanda Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
                 }
+                if (isEccMissing) {
+                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="ecc" data-name="ECC" title="Click to copy AI prompt to install ECC" style="background: rgba(100, 210, 255, 0.15); color: #64d2ff; border: 1px solid rgba(100, 210, 255, 0.3);"><span class="chip-content">🧠 ECC Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                }
                 setupMissingTags.innerHTML = chips.join('');
             }
             if (setupBannerDesc) {
@@ -1978,7 +2072,8 @@ function renderDashboardState(data) {
                 if (isCodeGraphMissing) missingNames.push('CodeGraphContext');
                 if (isCrwMissing) missingNames.push('fastCRW Scraper');
                 if (isLightpandaMissing) missingNames.push('Lightpanda Browser');
-                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, build knowledge graphs from specs, and hybridize web search.`;
+                if (isEccMissing) missingNames.push('ECC Pruner');
+                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, build knowledge graphs from specs, hybridize web search, and strategically compact context.`;
             }
             if (setupInstallPathInput && document.activeElement !== setupInstallPathInput) {
                 setupInstallPathInput.value = data.upstreamInstallPath || '';
@@ -2277,6 +2372,47 @@ function renderDashboardState(data) {
         if (lightpandaDiagUninstallBtn) lightpandaDiagUninstallBtn.style.display = lpInstalled ? 'inline-block' : 'none';
     }
 
+    if (diagEccStatus) {
+        const eccInstalled = Boolean(data.eccInstalled);
+        const eccEnabled = data.eccEnabled !== false;
+        const eccVer = data.eccVersion || 'Ready';
+        if (eccInstalled && eccEnabled) {
+            diagEccStatus.textContent = `Active (${eccVer})`;
+            diagEccStatus.style.color = 'var(--accent-green)';
+        } else if (eccInstalled && !eccEnabled) {
+            diagEccStatus.textContent = 'Inactive (Disabled)';
+            diagEccStatus.style.color = 'var(--text-muted)';
+        } else {
+            diagEccStatus.textContent = 'Inactive (Not Installed)';
+            diagEccStatus.style.color = 'var(--accent-amber)';
+        }
+    }
+    if (eccDiagActions) {
+        eccDiagActions.style.display = 'inline-flex';
+        const eccInstalled = Boolean(data.eccInstalled);
+        if (eccDiagAiBtn) eccDiagAiBtn.style.display = eccInstalled ? 'none' : 'inline-block';
+        if (eccDiagSyncBtn) eccDiagSyncBtn.style.display = eccInstalled ? 'none' : 'inline-block';
+        if (eccDiagUninstallBtn) eccDiagUninstallBtn.style.display = eccInstalled ? 'inline-block' : 'none';
+    }
+
+    if (eccActiveBadge) {
+        const eccInstalled = Boolean(data.eccInstalled);
+        const eccEnabled = data.eccEnabled !== false;
+        if (eccInstalled && eccEnabled) {
+            eccActiveBadge.textContent = '🟢 ACTIVE';
+            eccActiveBadge.className = 'panel-tag tag-cyan';
+        } else if (eccInstalled && !eccEnabled) {
+            eccActiveBadge.textContent = '⚪ DISABLED';
+            eccActiveBadge.className = 'panel-tag';
+        } else {
+            eccActiveBadge.textContent = '⚠️ NOT DETECTED';
+            eccActiveBadge.className = 'panel-tag tag-purple';
+        }
+    }
+    if (eccCheckbox) {
+        eccCheckbox.checked = data.eccEnabled !== false;
+    }
+
     if (jevStatusBadge) {
         const jInstalled = data.jevGraphInstalled;
         const jEnabled = data.jevGraphEnabled !== false;
@@ -2400,6 +2536,14 @@ function renderDashboardState(data) {
             repo: 'lightpanda-io/browser',
             version: data.lightpandaInstalled ? `${data.lightpandaVersion || 'Ready'} (lightpanda)` : 'Not installed',
             isInstalled: Boolean(data.lightpandaInstalled)
+        },
+        {
+            key: 'ecc',
+            name: 'ECC Harness Optimization',
+            icon: '🧠',
+            repo: 'affaan-m/ECC',
+            version: data.eccInstalled ? `${data.eccVersion || 'Ready'} (${data.eccSkillsCount || 4}/4 skills)` : 'Not synced',
+            isInstalled: Boolean(data.eccInstalled)
         }
     ];
 

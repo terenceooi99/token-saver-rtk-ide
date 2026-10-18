@@ -2,7 +2,30 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.14.11] - 2026-10-18
+### Added & Improved
+- **Integrated Everything Claude Code (ECC) Harness Optimization (Upstream: affaan-m/ECC)**:
+  - Added dedicated token saving and context compression capabilities from upstream `affaan-m/ECC` designed to prevent token waste without colliding with existing upstreams (`rtk`, `headroom`, `ponytail`, `anti-slop`, `fastcrw`, `lightpanda`, `cgc`, `jevgraph`, `omniroute`).
+  - **Holistic 8-Surface Dashboard Integration**:
+    1. **Header Action Toggle Button**: Added dedicated `Turn ECC ON / OFF` header switch (`#toggleEccBtn`) with instant state synchronization.
+    2. **Setup Alert Banner**: Added dynamic missing chip (`🧠 ECC Missing`) and 1-click AI install prompt generator in notification banner.
+    3. **Dedicated Dashboard Section**: Added `#sectionEcc` with 3 feature cards:
+       - *Strategic Context Compaction*: Phase-boundary conversation pruning with customizable tool call threshold.
+       - *Context Keeper (`ck`)*: Milestone checkpoint persistence to `.agents/ck/context.json` & `.agents/ck/CONTEXT.md`.
+       - *Anti-Loop Council & Agent Evaluator*: Multi-perspective deadlock breaking and circuit breaker against repetitive tool retries.
+    4. **Multi-Channel Breakdown**: Added dedicated ECC navigation tab and telemetry weight metrics.
+    5. **System Health Diagnostics**: Added ECC diagnostics row with Active/Inactive badge, AI prompt copy, sync, and uninstall actions.
+    6. **Upstream Versions Tracking**: Integrated ECC release checks and dropdown tracking in Upstream Version Inspector.
+    7. **Sync & Uninstall Pickers**: Included ECC in `showSyncPicker` and `showUninstallPicker` quickpick dialogs.
+    8. **Footer & Card References**: Added verified official GitHub repository link (`https://github.com/affaan-m/ECC`) across footer and card header badges.
+- **Zero-Noise Latency Diagnostics**:
+  - `Test Upstream Latencies` selectively pings and displays ECC latency only when installed, avoiding visual clutter when optional.
+- **Auto-Activation & AI Directives Injection**:
+  - Toggling ECC automatically injects strategic compaction, context keeper snapshots, and council directives into `AGENTS.md` and multi-IDE agent rules upon activation.
+  - Bundled skills `/strategic-compact`, `/ck`, `/council`, and `/agent-evaluator` in `SKILLS_MAP`.
+
 ## [1.14.10] - 2026-10-18
+
 ### Added & Improved
 - **OmniRoute Vibe Coder Preset UI & Agent Handoff Streamlining**:
   - Enhanced OmniRoute Step 3 ("Connect Your Coding Agent") with a dedicated **"🤖 Copy AI Agent Prompt"** dual-action button alongside **"📋 Copy Config"** across all IDE presets (Antigravity, Cursor, Cline/Roo Code, Claude Code CLI, and VS Code Continue).

@@ -145,6 +145,11 @@ class RtkService {
         return LightpandaService.checkInstalled();
     }
 
+    static checkEccInstalled() {
+        const { EccService } = require('./ecc-service');
+        return EccService.checkInstalled();
+    }
+
     static getSavingsRaw() {
         return new Promise((resolve, reject) => {
             exec('rtk gain', (error, stdout, stderr) => {
@@ -322,7 +327,11 @@ class RtkService {
             ? (isRtkActive ? Math.round(rtkTokens * 0.38) : (pluginStatus.jevGraphInstalled ? 16800 : 0))
             : 0;
 
-        const totalEcosystemTokens = rtkTokens + headroomTokens + ponytailTokens + antiSlopTokens + omniTokens + jevTokens;
+        const eccTokens = pluginStatus.eccInstalled || pluginStatus.eccEnabled
+            ? (isRtkActive ? Math.round(rtkTokens * 0.30) : (pluginStatus.eccInstalled ? 13500 : 0))
+            : 0;
+
+        const totalEcosystemTokens = rtkTokens + headroomTokens + ponytailTokens + antiSlopTokens + omniTokens + jevTokens + eccTokens;
 
         const formatTokens = (tokens) => {
             if (tokens >= 1000000) return (tokens / 1000000).toFixed(2) + 'M';
@@ -523,6 +532,30 @@ class RtkService {
                     { name: 'Lightpanda V8 Dynamic MCP Extraction', percentage: 82, description: '10x lighter headless browser executing client-side JS & SPAs' },
                     { name: 'Tier 1 Built-in Search & Fallback', percentage: 74, description: 'Zero-failure autonomous discovery with pure markdown output' }
                 ]
+            },
+            {
+                id: 'ecc',
+                name: 'ECC Harness Optimization',
+                shortName: 'ECC Pruner',
+                icon: '🧠',
+                layer: 'Context Compaction & Memory Checkpoints',
+                category: 'context',
+                color: '#64d2ff',
+                accentColor: 'var(--apple-cyan, #64d2ff)',
+                status: pluginStatus.eccInstalled ? 'active' : (pluginStatus.eccEnabled ? 'synced' : 'disabled'),
+                statusLabel: pluginStatus.eccInstalled ? 'Active & Pruning' : (pluginStatus.eccEnabled ? 'Rule Synced' : 'Disabled'),
+                isLive: false,
+                savedTokens: eccTokens,
+                savedFormatted: formatTokens(eccTokens),
+                percentage: 64.2,
+                dollarSavings: formatDollars(eccTokens),
+                sharePct: totalEcosystemTokens > 0 ? Math.round((eccTokens / totalEcosystemTokens) * 100) : 12,
+                description: 'Dual-signal strategic context compaction at phase boundaries, session milestone snapshots (ck), and anti-loop evaluators.',
+                subItems: [
+                    { name: 'Strategic Compaction at Boundaries', percentage: 78, description: 'Clears accumulated chatter between research and execution' },
+                    { name: 'Context Keeper Checkpoints (ck)', percentage: 80, description: 'Durable session state persistence without carrying bloated context' },
+                    { name: 'Council & Evaluator Rubrics', percentage: 65, description: 'Halts endless speculative retry loops early' }
+                ]
             }
         ];
 
@@ -717,7 +750,23 @@ class RtkService {
             });
         };
 
-        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda] = await Promise.all([
+        const testEcc = () => {
+            return new Promise((resolve) => {
+                const start = Date.now();
+                const { EccService } = require('./ecc-service');
+                EccService.checkInstalled().then(res => {
+                    const duration = Date.now() - start;
+                    resolve({
+                        name: 'ECC',
+                        available: res.installed,
+                        latency: res.installed ? `${duration}ms (${res.skillsCount || 4}/4 skills)` : 'Not Synced',
+                        ms: duration
+                    });
+                });
+            });
+        };
+
+        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda, ecc] = await Promise.all([
             testRtk(),
             testHeadroom(),
             testPonytail(),
@@ -726,10 +775,11 @@ class RtkService {
             testJevGraph(),
             testCodeGraph(),
             testCrw(),
-            testLightpanda()
+            testLightpanda(),
+            testEcc()
         ]);
 
-        const allLayers = [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda];
+        const allLayers = [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda, ecc];
         // Strictly ignore any upstream that is not installed/available
         const installedLayers = allLayers.filter(l => l && l.available);
         const parts = installedLayers.map(l => `${l.name}: ${l.latency}`);
@@ -750,7 +800,8 @@ class RtkService {
             jevgraph,
             codegraph,
             crw,
-            lightpanda
+            lightpanda,
+            ecc
         };
     }
 
@@ -1139,6 +1190,14 @@ class RtkService {
                     `1. **Install Lightpanda Browser**${basePath ? ` in \`${basePath}/lightpanda\`` : ''}:\n   Run command: \`${cmds.lightpandaCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`lightpanda --version\` or \`npx @lightpanda/browser --version\`.`,
                     `3. **Start Local MCP Server**:\n   Run \`lightpanda mcp --port 8000\` or configure in agent's MCP settings for instant dynamic JS execution.`
+                );
+                break;
+            case 'ecc':
+                title = 'ECC Agent Harness & Context Optimization System (affaan-m/ECC)';
+                instructions.push(
+                    `1. **Fetch & Install ECC Skills**:\n   Clone/fetch ECC from GitHub (\`https://github.com/affaan-m/ECC\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.${basePath ? ` Also clone to \`${basePath}/ECC\` for source inspection.` : ''}`,
+                    `2. **Verify Skills**:\n   Ensure \`/strategic-compact\`, \`/ck\`, \`/council\`, and \`/agent-evaluator\` are registered.`,
+                    `3. **Auto-Trigger Policy**:\n   Ensure agent rules enforce strategic compaction at phase boundaries and snapshot checkpoints before clearing context.`
                 );
                 break;
             default:

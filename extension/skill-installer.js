@@ -804,8 +804,68 @@ Whenever a tool or script in \`<WORKSPACE_ROOT>\` is executed by an agent or use
    - If fewer than 7 days have elapsed since \`last_check_timestamp\`, bypass the check immediately with zero delay.
    - If 7 days or more have elapsed, query upstream (PyPI, npm, GitHub repository tags/releases) for updates, install them, and record the new timestamp before completing the task.
    - Any newly installed tool must automatically implement or hook into this 7-day update check protocol without requiring explicit user prompting.
+`,
+    'strategic-compact': `---
+name: strategic-compact
+description: >
+  Strategically compact the current conversation context to prune tool logs, compress conversational history, and keep focus on active deliverables. Upstream: affaan-m/ECC.
+  Activate when the user types /strategic-compact, "compact context", "summarize context", or when tool call threshold (50+) is reached.
+---
+
+# Strategic Context Compaction (ECC)
+
+Reduce conversational token bloat while strictly preserving unresolved goals and architectural invariants:
+1. **Identify Completed Milestones:** Summarize finished tasks into concise one-line records.
+2. **Prune Intermediate Logs:** Discard raw command outputs and temporary execution traces.
+3. **Persist State Checkpoint:** Write milestone state to \`.agents/ck/context.json\` or \`.agents/ck/CONTEXT.md\`.
+4. **State Next Action:** Conclude with the immediate next step in 1-2 bullet points.
+`,
+    'ck': `---
+name: ck
+description: >
+  Context Keeper snapshot and memory persistence tool. Saves or restores critical session context checkpoints across prompts. Upstream: affaan-m/ECC.
+  Activate when the user types /ck:save, /ck:restore, "context keeper", or "save context snapshot".
+---
+
+# Context Keeper (ck) - Session Memory Persistence
+
+Maintains persistent context across compaction events and conversation resets:
+- **Save Checkpoint:** Execute \`saveSessionCheckpoint()\` or write active state, leftOff, and nextSteps to \`.agents/ck/context.json\` and \`.agents/ck/CONTEXT.md\`.
+- **Restore Checkpoint:** Read \`.agents/ck/context.json\` to immediately recover project goals without re-reading previous chats.
+`,
+    'council': `---
+name: council
+description: >
+  Multi-perspective reasoning and debugging council. Evaluates complex architectural deadlocks, conflicting requirements, and recurring build failures. Upstream: affaan-m/ECC.
+  Activate when the user types /council, "ask council", "evaluate deadlock", or when encountering >3 failed debugging cycles.
+---
+
+# Council of Perspectives (ECC)
+
+Breaks circular trial-and-error loops to save wasted prompt tokens:
+1. **Review Deadlock:** Contrast root cause vs symptoms.
+2. **Three-Perspective Analysis:**
+   - **Architect:** Minimal systemic impact, maintain invariants.
+   - **Pragmatist:** Shortest working diff, leverage existing code.
+   - **Skeptic:** What assumptions are wrong? Is the requirement unnecessary?
+3. **Consensus:** Select one single actionable path and stop repeating failed commands.
+`,
+    'agent-evaluator': `---
+name: agent-evaluator
+description: >
+  Automated evaluator to verify agent progress, test pass rates, and anti-loop invariants. Upstream: affaan-m/ECC.
+  Activate when the user types /agent-evaluator, "evaluate agent", or "audit debug loop".
+---
+
+# Agent Evaluator (ECC)
+
+Evaluates whether the current agent execution is making forward progress or spinning in token-wasteful retry loops:
+- Stop repeated commands that produce the same error code.
+- Check compliance with project rules and pre-flight validation gates.
+- Enforce the 3-step limit on consecutive tool failures.
 `
 };
+
 
 const IDE_TARGETS = [
     { id: 'antigravity_global', name: 'Antigravity IDE (Global)', type: 'global' },
@@ -954,6 +1014,8 @@ class SkillInstaller {
         let crwEnabled = true;
         let lightpandaEnabled = true;
         let hybridWebEnabled = true;
+        let eccEnabled = true;
+        let eccCompactToolThreshold = 50;
 
         try {
             const config = vscode.workspace.getConfiguration('tokenSaver');
@@ -969,9 +1031,12 @@ class SkillInstaller {
             crwEnabled = config.get('crwEnabled', true);
             lightpandaEnabled = config.get('lightpandaEnabled', true);
             hybridWebEnabled = config.get('hybridWebEnabled', true);
+            eccEnabled = config.get('eccEnabled', true);
+            eccCompactToolThreshold = config.get('eccCompactToolThreshold', 50);
         } catch (e) {
             // Use defaults if config is inaccessible
         }
+
 
         let text = CORE_RULE_TEXT;
 
@@ -1044,6 +1109,15 @@ class SkillInstaller {
                 text += `- When exploring codebases, inspect function signatures / AST outlines (/rtk-outline) before reading entire files into context.\n`;
             }
         }
+
+        if (eccEnabled) {
+            text += `\n## ECC Context Management & Compaction Protocol (Upstream: affaan-m/ECC)\n`;
+            text += `Autonomous AI agents MUST actively manage conversation context window load to prevent token bloat and degraded reasoning:\n`;
+            text += `1. **Strategic Compaction at Milestones:** At major phase completions or after ${eccCompactToolThreshold}+ tool calls, invoke strategic compaction (/strategic-compact) to summarize completed steps, pruned raw outputs, and focus active memory strictly on pending requirements.\n`;
+            text += `2. **Context Keeper (\`ck\`) Snapshots:** Before major context purges, architectural refactors, or switching tasks, persist durable checkpoint files (\`.agents/ck/context.json\` and \`.agents/ck/CONTEXT.md\` or invoke /ck:save) so state is never lost across conversation boundaries.\n`;
+            text += `3. **Anti-Loop Council & Agent Evaluation:** If stuck in repeated failed edits, build verification errors, or circular debug loops (>3 failed attempts), invoke /council or /agent-evaluator to obtain root-cause guidance and stop wasting tokens on trial-and-error repetition.\n`;
+        }
+
 
         text += `\n## Upstream Engine Integration & Latency Guardrails Standards\n`;
         text += `Whenever a new upstream engine or external tool (e.g. \`fastcrw/crw\`, \`CodeGraphContext\`, \`JevGraph\`) is introduced or updated:\n`;
@@ -1603,9 +1677,10 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     /**
      * Uninstall JevGraph skills specifically (chenmingtang830/jevgraph)
      */
-    /**
-     * Safely open the OS Recycle Bin / Trash folder in the native file explorer
-     */
+    static async uninstallJevGraphSkills(targetScope = 'all') {
+        return await this.uninstallSkillSet('jevgraph', targetScope);
+    }
+
     static openRecycleBin() {
         const { exec } = require('child_process');
         try {
@@ -1629,6 +1704,14 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     static async uninstallCodeGraphSkills(targetScope = 'all') {
         return await this.uninstallSkillSet('codegraph', targetScope);
     }
+
+    /**
+     * Uninstall ECC skills specifically (affaan-m/ECC)
+     */
+    static async uninstallEccSkills(targetScope = 'all') {
+        return await this.uninstallSkillSet('ecc', targetScope);
+    }
+
 
     /**
      * Uninstall all Token Saver / RTK / Ponytail / Anti-Slop / JevGraph / CodeGraph skills
@@ -1717,6 +1800,12 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             'crw-search',
             'hybrid-web'
         ];
+        const eccSkills = [
+            'strategic-compact',
+            'ck',
+            'council',
+            'agent-evaluator'
+        ];
 
         let targetSkills = [];
         if (skillSetType === 'ponytail') {
@@ -1729,12 +1818,15 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             targetSkills = codeGraphSkills;
         } else if (skillSetType === 'crw' || skillSetType === 'hybridweb') {
             targetSkills = crwSkills;
+        } else if (skillSetType === 'ecc') {
+            targetSkills = eccSkills;
         } else if (skillSetType === 'rtk') {
-            const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills, ...codeGraphSkills, ...crwSkills]);
+            const excluded = new Set([...ponytailSkills, ...antiSlopSkills, ...jevSkills, ...codeGraphSkills, ...crwSkills, ...eccSkills]);
             targetSkills = Object.keys(SKILLS_MAP).filter(s => !excluded.has(s));
         } else {
             targetSkills = Object.keys(SKILLS_MAP);
         }
+
 
         let removedGlobal = [];
         let removedWs = [];

@@ -34,6 +34,7 @@
                     <span class="initial-loading-tag" data-upstream-id="codegraph">CodeGraph</span>
                     <span class="initial-loading-tag" data-upstream-id="crw">fastCRW</span>
                     <span class="initial-loading-tag" data-upstream-id="lightpanda">Lightpanda</span>
+                    <span class="initial-loading-tag" data-upstream-id="ecc">ECC</span>
                 </div>
             </div>
         </div>
@@ -73,6 +74,7 @@
                 <button class="btn btn-ghost" id="toggleJevGraphBtn">JevGraph OFF</button>
                 <button class="btn btn-ghost" id="toggleCodeGraphBtn">CodeGraph OFF</button>
                 <button class="btn btn-ghost" id="toggleHybridWebBtn">Hybrid Web OFF</button>
+                <button class="btn btn-ghost" id="toggleEccBtn">ECC OFF</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
@@ -666,6 +668,72 @@
                     </div>
                 </section>
 
+                <!-- ECC Agent Harness & Context Optimization System (affaan-m/ECC) -->
+                <section class="panel-card ecc-section" id="sectionEcc">
+                    <div class="panel-header collapsible" data-target="bodyEcc">
+                        <div class="panel-header-left">
+                            <span class="collapse-chevron">▾</span>
+                            <div>
+                                <h2>🧠 ECC Harness Optimization & Compaction</h2>
+                                <p class="panel-subtitle">Strategic compaction at boundaries, session checkpoints (ck), & anti-loop evaluators</p>
+                            </div>
+                        </div>
+                        <div class="header-tags-group">
+                            <a href="https://github.com/affaan-m/ECC" target="_blank"
+                                class="repo-badge-link" title="Upstream GitHub: affaan-m/ECC">GitHub: affaan-m/ECC ↗</a>
+                            <span class="panel-tag tag-cyan" id="eccActiveBadge">Checking...</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="bodyEcc">
+                        <!-- ECC Engine Status & Sync Row -->
+                        <div class="engine-sync-row">
+                            <div class="engine-info">
+                                <span class="engine-title">Strategic Context Management Engine</span>
+                                <span class="engine-desc">Monitors tool counts & token limits. Prompts clean compaction at phase breaks instead of unguided context wipes.</span>
+                            </div>
+                            <div class="engine-controls">
+                                <button class="btn-mini-sync" id="eccInlineSyncBtn"
+                                    title="Fetch & sync latest ECC skills from GitHub">⭮ Sync from GitHub</button>
+                                <label class="switch-mini" title="Enable/Disable ECC Context Optimization">
+                                    <input type="checkbox" id="eccCheckbox" checked />
+                                    <span class="slider-mini"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 3 Modular Feature Blocks (Strategic Compact, Context Keeper ck, Council/Evaluator) -->
+                        <div class="vibe-steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 14px;">
+                            <!-- Block 1: Strategic Compact -->
+                            <div class="vibe-step-card">
+                                <div class="step-badge" style="background: rgba(100, 210, 255, 0.2); color: #64d2ff;">Compaction</div>
+                                <h3 class="step-title">Strategic Compaction</h3>
+                                <p class="step-desc">Prompts clean context pruning at milestone boundaries (post-plan, post-test) or after 50+ tool calls.</p>
+                                <button class="btn btn-sm btn-primary" id="eccCompactNowBtn" style="margin-top: 8px; width: 100%;"
+                                    title="Trigger strategic compaction prompt">✂️ Run /strategic-compact</button>
+                            </div>
+
+                            <!-- Block 2: Context Keeper ck -->
+                            <div class="vibe-step-card">
+                                <div class="step-badge" style="background: rgba(48, 209, 88, 0.2); color: #30d158;">Memory</div>
+                                <h3 class="step-title">Context Keeper (ck)</h3>
+                                <p class="step-desc">Dumps active state, focus, decisions, and next steps to <code>.agents/ck/</code> before pruning context.</p>
+                                <button class="btn btn-sm btn-ghost" id="eccSaveCkBtn" style="margin-top: 8px; width: 100%;"
+                                    title="Save current workspace checkpoint to .agents/ck/">💾 Save Session Milestone</button>
+                            </div>
+
+                            <!-- Block 3: Evaluator & Council -->
+                            <div class="vibe-step-card">
+                                <div class="step-badge" style="background: rgba(175, 82, 222, 0.2); color: #af52de;">Quality</div>
+                                <h3 class="step-title">Council & Evaluator</h3>
+                                <p class="step-desc">Halts repetitive trial-and-error retry loops early with structured evaluation scorecards.</p>
+                                <button class="btn btn-sm btn-ghost" id="eccCouncilBtn" style="margin-top: 8px; width: 100%;"
+                                    title="Convene multi-perspective rubric review">⚖️ Run /council Review</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- OmniRoute AI Gateway & Router (For Vibe Coders) -->
                 <section class="panel-card omniroute-section" id="sectionOmniRoute">
                     <div class="panel-header collapsible" data-target="bodyOmniRoute">
@@ -810,6 +878,9 @@
                             </button>
                             <button class="channel-tab-btn" data-channel="crw" id="tabChannelCrw">
                                 <span class="tab-icon">🌐</span> Hybrid Web
+                            </button>
+                            <button class="channel-tab-btn" data-channel="ecc" id="tabChannelEcc">
+                                <span class="tab-icon">🧠</span> ECC Compaction
                             </button>
                         </div>
 
@@ -1121,6 +1192,20 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="diag-row">
+                                <span class="diag-key">ECC (GitHub):</span>
+                                <div class="diag-val-wrapper">
+                                    <span class="diag-val" id="diagEccStatus">Checking...</span>
+                                    <span class="diag-action-btns" id="eccDiagActions" style="display: none;">
+                                        <button class="btn-diag-mini btn-diag-ai" id="eccDiagAiBtn"
+                                            title="Copy AI install prompt for ECC">🤖 Ask AI</button>
+                                        <button class="btn-diag-mini btn-diag-sync" id="eccDiagSyncBtn"
+                                            title="Fetch ECC skills from GitHub">🧠 Sync</button>
+                                        <button class="btn-diag-mini btn-diag-trash" id="eccDiagUninstallBtn"
+                                            title="Uninstall ECC Skills">🗑️</button>
+                                    </span>
+                                </div>
+                            </div>
                             <div class="diag-row diag-row-dropdown" id="diagVersionRow">
                                 <span class="diag-key">Upstream Versions:</span>
                                 <div class="diag-dropdown-wrapper">
@@ -1166,7 +1251,8 @@
                 <a href="https://github.com/chenmingtang830/jevgraph" target="_blank">JevGraph</a> •
                 <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank">CodeGraphContext</a> •
                 <a href="https://github.com/fastcrw/crw" target="_blank">fastCRW</a> •
-                <a href="https://github.com/lightpanda-io/browser" target="_blank">Lightpanda Browser</a>
+                <a href="https://github.com/lightpanda-io/browser" target="_blank">Lightpanda Browser</a> •
+                <a href="https://github.com/affaan-m/ECC" target="_blank">ECC Harness</a>
             </span>
         </footer>
     </div>

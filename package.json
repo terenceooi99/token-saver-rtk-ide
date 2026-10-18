@@ -2,7 +2,7 @@
   "name": "token-saver-rtk-ide",
   "displayName": "Token Saver for VS Code & Agentic IDEs",
   "description": "Smart token optimization & CLI compression proxy for VS Code, Cursor, Windsurf, Cline, Roo Code, Claude Code & Antigravity IDE using matured upstream open-sourced solutions.",
-  "version": "1.14.10",
+  "version": "1.14.11",
   "publisher": "terenceooi",
   "author": {
     "name": "Terence",
@@ -449,6 +449,51 @@
         "command": "tokenSaver.uninstallAllUpstream",
         "title": "Uninstall All Upstream GitHub Layers (Full Clean Purge)",
         "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.toggleEcc",
+        "title": "Toggle ECC Harness & Compaction Optimization",
+        "category": "Token Saver",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "tokenSaver.enableEcc",
+        "title": "Enable ECC Harness & Compaction Optimization",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.disableEcc",
+        "title": "Disable ECC Harness & Compaction Optimization",
+        "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.syncEcc",
+        "title": "Sync ECC Skills from GitHub (affaan-m/ECC)",
+        "category": "Token Saver",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "tokenSaver.saveSessionCk",
+        "title": "Save Context Keeper (ck) Milestone Checkpoint",
+        "category": "Token Saver",
+        "icon": "$(save)"
+      },
+      {
+        "command": "tokenSaver.runStrategicCompact",
+        "title": "Run Strategic Compaction (/strategic-compact)",
+        "category": "Token Saver",
+        "icon": "$(scissors)"
+      },
+      {
+        "command": "tokenSaver.runEccCouncil",
+        "title": "Run Council & Evaluator Review (/council)",
+        "category": "Token Saver",
+        "icon": "$(feedback)"
+      },
+      {
+        "command": "tokenSaver.uninstallEcc",
+        "title": "Uninstall ECC Skills & Optimization (affaan-m/ECC)",
+        "category": "Token Saver"
       }
     ],
     "configuration": {
@@ -631,6 +676,16 @@
           "type": "number",
           "default": 8000,
           "description": "Local port for Lightpanda HTTP MCP server (default: 8000)."
+        },
+        "tokenSaver.eccEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable ECC (affaan-m/ECC) strategic compaction, session milestone checkpoints (ck), and multi-model review."
+        },
+        "tokenSaver.eccCompactToolThreshold": {
+          "type": "number",
+          "default": 50,
+          "description": "Number of tool calls before suggesting strategic compaction to prune active context."
         },
         "tokenSaver.upstreamInstallPath": {
           "type": "string",

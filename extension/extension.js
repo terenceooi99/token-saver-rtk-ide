@@ -215,7 +215,8 @@ async function activate(context) {
                     e.affectsConfiguration('tokenSaver.terseAgentMode') ||
                     e.affectsConfiguration('tokenSaver.compactDiffContext') ||
                     e.affectsConfiguration('tokenSaver.astOutlineContext') ||
-                    e.affectsConfiguration('tokenSaver.headroomEnabled')) {
+                    e.affectsConfiguration('tokenSaver.headroomEnabled') ||
+                    e.affectsConfiguration('tokenSaver.eccEnabled')) {
                     const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
                     SkillInstaller.syncRules(isEnabled, scope);
                 }
@@ -1028,8 +1029,91 @@ async function activate(context) {
     const disableOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.disableOmniRoute', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         await config.update('omniRouteEnabled', false, vscode.ConfigurationTarget.Global);
-        OmniRouteService.stopGateway();
         vscode.window.showInformationMessage('⚪ OmniRoute AI Gateway feature DISABLED.');
+        await refreshStatus(context);
+    });
+
+    const toggleEccCmd = vscode.commands.registerCommand('tokenSaver.toggleEcc', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+
+        const current = config.get('eccEnabled', true);
+        const next = !current;
+        await config.update('eccEnabled', next, vscode.ConfigurationTarget.Global);
+        const { EccService } = require('./ecc-service');
+        const eccCheck = await EccService.checkInstalled();
+
+        if (next) {
+            if (!eccCheck.installed) {
+                await promptMissingUpstream('ecc', 'ECC Harness Optimization (affaan-m/ECC)', () => {
+                    RtkUpdater.performEccSync();
+                });
+            } else {
+                vscode.window.showInformationMessage('🧠 ECC strategic context compaction & keeper mode ENABLED.');
+            }
+        } else {
+            vscode.window.showInformationMessage('⚪ ECC strategic context compaction & keeper mode DISABLED.');
+        }
+
+        const scope = config.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        await refreshStatus(context);
+    });
+
+    const enableEccCmd = vscode.commands.registerCommand('tokenSaver.enableEcc', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        await config.update('eccEnabled', true, vscode.ConfigurationTarget.Global);
+        const { EccService } = require('./ecc-service');
+        const eccCheck = await EccService.checkInstalled();
+        if (!eccCheck.installed) {
+            await promptMissingUpstream('ecc', 'ECC Harness Optimization (affaan-m/ECC)', () => {
+                RtkUpdater.performEccSync();
+            });
+        } else {
+            vscode.window.showInformationMessage('🧠 ECC optimization ENABLED.');
+        }
+        const scope = config.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        await refreshStatus(context);
+    });
+
+    const disableEccCmd = vscode.commands.registerCommand('tokenSaver.disableEcc', async () => {
+        const config = vscode.workspace.getConfiguration('tokenSaver');
+        await config.update('eccEnabled', false, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage('⚪ ECC optimization DISABLED.');
+        const scope = config.get('targetScope', 'all');
+        SkillInstaller.syncRules(isEnabled, scope);
+        await refreshStatus(context);
+    });
+
+    const syncEccCmd = vscode.commands.registerCommand('tokenSaver.syncEcc', async () => {
+        await RtkUpdater.performEccSync();
+        await refreshStatus(context);
+    });
+
+    const saveSessionCkCmd = vscode.commands.registerCommand('tokenSaver.saveSessionCk', async () => {
+        const { EccService } = require('./ecc-service');
+        const res = await EccService.saveSessionCheckpoint('Milestone saved via Token Saver');
+        if (res.success) {
+            vscode.window.showInformationMessage(`💾 Context Keeper checkpoint saved to ${res.path}`);
+        } else {
+            vscode.window.showErrorMessage(`Failed to save checkpoint: ${res.error}`);
+        }
+    });
+
+    const runStrategicCompactCmd = vscode.commands.registerCommand('tokenSaver.runStrategicCompact', async () => {
+        vscode.window.showInformationMessage(
+            '✂️ Strategic Compaction Prompt: Run `/compact [focus summary]` in chat at this milestone to prune accumulated context and start clean!'
+        );
+    });
+
+    const runEccCouncilCmd = vscode.commands.registerCommand('tokenSaver.runEccCouncil', async () => {
+        vscode.window.showInformationMessage(
+            '⚖️ Council & Evaluator Prompt: Type `/council` in your AI chat to review architecture trade-offs or `/agent-evaluator` to verify outputs against rubrics.'
+        );
+    });
+
+    const uninstallEccCmd = vscode.commands.registerCommand('tokenSaver.uninstallEcc', async () => {
+        await RtkUpdater.performLayerUninstall('ecc');
         await refreshStatus(context);
     });
 
@@ -1287,6 +1371,14 @@ async function activate(context) {
         toggleOmniRouteCmd,
         enableOmniRouteCmd,
         disableOmniRouteCmd,
+        toggleEccCmd,
+        enableEccCmd,
+        disableEccCmd,
+        syncEccCmd,
+        saveSessionCkCmd,
+        runStrategicCompactCmd,
+        runEccCouncilCmd,
+        uninstallEccCmd,
         uninstallUpstreamCmd,
         uninstallRtkCmd,
         uninstallHeadroomCmd,

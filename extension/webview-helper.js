@@ -45,6 +45,9 @@ class WebviewHelper {
         const hybridWebEnabled = config.get('hybridWebEnabled', true);
         const crwCheck = await CrwService.checkInstalled();
         const crwEnabled = CrwService.isEnabled();
+        const { EccService } = require('./ecc-service');
+        const eccCheck = await EccService.checkInstalled();
+        const eccEnabled = config.get('eccEnabled', true);
         const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
         const metrics = await RtkService.getParsedMetrics();
         const skillsInstalled = SkillInstaller.checkSkillsInstalled('all');
@@ -80,6 +83,8 @@ class WebviewHelper {
             crwEnabled,
             lightpandaInstalled: lightpandaCheck.installed,
             lightpandaEnabled,
+            eccInstalled: eccCheck.installed,
+            eccEnabled,
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running
         };
@@ -122,6 +127,11 @@ class WebviewHelper {
             lightpandaInstalled: lightpandaCheck.installed,
             lightpandaVersion: lightpandaCheck.version || 'Not installed',
             lightpandaMcpPort: config.get('lightpandaMcpPort', 8000),
+            eccEnabled,
+            eccInstalled: eccCheck.installed,
+            eccVersion: eccCheck.version || 'Not synced',
+            eccSkillsCount: eccCheck.skillsCount || 0,
+            eccCompactToolThreshold: config.get('eccCompactToolThreshold', 50),
             omniRouteEnabled: config.get('omniRouteEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running,
@@ -461,6 +471,24 @@ class WebviewHelper {
             case 'toggleHybridWeb':
                 await vscode.commands.executeCommand('tokenSaver.toggleHybridWeb');
                 triggerRefresh(300);
+                break;
+            case 'toggleEcc':
+                await vscode.commands.executeCommand('tokenSaver.toggleEcc');
+                triggerRefresh(300);
+                break;
+            case 'syncEcc':
+                await vscode.commands.executeCommand('tokenSaver.syncEcc');
+                triggerRefresh(1000);
+                break;
+            case 'saveSessionCk':
+                await vscode.commands.executeCommand('tokenSaver.saveSessionCk');
+                triggerRefresh(300);
+                break;
+            case 'runStrategicCompact':
+                await vscode.commands.executeCommand('tokenSaver.runStrategicCompact');
+                break;
+            case 'runEccCouncil':
+                await vscode.commands.executeCommand('tokenSaver.runEccCouncil');
                 break;
             case 'syncCrw':
                 await vscode.commands.executeCommand('tokenSaver.syncCrw');

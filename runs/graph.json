@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-18T09:09:11.532Z",
+  "last_updated": "2026-10-18T09:48:39.013Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -122,7 +122,8 @@
     "_staging_vsix\\extension\\skills\\tool-management-rules\\SKILL.md",
     "_staging_vsix\\extension\\skills\\antislop-human\\SKILL.md",
     "CHANGELOG.md",
-    "skills\\rtk-omniroute\\SKILL.md"
+    "skills\\rtk-omniroute\\SKILL.md",
+    ".agents\\rules\\upstream-engine-integration.md"
   ],
   "entities": [
     {
@@ -5254,6 +5255,33 @@
       "source": "CHANGELOG.md",
       "line": 5,
       "evidence": "## [1.14.10] - 2026-10-18"
+    },
+    {
+      "id": "sec_ecc_context_management_compaction_protocol_upstream_affaan_m_ecc_",
+      "name": "ECC Context Management & Compaction Protocol (Upstream: affaan-m/ECC)",
+      "type": "Section/Module",
+      "description": "Specification section from AGENTS.md",
+      "source": "AGENTS.md",
+      "line": 71,
+      "evidence": "## ECC Context Management & Compaction Protocol (Upstream: affaan-m/ECC)"
+    },
+    {
+      "id": "sec__1_14_11_2026_10_18",
+      "name": "[1.14.11] - 2026-10-18",
+      "type": "Section/Module",
+      "description": "Specification section from CHANGELOG.md",
+      "source": "CHANGELOG.md",
+      "line": 5,
+      "evidence": "## [1.14.11] - 2026-10-18"
+    },
+    {
+      "id": "sec_10_extension_entrypoint_extension_js_syntax_subscription_registration_contract",
+      "name": "10. Extension Entrypoint (extension.js) Syntax & Subscription Registration Contract",
+      "type": "Section/Module",
+      "description": "Specification section from .agents\\rules\\upstream-engine-integration.md",
+      "source": ".agents\\rules\\upstream-engine-integration.md",
+      "line": 64,
+      "evidence": "## 10. Extension Entrypoint (`extension.js`) Syntax & Subscription Registration Contract"
     }
   ],
   "relations": [
@@ -9579,8 +9607,8 @@
     }
   ],
   "stats": {
-    "total_sources": 121,
-    "total_entities": 570,
+    "total_sources": 122,
+    "total_entities": 573,
     "total_relations": 540,
     "token_savings_estimate": "85-95%"
   }

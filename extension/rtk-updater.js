@@ -339,6 +339,7 @@ class RtkUpdater {
         this.performAntiSlopSync();
         this.performJevGraphSync();
         this.performCodeGraphSync();
+        this.performEccSync();
     }
 
     static async performJevGraphSync() {
@@ -407,6 +408,26 @@ class RtkUpdater {
             vscode.window.showInformationMessage('✓ Lightpanda Browser & hybrid dynamic MCP directives synced across IDE.');
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to sync Lightpanda: ${e.message}`);
+        }
+    }
+
+    static async performEccSync() {
+        const { EccService } = require('./ecc-service');
+        const isWindows = process.platform === 'win32';
+        const installPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
+        const cmds = EccService.getInstallCommands(isWindows, installPath);
+
+        try {
+            vscode.window.showInformationMessage('🧠 Fetching & syncing ECC skills and harness from GitHub (affaan-m/ECC)...');
+            if (installPath) {
+                RtkService.runInTerminal(cmds.cloneCmd);
+            }
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            SkillInstaller.installAllSkills(scope);
+            SkillInstaller.syncRules(true, scope);
+            vscode.window.showInformationMessage('✓ ECC strategic compaction & context keeper skills synced across IDE.');
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to sync ECC: ${e.message}`);
         }
     }
 
@@ -512,6 +533,19 @@ class RtkUpdater {
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Lightpanda: ${e.message}`);
+                }
+                break;
+            case 'ecc':
+                try {
+                    const res = await SkillInstaller.uninstallEccSkills();
+                    await config.update('eccEnabled', false, vscode.ConfigurationTarget.Global);
+                    const scope = config.get('targetScope', 'all');
+                    SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
+                    vscode.window.showInformationMessage(
+                        `🧠 Uninstalled ECC skills (${res.total.length} skills removed). Strategic compaction and ECC directives disabled.`
+                    );
+                } catch (e) {
+                    vscode.window.showErrorMessage(`Failed to uninstall ECC: ${e.message}`);
                 }
                 break;
             case 'omniroute':
@@ -642,6 +676,11 @@ class RtkUpdater {
                 layerKey: 'lightpanda'
             },
             {
+                label: '$(circuit-board) ECC Harness Optimization (affaan-m/ECC)',
+                description: 'Remove /strategic-compact, /ck, /council, /agent-evaluator skills and disable ECC feature',
+                layerKey: 'ecc'
+            },
+            {
                 label: '$(clear-all) Injected Multi-IDE Rules & Skills',
                 description: 'Strip all rule blocks from AGENTS.md, .cursorrules, etc. and remove .agents/skills',
                 layerKey: 'rules_skills'
@@ -669,7 +708,8 @@ class RtkUpdater {
                 const { CodeGraphService } = require('./codegraph-service');
                 const { CrwService } = require('./crw-service');
                 const { LightpandaService } = require('./lightpanda-service');
-                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, crwCheck, lightpandaCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease, crwRelease, lightpandaRelease] = await Promise.all([
+                const { EccService } = require('./ecc-service');
+                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, crwCheck, lightpandaCheck, eccCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease, crwRelease, lightpandaRelease, eccRelease] = await Promise.all([
                     RtkService.checkInstalled(),
                     RtkService.checkHeadroomInstalled(),
                     RtkService.checkPonytailInstalled(),
@@ -679,6 +719,7 @@ class RtkUpdater {
                     CodeGraphService.checkInstalled(),
                     CrwService.checkInstalled(),
                     LightpandaService.checkInstalled(),
+                    EccService.checkInstalled(),
                     this.getLatestRelease('rtk-ai/rtk'),
                     this.getLatestRelease('headroomlabs-ai/headroom'),
                     this.getLatestRelease('DietrichGebert/ponytail'),
@@ -687,7 +728,8 @@ class RtkUpdater {
                     this.getLatestRelease('chenmingtang830/jevgraph'),
                     this.getLatestRelease('CodeGraphContext/CodeGraphContext'),
                     this.getLatestRelease('fastcrw/crw'),
-                    this.getLatestRelease('lightpanda-io/browser')
+                    this.getLatestRelease('lightpanda-io/browser'),
+                    this.getLatestRelease('affaan-m/ECC')
                 ]);
 
                 const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
@@ -699,7 +741,8 @@ class RtkUpdater {
                 const codeGraphHasUpdate = codeGraphRelease.success && (!codeGraphCheck.installed);
                 const crwHasUpdate = crwRelease.success && (!crwCheck.installed);
                 const lightpandaHasUpdate = lightpandaRelease.success && (!lightpandaCheck.installed);
-                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate || crwHasUpdate || lightpandaHasUpdate;
+                const eccHasUpdate = eccRelease.success && (!eccCheck.installed || (eccCheck.skillsCount && eccCheck.skillsCount < 4));
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate || crwHasUpdate || lightpandaHasUpdate || eccHasUpdate;
 
                 const picks = [
                     {
@@ -781,9 +824,17 @@ class RtkUpdater {
                         actionKey: 'omniroute'
                     },
                     {
+                        label: '$(circuit-board) ECC Harness Optimization (affaan-m/ECC)',
+                        description: `Installed: ${eccCheck.installed ? `${eccCheck.skillsCount || 4}/4 skills active` : 'Not Synced'} | GitHub: ${eccRelease.tag || 'Latest'}`,
+                        detail: eccHasUpdate
+                            ? '🚀 Update / Missing skills detected - Click to fetch & sync from GitHub'
+                            : (eccCheck.installed ? '✓ Synced & active in Global IDE - Click to re-fetch' : '⚡ Click to fetch affaan-m/ECC skills to IDE'),
+                        actionKey: 'ecc'
+                    },
+                    {
                         label: '$(link-external) View Upstream GitHub Release Notes & Compare',
                         description: 'Open release notes and commit history on GitHub',
-                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute, jevgraph, codegraph, crw & lightpanda in your browser',
+                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute, jevgraph, codegraph, crw, lightpanda & ecc in your browser',
                         actionKey: 'notes'
                     }
                 ];
@@ -796,6 +847,8 @@ class RtkUpdater {
 
                 if (sel.actionKey === 'all') {
                     this.performAllUpdates();
+                } else if (sel.actionKey === 'ecc') {
+                    await this.performEccSync();
                 } else if (sel.actionKey === 'crw') {
                     await this.performCrwSync();
                 } else if (sel.actionKey === 'lightpanda') {

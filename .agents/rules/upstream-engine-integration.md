@@ -61,4 +61,15 @@ To ensure tools installed in custom locations or managed via local virtual envir
 - **Module-Level Core Imports**: Any service file providing `checkInstalled()` or filesystem resolution MUST import `path`, `fs`, and `child_process` at the top of the file rather than relying on nested or deferred requires.
 - **Comprehensive Headless Pre-Flight**: The pre-flight node test runner must execute `Promise.all([ ...services.map(s => s.checkInstalled()), WebviewHelper.getLatestStateData(...) ])` to ensure zero runtime `ReferenceError`s or unhandled rejections across all service modules.
 
+## 10. Extension Entrypoint (`extension.js`) Syntax & Subscription Registration Contract
+Whenever registering new commands, event listeners, or upstream features in `extension/extension.js`:
+1. **Atomic Command Block Isolation**: Every `vscode.commands.registerCommand` callback MUST be completely closed with its own closing brace and parenthesis (`);`) before declaring the next command. Never interleave command registrations.
+2. **Subscription Parity**: Every declared command identifier registered in `extension.js` MUST:
+   - Be defined and bound to a `const <name>Cmd` variable.
+   - Be pushed into `context.subscriptions.push(...)`.
+   - Have a corresponding command entry in `package.json` (`contributes.commands`).
+3. **Mandatory Entrypoint Syntax Check Before Packaging**:
+   Agents MUST run `node --check ./extension/extension.js` immediately after modifying `extension.js` and BEFORE executing the VSIX package script or declaring task completion, ensuring zero unclosed callback scopes or syntax errors.
+
+
 

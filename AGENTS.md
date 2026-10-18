@@ -68,7 +68,14 @@ Follow Anti-Slop rules to prevent generic AI slop in generated UI, copy, and cod
 - Inspect git changes using compact single-line diffs: `rtk git diff -U1` instead of wide multi-line context.
 - When exploring codebases, inspect function signatures / AST outlines (/rtk-outline) before reading entire files into context.
 
+## ECC Context Management & Compaction Protocol (Upstream: affaan-m/ECC)
+Autonomous AI agents MUST actively manage conversation context window load to prevent token bloat and degraded reasoning:
+1. **Strategic Compaction at Milestones:** At major phase completions or after 50+ tool calls, invoke strategic compaction (/strategic-compact) to summarize completed steps, pruned raw outputs, and focus active memory strictly on pending requirements.
+2. **Context Keeper (`ck`) Snapshots:** Before major context purges, architectural refactors, or switching tasks, persist durable checkpoint files (`.agents/ck/context.json` and `.agents/ck/CONTEXT.md` or invoke /ck:save) so state is never lost across conversation boundaries.
+3. **Anti-Loop Council & Agent Evaluation:** If stuck in repeated failed edits, build verification errors, or circular debug loops (>3 failed attempts), invoke /council or /agent-evaluator to obtain root-cause guidance and stop wasting tokens on trial-and-error repetition.
+
 ## Upstream Engine Integration & Latency Guardrails Standards
+
 Whenever a new upstream engine or external tool (e.g. `fastcrw/crw`, `CodeGraphContext`, `JevGraph`) is introduced or updated:
 1. **Holistic Dashboard Integration (8 Surfaces Required)**:
    - Header action toggle button (`Turn <Tool> ON / OFF`)
