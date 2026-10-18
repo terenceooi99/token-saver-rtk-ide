@@ -261,9 +261,9 @@ const sectionEcc = document.getElementById('sectionEcc');
 const eccActiveBadge = document.getElementById('eccActiveBadge');
 const eccInlineSyncBtn = document.getElementById('eccInlineSyncBtn');
 const eccCheckbox = document.getElementById('eccCheckbox');
-const eccCompactNowBtn = document.getElementById('eccCompactNowBtn');
-const eccSaveCkBtn = document.getElementById('eccSaveCkBtn');
-const eccCouncilBtn = document.getElementById('eccCouncilBtn');
+const eccAutoCompactToggle = document.getElementById('eccAutoCompactToggle');
+const eccAutoCkToggle = document.getElementById('eccAutoCkToggle');
+const eccAutoCouncilToggle = document.getElementById('eccAutoCouncilToggle');
 const tabChannelEcc = document.getElementById('tabChannelEcc');
 
 const diagEccStatus = document.getElementById('diagEccStatus');
@@ -957,25 +957,43 @@ if (eccInlineSyncBtn) {
     });
 }
 
-if (eccCompactNowBtn) {
-    eccCompactNowBtn.addEventListener('click', () => {
-        vscode.postMessage({ command: 'runStrategicCompact' });
+if (eccAutoCompactToggle) {
+    eccAutoCompactToggle.addEventListener('change', () => {
+        vscode.postMessage({ command: 'toggleEccAutoCompact', enabled: eccAutoCompactToggle.checked });
     });
 }
 
-if (eccSaveCkBtn) {
-    eccSaveCkBtn.addEventListener('click', () => {
-        eccSaveCkBtn.textContent = '💾 Saving...';
-        vscode.postMessage({ command: 'saveSessionCk' });
-        setTimeout(() => { eccSaveCkBtn.textContent = '💾 Save Session Milestone'; }, 2000);
+if (eccAutoCkToggle) {
+    eccAutoCkToggle.addEventListener('change', () => {
+        vscode.postMessage({ command: 'toggleEccAutoCk', enabled: eccAutoCkToggle.checked });
     });
 }
 
-if (eccCouncilBtn) {
-    eccCouncilBtn.addEventListener('click', () => {
-        vscode.postMessage({ command: 'runEccCouncil' });
+if (eccAutoCouncilToggle) {
+    eccAutoCouncilToggle.addEventListener('change', () => {
+        vscode.postMessage({ command: 'toggleEccAutoCouncil', enabled: eccAutoCouncilToggle.checked });
     });
 }
+
+// Global copy button handler for .copy-cmd-btn
+document.querySelectorAll('.copy-cmd-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const cmd = btn.getAttribute('data-cmd') || btn.dataset.cmd;
+        if (cmd) {
+            navigator.clipboard.writeText(cmd).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied';
+                btn.style.color = 'var(--apple-green, #30d158)';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.color = '';
+                }, 2000);
+            }).catch(() => {
+                vscode.postMessage({ command: 'copyToClipboard', text: cmd });
+            });
+        }
+    });
+});
 
 if (eccDiagAiBtn) {
     eccDiagAiBtn.addEventListener('click', () => {
@@ -2469,6 +2487,15 @@ function renderDashboardState(data) {
     }
     if (eccCheckbox) {
         eccCheckbox.checked = data.eccEnabled !== false;
+    }
+    if (eccAutoCompactToggle) {
+        eccAutoCompactToggle.checked = data.eccAutoCompactEnabled !== false;
+    }
+    if (eccAutoCkToggle) {
+        eccAutoCkToggle.checked = data.eccAutoCkEnabled !== false;
+    }
+    if (eccAutoCouncilToggle) {
+        eccAutoCouncilToggle.checked = data.eccAutoCouncilEnabled !== false;
     }
 
     if (jevStatusBadge) {

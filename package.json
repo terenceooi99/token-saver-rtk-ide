@@ -700,6 +700,21 @@
           "default": true,
           "description": "Enable ECC (affaan-m/ECC) strategic compaction, session milestone checkpoints (ck), and multi-model review."
         },
+        "tokenSaver.eccAutoCompactEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically prompt strategic context compaction when reaching tool thresholds or milestone breaks."
+        },
+        "tokenSaver.eccAutoCkEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically snapshot session checkpoints (ck) to .agents/ck/ before major context pruning."
+        },
+        "tokenSaver.eccAutoCouncilEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically halt repetitive fail-and-retry loops and trigger multi-perspective council evaluation."
+        },
         "tokenSaver.eccCompactToolThreshold": {
           "type": "number",
           "default": 50,

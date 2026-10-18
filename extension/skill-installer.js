@@ -1033,6 +1033,9 @@ class SkillInstaller {
             hybridWebEnabled = config.get('hybridWebEnabled', true);
             eccEnabled = config.get('eccEnabled', true);
             eccCompactToolThreshold = config.get('eccCompactToolThreshold', 50);
+            eccAutoCompactEnabled = config.get('eccAutoCompactEnabled', true);
+            eccAutoCkEnabled = config.get('eccAutoCkEnabled', true);
+            eccAutoCouncilEnabled = config.get('eccAutoCouncilEnabled', true);
         } catch (e) {
             // Use defaults if config is inaccessible
         }
@@ -1113,9 +1116,16 @@ class SkillInstaller {
         if (eccEnabled) {
             text += `\n## ECC Context Management & Compaction Protocol (Upstream: affaan-m/ECC)\n`;
             text += `Autonomous AI agents MUST actively manage conversation context window load to prevent token bloat and degraded reasoning:\n`;
-            text += `1. **Strategic Compaction at Milestones:** At major phase completions or after ${eccCompactToolThreshold}+ tool calls, invoke strategic compaction (/strategic-compact) to summarize completed steps, pruned raw outputs, and focus active memory strictly on pending requirements.\n`;
-            text += `2. **Context Keeper (\`ck\`) Snapshots:** Before major context purges, architectural refactors, or switching tasks, persist durable checkpoint files (\`.agents/ck/context.json\` and \`.agents/ck/CONTEXT.md\` or invoke /ck:save) so state is never lost across conversation boundaries.\n`;
-            text += `3. **Anti-Loop Council & Agent Evaluation:** If stuck in repeated failed edits, build verification errors, or circular debug loops (>3 failed attempts), invoke /council or /agent-evaluator to obtain root-cause guidance and stop wasting tokens on trial-and-error repetition.\n`;
+            let ruleIdx = 1;
+            if (eccAutoCompactEnabled) {
+                text += `${ruleIdx++}. **Strategic Compaction at Milestones:** At major phase completions or after ${eccCompactToolThreshold}+ tool calls, invoke strategic compaction (/strategic-compact) to summarize completed steps, pruned raw outputs, and focus active memory strictly on pending requirements.\n`;
+            }
+            if (eccAutoCkEnabled) {
+                text += `${ruleIdx++}. **Context Keeper (\`ck\`) Snapshots:** Before major context purges, architectural refactors, or switching tasks, persist durable checkpoint files (\`.agents/ck/context.json\` and \`.agents/ck/CONTEXT.md\` or invoke /ck:save) so state is never lost across conversation boundaries.\n`;
+            }
+            if (eccAutoCouncilEnabled) {
+                text += `${ruleIdx++}. **Anti-Loop Council & Agent Evaluation:** If stuck in repeated failed edits, build verification errors, or circular debug loops (>3 failed attempts), invoke /council or /agent-evaluator to obtain root-cause guidance and stop wasting tokens on trial-and-error repetition.\n`;
+            }
         }
 
 

@@ -702,33 +702,63 @@
                             </div>
                         </div>
 
-                        <!-- 3 Modular Feature Blocks (Strategic Compact, Context Keeper ck, Council/Evaluator) -->
-                        <div class="vibe-steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 14px;">
+                        <!-- Autonomous Harness Engine: 3 Auto-Trigger Controls with Apple HIG Toggles -->
+                        <div class="vibe-steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 14px; gap: 14px;">
                             <!-- Block 1: Strategic Compact -->
-                            <div class="vibe-step-card">
-                                <div class="step-badge" style="background: rgba(100, 210, 255, 0.2); color: #64d2ff;">Compaction</div>
-                                <h3 class="step-title">Strategic Compaction</h3>
-                                <p class="step-desc">Prompts clean context pruning at milestone boundaries (post-plan, post-test) or after 50+ tool calls.</p>
-                                <button class="btn btn-sm btn-primary" id="eccCompactNowBtn" style="margin-top: 8px; width: 100%;"
-                                    title="Trigger strategic compaction prompt">✂️ Run /strategic-compact</button>
+                            <div class="vibe-step-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div class="step-badge" style="background: rgba(100, 210, 255, 0.2); color: #64d2ff;">Auto-Prune</div>
+                                        <label class="custom-toggle" title="Auto-prompt compaction at milestone boundaries & 50+ tool calls">
+                                            <input type="checkbox" id="eccAutoCompactToggle" checked />
+                                            <span class="custom-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <h3 class="step-title">Auto-Prune Messy Context</h3>
+                                    <p class="step-desc">Automatically prompts context pruning after 50+ tool calls or major feature completions so your agent doesn't get sluggish.</p>
+                                </div>
+                                <div class="command-pill-row" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 5px 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                    <code style="font-size: 11px; color: var(--apple-cyan, #64d2ff);">/strategic-compact</code>
+                                    <button class="btn btn-xs btn-ghost copy-cmd-btn" data-cmd="/strategic-compact" title="Copy command to clipboard">📋 Copy</button>
+                                </div>
                             </div>
 
                             <!-- Block 2: Context Keeper ck -->
-                            <div class="vibe-step-card">
-                                <div class="step-badge" style="background: rgba(48, 209, 88, 0.2); color: #30d158;">Memory</div>
-                                <h3 class="step-title">Context Keeper (ck)</h3>
-                                <p class="step-desc">Dumps active state, focus, decisions, and next steps to <code>.agents/ck/</code> before pruning context.</p>
-                                <button class="btn btn-sm btn-ghost" id="eccSaveCkBtn" style="margin-top: 8px; width: 100%;"
-                                    title="Save current workspace checkpoint to .agents/ck/">💾 Save Session Milestone</button>
+                            <div class="vibe-step-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div class="step-badge" style="background: rgba(48, 209, 88, 0.2); color: #30d158;">Auto-Save</div>
+                                        <label class="custom-toggle" title="Auto-save memory snapshots before context flushes or topic jumps">
+                                            <input type="checkbox" id="eccAutoCkToggle" checked />
+                                            <span class="custom-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <h3 class="step-title">Auto-Save Brain Snapshots</h3>
+                                    <p class="step-desc">A game auto-save for your agent. Preserves decisions and roadmap items to <code>.agents/ck/</code> before context prunes or session switches.</p>
+                                </div>
+                                <div class="command-pill-row" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 5px 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                    <code style="font-size: 11px; color: var(--apple-green, #30d158);">/ck:save [tag]</code>
+                                    <button class="btn btn-xs btn-ghost copy-cmd-btn" data-cmd="/ck:save" title="Copy command to clipboard">📋 Copy</button>
+                                </div>
                             </div>
 
                             <!-- Block 3: Evaluator & Council -->
-                            <div class="vibe-step-card">
-                                <div class="step-badge" style="background: rgba(175, 82, 222, 0.2); color: #af52de;">Quality</div>
-                                <h3 class="step-title">Council & Evaluator</h3>
-                                <p class="step-desc">Halts repetitive trial-and-error retry loops early with structured evaluation scorecards.</p>
-                                <button class="btn btn-sm btn-ghost" id="eccCouncilBtn" style="margin-top: 8px; width: 100%;"
-                                    title="Convene multi-perspective rubric review">⚖️ Run /council Review</button>
+                            <div class="vibe-step-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div class="step-badge" style="background: rgba(175, 82, 222, 0.2); color: #af52de;">Anti-Loop</div>
+                                        <label class="custom-toggle" title="Auto-halt repeated failing retry loops and evaluate root causes">
+                                            <input type="checkbox" id="eccAutoCouncilToggle" checked />
+                                            <span class="custom-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <h3 class="step-title">Auto-Halt Doom Loops</h3>
+                                    <p class="step-desc">Catches the agent when it retries the same broken fix 3+ times, calling in structured rubric evaluation to unblock the bug immediately.</p>
+                                </div>
+                                <div class="command-pill-row" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 5px 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                    <code style="font-size: 11px; color: var(--apple-purple, #af52de);">/council</code>
+                                    <button class="btn btn-xs btn-ghost copy-cmd-btn" data-cmd="/council" title="Copy command to clipboard">📋 Copy</button>
+                                </div>
                             </div>
                         </div>
                     </div>

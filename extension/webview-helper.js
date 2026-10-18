@@ -132,6 +132,9 @@ class WebviewHelper {
             eccVersion: eccCheck.version || 'Not synced',
             eccSkillsCount: eccCheck.skillsCount || 0,
             eccCompactToolThreshold: config.get('eccCompactToolThreshold', 50),
+            eccAutoCompactEnabled: config.get('eccAutoCompactEnabled', true),
+            eccAutoCkEnabled: config.get('eccAutoCkEnabled', true),
+            eccAutoCouncilEnabled: config.get('eccAutoCouncilEnabled', true),
             omniRouteEnabled: config.get('omniRouteEnabled', true),
             omniRouteInstalled: omniStatus.installed,
             omniRouteRunning: omniStatus.running,
@@ -475,6 +478,30 @@ class WebviewHelper {
             case 'toggleEcc':
                 await vscode.commands.executeCommand('tokenSaver.toggleEcc');
                 triggerRefresh(300);
+                break;
+            case 'toggleEccAutoCompact':
+                const autoCompactVal = message.enabled !== undefined ? message.enabled : true;
+                try {
+                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                    await cfg.update('eccAutoCompactEnabled', autoCompactVal, vscode.ConfigurationTarget.Global);
+                } catch (e) {}
+                triggerRefresh(150);
+                break;
+            case 'toggleEccAutoCk':
+                const autoCkVal = message.enabled !== undefined ? message.enabled : true;
+                try {
+                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                    await cfg.update('eccAutoCkEnabled', autoCkVal, vscode.ConfigurationTarget.Global);
+                } catch (e) {}
+                triggerRefresh(150);
+                break;
+            case 'toggleEccAutoCouncil':
+                const autoCouncilVal = message.enabled !== undefined ? message.enabled : true;
+                try {
+                    const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                    await cfg.update('eccAutoCouncilEnabled', autoCouncilVal, vscode.ConfigurationTarget.Global);
+                } catch (e) {}
+                triggerRefresh(150);
                 break;
             case 'syncEcc':
                 await vscode.commands.executeCommand('tokenSaver.syncEcc');
