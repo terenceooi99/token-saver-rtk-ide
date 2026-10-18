@@ -1,5 +1,6 @@
 // Acquire VS Code API
 const vscode = acquireVsCodeApi();
+const initialOverlayStartTime = Date.now();
 
 // DOM Elements
 const dashboardContainer = document.getElementById('dashboardContainer');
@@ -1026,6 +1027,25 @@ document.querySelectorAll('.copy-cmd-btn').forEach(btn => {
     });
 });
 
+// Upstream Waiting Overlay Advertisement Email Copy Button
+const copyAdEmailBtn = document.getElementById('copyAdEmailBtn');
+if (copyAdEmailBtn) {
+    copyAdEmailBtn.addEventListener('click', () => {
+        const email = 'terenceooi1688@gmail.com';
+        navigator.clipboard.writeText(email).then(() => {
+            const originalText = copyAdEmailBtn.textContent;
+            copyAdEmailBtn.textContent = '✓ Copied';
+            copyAdEmailBtn.style.color = '#30d158';
+            setTimeout(() => {
+                copyAdEmailBtn.textContent = originalText;
+                copyAdEmailBtn.style.color = '';
+            }, 2000);
+        }).catch(() => {
+            vscode.postMessage({ command: 'copyToClipboard', text: email });
+        });
+    });
+}
+
 if (eccDiagAiBtn) {
     eccDiagAiBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'copyAiInstallPrompt', element: 'ecc' });
@@ -1836,6 +1856,11 @@ function renderDashboardState(data) {
             initialLoadingDesc.textContent = 'Initial check complete. Synchronizing dashboard view...';
         }
 
+        // Smooth auto fade-out: guarantees exactly 3.5 seconds TOTAL on-screen time (including checking process)
+        // so users get adequate time to read the sponsor notice without artificial lag
+        const elapsedMs = Date.now() - initialOverlayStartTime;
+        const remainingDelayMs = Math.max(1200, 3500 - elapsedMs);
+
         setTimeout(() => {
             if (initialLoadingOverlay) {
                 initialLoadingOverlay.classList.add('fade-out');
@@ -1843,9 +1868,9 @@ function renderDashboardState(data) {
                     if (initialLoadingOverlay) {
                         initialLoadingOverlay.style.display = 'none';
                     }
-                }, 400);
+                }, 500);
             }
-        }, 500);
+        }, remainingDelayMs);
     }
 
     const { isEnabled, installed, version, binaryPath, metrics, scope, ideStatus, isSidebar } = data;

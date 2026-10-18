@@ -4250,4 +4250,143 @@ body.light-theme .ecc-section {
     /* Uniform standard border */
 }
 
+/* Upstream Waiting Window Advertisement Box Styling */
+.initial-ad-box {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: rgba(255, 180, 0, 0.05);
+    border: 1px solid rgba(255, 180, 0, 0.22);
+    border-radius: var(--radius-md, 10px);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    transition: var(--apple-spring, all 0.25s ease);
+}
+
+.initial-ad-box:hover {
+    border-color: rgba(255, 180, 0, 0.38);
+    background: rgba(255, 180, 0, 0.08);
+}
+
+.initial-ad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.initial-ad-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffb340;
+    letter-spacing: -0.01em;
+}
+
+.initial-ad-rate {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffd666;
+    background: rgba(255, 180, 0, 0.15);
+    border: 1px solid rgba(255, 180, 0, 0.3);
+    padding: 1px 7px;
+    border-radius: var(--radius-pill, 9999px);
+}
+
+.initial-ad-desc {
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--apple-text-secondary, #94a3b8);
+    line-height: 1.4;
+}
+
+.initial-ad-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255, 180, 0, 0.15);
+    flex-wrap: wrap;
+}
+
+.initial-ad-link {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #ffc04d;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    word-break: break-all;
+}
+
+.initial-ad-link:hover {
+    color: #ffe082;
+    text-decoration: underline;
+}
+
+.initial-ad-copy-btn {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-size: 10.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.initial-ad-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Light Theme Styling for Advertisement Box */
+body.light-theme .initial-ad-box {
+    background: rgba(217, 119, 6, 0.06);
+    border-color: rgba(217, 119, 6, 0.25);
+}
+
+body.light-theme .initial-ad-badge {
+    color: #b45309;
+}
+
+body.light-theme .initial-ad-rate {
+    color: #92400e;
+    background: rgba(217, 119, 6, 0.12);
+    border-color: rgba(217, 119, 6, 0.28);
+}
+
+body.light-theme .initial-ad-desc {
+    color: #64748b;
+}
+
+body.light-theme .initial-ad-actions {
+    border-top-color: rgba(217, 119, 6, 0.2);
+}
+
+body.light-theme .initial-ad-link {
+    color: #b45309;
+}
+
+body.light-theme .initial-ad-link:hover {
+    color: #78350f;
+}
+
+body.light-theme .initial-ad-copy-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1e293b;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+body.light-theme .initial-ad-copy-btn:hover {
+    background: rgba(0, 0, 0, 0.09);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+
 
