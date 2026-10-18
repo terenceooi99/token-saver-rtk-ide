@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-18T09:48:39.013Z",
+  "last_updated": "2026-10-18T12:40:00.208Z",
   "sources": [
     "README.md",
     "CLAUDE.md",
@@ -5282,6 +5282,51 @@
       "source": ".agents\\rules\\upstream-engine-integration.md",
       "line": 64,
       "evidence": "## 10. Extension Entrypoint (`extension.js`) Syntax & Subscription Registration Contract"
+    },
+    {
+      "id": "sec__1_15_0_2026_10_18",
+      "name": "[1.15.0] - 2026-10-18",
+      "type": "Section/Module",
+      "description": "Specification section from CHANGELOG.md",
+      "source": "CHANGELOG.md",
+      "line": 5,
+      "evidence": "## [1.15.0] - 2026-10-18"
+    },
+    {
+      "id": "ent_ecc_harness_optimization_full_8_surface_dashboard_integration",
+      "name": "ECC Harness Optimization — Full 8-Surface Dashboard Integration",
+      "type": "Component/Requirement",
+      "description": "(see [1.14.11] for detailed breakdown):",
+      "source": "CHANGELOG.md",
+      "line": 17,
+      "evidence": "- **ECC Harness Optimization — Full 8-Surface Dashboard Integration** (see [1.14.11] for detailed breakdown):"
+    },
+    {
+      "id": "ent_case_block_isolation_in_performlayeruninstall_",
+      "name": "Case-Block Isolation in `performLayerUninstall`",
+      "type": "Component/Requirement",
+      "description": "All `switch` cases wrapped in braces (`{ ... }`) to prevent variable leakage across fall-through arms.",
+      "source": "CHANGELOG.md",
+      "line": 28,
+      "evidence": "- **Case-Block Isolation in `performLayerUninstall`**: All `switch` cases wrapped in braces (`{ ... }`) to prevent variable leakage across fall-through arms."
+    },
+    {
+      "id": "ent_jevgraph_service_hardening",
+      "name": "JevGraph Service Hardening",
+      "type": "Component/Requirement",
+      "description": "(`jevgraph-service.js`): expanded candidate directory resolution and virtualenv binary detection.",
+      "source": "CHANGELOG.md",
+      "line": 29,
+      "evidence": "- **JevGraph Service Hardening** (`jevgraph-service.js`): expanded candidate directory resolution and virtualenv binary detection."
+    },
+    {
+      "id": "ent_rtk_service_expansion",
+      "name": "RTK Service Expansion",
+      "type": "Component/Requirement",
+      "description": "(`rtk-service.js`): additional install-path probing for cross-platform RTK binary discovery.",
+      "source": "CHANGELOG.md",
+      "line": 30,
+      "evidence": "- **RTK Service Expansion** (`rtk-service.js`): additional install-path probing for cross-platform RTK binary discovery."
     }
   ],
   "relations": [
@@ -9604,12 +9649,44 @@
       "evidence": "- **Token Compression:** Enable `RTK -> Caveman` in OmniRoute Web Dashboard (`http://localhost:20128` → **Context & Cache → Compression**).",
       "source_file": "skills\\rtk-omniroute\\SKILL.md",
       "line": 31
+    },
+    {
+      "source": "sec_added_improved",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_ecc_harness_optimization_full_8_surface_dashboard_integration",
+      "evidence": "- **ECC Harness Optimization — Full 8-Surface Dashboard Integration** (see [1.14.11] for detailed breakdown):",
+      "source_file": "CHANGELOG.md",
+      "line": 17
+    },
+    {
+      "source": "sec_fixed_hardened",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_case_block_isolation_in_performlayeruninstall_",
+      "evidence": "- **Case-Block Isolation in `performLayerUninstall`**: All `switch` cases wrapped in braces (`{ ... }`) to prevent variable leakage across fall-through arms.",
+      "source_file": "CHANGELOG.md",
+      "line": 28
+    },
+    {
+      "source": "sec_fixed_hardened",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_jevgraph_service_hardening",
+      "evidence": "- **JevGraph Service Hardening** (`jevgraph-service.js`): expanded candidate directory resolution and virtualenv binary detection.",
+      "source_file": "CHANGELOG.md",
+      "line": 29
+    },
+    {
+      "source": "sec_fixed_hardened",
+      "relation": "DEFINES_REQUIREMENT",
+      "target": "ent_rtk_service_expansion",
+      "evidence": "- **RTK Service Expansion** (`rtk-service.js`): additional install-path probing for cross-platform RTK binary discovery.",
+      "source_file": "CHANGELOG.md",
+      "line": 30
     }
   ],
   "stats": {
     "total_sources": 122,
-    "total_entities": 573,
-    "total_relations": 540,
+    "total_entities": 578,
+    "total_relations": 544,
     "token_savings_estimate": "85-95%"
   }
 }

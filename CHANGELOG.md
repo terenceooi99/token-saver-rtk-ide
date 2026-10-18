@@ -2,6 +2,33 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.15.0] - 2026-10-18
+
+### Added & Improved
+- **Apple HIG-Inspired Dashboard Overhaul**:
+  - Complete redesign of the webview dashboard UI (`dashboard.css`, `dashboard.js`, `index.html`) with Apple Human Interface Guidelines aesthetics: refined typography, spacing, card elevation shadows, and smooth animated state transitions.
+  - Glassmorphic panel cards with backdrop-filter blur, frosted header bar, and per-section collapsible accordion layout.
+  - Animated status pill transitions, shimmer loading skeleton, and micro-interaction hover states across all interactive elements.
+- **Upstream Restore Points & Recycle Bin Uninstall Flow**:
+  - Every uninstall action (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraphContext, fastCRW, Lightpanda, ECC, Rules & Skills) now creates a named **restore point** before deletion, moving candidate directories to Recycle Bin via `@homebridge/cjs-ponyfill` + `trash` instead of permanent deletion.
+  - `createRestorePoint()` persists restore metadata (name, repo, candidateDirs, stateBefore) to workspace state so users can recover at any time.
+  - `performLayerRecover(layerKey)` method restores the upstream layer: re-enables config, triggers GitHub re-sync, and re-injects rules & skills — all from a single dashboard action.
+  - `restoreVitalUpstreamArtifacts(layerKey)` reconstitutes critical launcher and binary files from a shared backup directory before recover sync.
+- **ECC Harness Optimization — Full 8-Surface Dashboard Integration** (see [1.14.11] for detailed breakdown):
+  - `extension/ecc-service.js` new upstream service for `affaan-m/ECC` with `getCandidateDirs()`, `checkInstalled()`, `getUninstallCommands()`, and ECC skill lifecycle management.
+  - `SkillInstaller.uninstallEccSkills()` quarantines ECC skills to Recycle Bin with full provenance tagging.
+  - Included ECC in both `showSyncPicker` and `showUninstallPicker` quickpick flows and ECC restore point + recover path.
+- **Expanded Webview State & Pre-Flight Integrity**:
+  - `webview-helper.js`: all upstream checks (`eccCheck`, `codeGraphCheck`, `jevGraphCheck`, `crwCheck`, `lightpandaCheck`, `omniStatus`) resolved atomically before constructing `pluginStatus` — zero `ReferenceError` risk.
+  - Fail-safe fallback defaults guard every dictionary lookup in the state payload pipeline.
+- **Extension Command Hygiene**:
+  - `extension.js`: all new upstream commands (ECC sync, ECC uninstall, layer recover) registered with matching `package.json` `contributes.commands` entries and pushed into `context.subscriptions`.
+
+### Fixed & Hardened
+- **Case-Block Isolation in `performLayerUninstall`**: All `switch` cases wrapped in braces (`{ ... }`) to prevent variable leakage across fall-through arms.
+- **JevGraph Service Hardening** (`jevgraph-service.js`): expanded candidate directory resolution and virtualenv binary detection.
+- **RTK Service Expansion** (`rtk-service.js`): additional install-path probing for cross-platform RTK binary discovery.
+
 ## [1.14.11] - 2026-10-18
 ### Added & Improved
 - **Integrated Everything Claude Code (ECC) Harness Optimization (Upstream: affaan-m/ECC)**:
