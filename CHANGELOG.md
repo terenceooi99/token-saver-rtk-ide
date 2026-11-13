@@ -2,6 +2,13 @@
 
 All notable changes to the **Token Saver (RTK)** project will be documented in this file.
 
+## [1.16.0] - 2026-11-14
+
+### Added & Improved
+- **RTK Service & Dashboard Preview Resources**:
+  - Added `rtk-service` module and dashboard preview resources for Token Saver IDE plugin.
+  - Integrated RTK, semantic graphs, and dashboard surfaces across the extension.
+
 ## [1.15.1] - 2026-10-18
 
 ### Added & Improved
