@@ -78,3 +78,8 @@ Whenever registering new commands, event listeners, or upstream features in `ext
 - **No Automatic VSIX Compilation**: AI agents MUST NOT automatically execute `scripts/package-vsix.ps1`, `npm run package`, or compile `.vsix` files during routine code edits, bug fixes, or test iterations.
 - **Strict User Intent Gate**: VSIX compilation and packaging must strictly be deferred until the user explicitly invokes `/publishtokensaverlocal` or `/publishtokensavernow`.
 - **Pre-Flight Validation Without Packaging**: Routine changes must be validated using direct syntax verification (`node --check <file>`) and headless tests without rebuilding or overwriting `latestvsixfile/token-saver-rtk-ide.vsix`.
+
+## 12. Feature-Targeted `npm test` Maintenance & Execution Policy
+- **Keep Tests Updated on Every Feature Addition/Change**: Whenever a new feature is added or an existing feature is modified, its corresponding isolated test case in `tests/` (and `package.json` `test:*` script if introducing a new suite) MUST be updated in the same change.
+- **Run Only Relevant `npm run test:*` Scripts**: During routine feature additions or edits, execute ONLY the targeted `npm run test:<feature>` script(s) relevant to the modified files (`test:manifest`, `test:startup`, `test:ide-rules`, `test:rtk-rg`, `test:skills`, `test:services`, `test:webview`) instead of running the full suite on every small edit.
+- **Strict Temp Isolation**: All tests must operate exclusively inside temporary isolated directories (`os.tmpdir()/token-saver-test-*`) and never modify real user or workspace files.

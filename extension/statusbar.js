@@ -16,18 +16,18 @@ class StatusBarManager {
         if (isEnabled) {
             this.statusBarItem.command = 'tokenSaver.disable';
             if (metrics && metrics.totalSavedTokens > 0 && displayStyle !== 'iconOnly') {
-                this.statusBarItem.text = `$(zap) Token Saver: ${metrics.totalSavedFormatted} saved (${metrics.savedPercentage}%)`;
+                this.statusBarItem.text = `$(pulse) Token Saver: ${metrics.totalSavedFormatted} (${metrics.savedPercentage}%)`;
             } else {
-                this.statusBarItem.text = `$(zap) Token Saver: ON`;
+                this.statusBarItem.text = `$(pulse) Token Saver: Active`;
             }
 
             const tooltipLines = [
-                `⚡ **Token Saver is ENABLED**`,
+                `**Token Saver — Active**`,
                 `---`,
-                `• **Total Saved**: ${metrics ? metrics.totalSavedFormatted : '0'} tokens (${metrics ? metrics.savedPercentage : 0}%)`,
-                `• **Estimated Cost Saved**: ${metrics ? metrics.estimatedDollarSavings : '$0.00'}`,
+                `- **Tokens saved**: ${metrics ? metrics.totalSavedFormatted : '0'} (${metrics ? metrics.savedPercentage : 0}%)`,
+                `- **Estimated cost saved**: ${metrics ? metrics.estimatedDollarSavings : '$0.00'}`,
                 `---`,
-                `👉 *Click to Turn Token Saver OFF directly*`
+                `*Click to pause Token Saver*`
             ];
 
             const mdTooltip = new vscode.MarkdownString(tooltipLines.join('\n\n'));
@@ -36,13 +36,13 @@ class StatusBarManager {
             this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.prominentForeground');
         } else {
             this.statusBarItem.command = 'tokenSaver.enable';
-            this.statusBarItem.text = `$(circle-slash) Token Saver: OFF`;
+            this.statusBarItem.text = `$(circle-slash) Token Saver: Paused`;
             const tooltipLines = [
-                `⚪ **Token Saver is DISABLED**`,
+                `**Token Saver — Paused**`,
                 `---`,
-                `All upstream token-saving solutions and AI prompt directives are paused.`,
+                `All upstream token-saving engines and agent directives are paused.`,
                 `---`,
-                `👉 *Click to Turn Token Saver ON directly*`
+                `*Click to enable Token Saver*`
             ];
             const mdTooltip = new vscode.MarkdownString(tooltipLines.join('\n\n'));
             mdTooltip.isTrusted = true;

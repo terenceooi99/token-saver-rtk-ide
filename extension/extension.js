@@ -54,11 +54,6 @@ async function activate(context) {
     statusBar = new StatusBarManager();
     sidebarProvider = new SidebarProvider(context.extensionUri, context);
 
-    // Auto-heal / restore any vital upstream configuration files that were accidentally deleted or restored
-    try {
-        RtkUpdater.restoreVitalUpstreamArtifacts('all');
-    } catch (_) {}
-
     context.subscriptions.push(statusBar);
     context.subscriptions.push(outputChannel);
     context.subscriptions.push(
@@ -75,12 +70,12 @@ async function activate(context) {
 
     const config = vscode.workspace.getConfiguration('tokenSaver');
     let isEnabled = context.globalState.get('tokenSaver.enabled', config.get('enableOnStartup', true));
-    const targetScope = config.get('targetScope', 'all');
-    const autoInstallSkills = config.get('autoInstallSkills', true);
+    const targetScope = config.get('targetScope', 'current');
+    const autoInstallSkills = config.get('autoInstallSkills', false);
     const omniRouteEnabled = config.get('omniRouteEnabled', true);
     const omniPort = config.get('omniRoutePort', 20128);
 
-    // Initial check of RTK, Headroom, Ponytail, Anti-Slop & OmniRoute engines
+    // Initial check of RTK, Headroom, Ponytail, Anti-Slop, JevGraph, CodeGraph & fastCRW engines
     const check = await RtkService.checkInstalled();
     const headroomCheck = await RtkService.checkHeadroomInstalled();
     const ponytailCheck = await RtkService.checkPonytailInstalled();
@@ -88,55 +83,52 @@ async function activate(context) {
     const jevGraphCheck = await RtkService.checkJevGraphInstalled();
     const codeGraphCheck = await CodeGraphService.checkInstalled();
     const crwCheck = await CrwService.checkInstalled();
-    const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
-    const isOmniMissing = omniRouteEnabled && !omniStatus.installed;
-    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || !jevGraphCheck.installed || !codeGraphCheck.installed || !crwCheck.installed || isOmniMissing) {
+    if (!check.installed || !headroomCheck.installed || !ponytailCheck.installed || !antiSlopCheck.installed || !jevGraphCheck.installed || !codeGraphCheck.installed || !crwCheck.installed) {
         const missing = [];
-        if (!check.installed) missing.push('RTK CLI');
+        if (!check.installed) missing.push('RTK-RG CLI');
         if (!headroomCheck.installed) missing.push('Headroom CCR');
-        if (!ponytailCheck.installed) missing.push('Ponytail YAGNI (GitHub)');
-        if (!antiSlopCheck.installed) missing.push('Anti-Slop (GitHub)');
-        if (!jevGraphCheck.installed) missing.push('JevGraph Knowledge Graph');
-        if (!codeGraphCheck.installed) missing.push('CodeGraphContext (GitHub)');
-        if (!crwCheck.installed) missing.push('fastCRW Scraper (GitHub)');
-        if (isOmniMissing) missing.push('OmniRoute Gateway');
+        if (!ponytailCheck.installed) missing.push('Ponytail YAGNI');
+        if (!antiSlopCheck.installed) missing.push('Anti-Slop');
+        if (!jevGraphCheck.installed) missing.push('JevGraph');
+        if (!codeGraphCheck.installed) missing.push('CodeGraphContext');
+        if (!crwCheck.installed) missing.push('fastCRW');
 
-        const options = ['🤖 Ask AI (Copy Prompt)'];
+        const options = ['Ask AI (Copy Prompt)'];
         if (!crwCheck.installed) {
-            options.push('🕷️ Sync fastCRW GitHub');
+            options.push('Sync fastCRW');
         }
         if (!codeGraphCheck.installed) {
-            options.push('🧬 Sync CodeGraph GitHub');
+            options.push('Sync CodeGraph');
         }
         if (!jevGraphCheck.installed) {
-            options.push('🕸️ Sync JevGraph GitHub');
+            options.push('Sync JevGraph');
         }
         if (!antiSlopCheck.installed) {
-            options.push('🛡️ Sync Anti-Slop GitHub');
+            options.push('Sync Anti-Slop');
         }
         if (!ponytailCheck.installed) {
-            options.push('🥋 Sync Ponytail GitHub');
+            options.push('Sync Ponytail');
         }
-        options.push('⚡ Auto-Run in Terminal', 'Open Setup Hub');
+        options.push('Run in Terminal', 'Open Setup Hub');
 
         vscode.window.showWarningMessage(
-            `⚡ Token Saver: ${missing.join(' & ')} not detected. Choose how you would like to fetch from GitHub / install:`,
+            `Token Saver: ${missing.join(', ')} not detected. Select an installation method:`,
             ...options
         ).then(choice => {
-            if (choice === '🤖 Ask AI (Copy Prompt)') {
+            if (choice === 'Ask AI (Copy Prompt)') {
                 vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
-            } else if (choice === '🕷️ Sync fastCRW GitHub') {
+            } else if (choice === 'Sync fastCRW') {
                 vscode.commands.executeCommand('tokenSaver.syncCrw');
-            } else if (choice === '🧬 Sync CodeGraph GitHub') {
+            } else if (choice === 'Sync CodeGraph') {
                 vscode.commands.executeCommand('tokenSaver.syncCodeGraph');
-            } else if (choice === '🕸️ Sync JevGraph GitHub') {
+            } else if (choice === 'Sync JevGraph') {
                 vscode.commands.executeCommand('tokenSaver.syncJevGraph');
-            } else if (choice === '🛡️ Sync Anti-Slop GitHub') {
+            } else if (choice === 'Sync Anti-Slop') {
                 vscode.commands.executeCommand('tokenSaver.syncAntiSlop');
-            } else if (choice === '🥋 Sync Ponytail GitHub') {
+            } else if (choice === 'Sync Ponytail') {
                 vscode.commands.executeCommand('tokenSaver.syncPonytail');
-            } else if (choice === '⚡ Auto-Run in Terminal') {
+            } else if (choice === 'Run in Terminal') {
                 vscode.commands.executeCommand('tokenSaver.installCli');
             } else if (choice === 'Open Setup Hub') {
                 vscode.commands.executeCommand('tokenSaver.openDashboard');
@@ -149,9 +141,8 @@ async function activate(context) {
         OmniRouteService.startGateway(omniPort);
     }
 
-    // Auto-install skills (Way 1: Chat / Slash Commands) & sync Multi-IDE rules (Way 2: Dashboard & Status Bar)
-    // Installs to global default path or user-defined path per /tool-management-rules without dumping into project repos
-    if (autoInstallSkills) {
+    // Auto-install skills only when explicitly enabled AND CLI is installed
+    if (autoInstallSkills && check.installed) {
         try {
             SkillInstaller.installAllSkills();
         } catch (err) {
@@ -159,8 +150,8 @@ async function activate(context) {
         }
     }
 
-    // Auto-clean redundant dumped skills from workspace repo if enabled to prevent project repo pollution
-    if (config.get('autoCleanWorkspaceSkills', true)) {
+    // Auto-clean redundant dumped skills from workspace repo only when explicitly enabled
+    if (config.get('autoCleanWorkspaceSkills', false) && check.installed) {
         setTimeout(async () => {
             try {
                 const wsClean = await SkillInstaller.cleanWorkspaceDumpedSkills();
@@ -171,7 +162,6 @@ async function activate(context) {
         }, 2000);
     }
 
-    SkillInstaller.syncRules(isEnabled, targetScope);
     await refreshStatus(context);
 
     // Automatic update check on startup if enabled
@@ -233,8 +223,14 @@ async function activate(context) {
                     e.affectsConfiguration('tokenSaver.compactDiffContext') ||
                     e.affectsConfiguration('tokenSaver.astOutlineContext') ||
                     e.affectsConfiguration('tokenSaver.headroomEnabled') ||
+                    e.affectsConfiguration('tokenSaver.jevGraphEnabled') ||
+                    e.affectsConfiguration('tokenSaver.codeGraphEnabled') ||
+                    e.affectsConfiguration('tokenSaver.crwEnabled') ||
+                    e.affectsConfiguration('tokenSaver.lightpandaEnabled') ||
+                    e.affectsConfiguration('tokenSaver.hybridWebEnabled') ||
+                    e.affectsConfiguration('tokenSaver.omniRouteEnabled') ||
                     e.affectsConfiguration('tokenSaver.eccEnabled')) {
-                    const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+                    const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'current');
                     SkillInstaller.syncRules(isEnabled, scope);
                 }
                 await refreshStatus(context);
@@ -250,7 +246,7 @@ async function activate(context) {
     async function setTokenSaverState(targetEnabled) {
         isEnabled = targetEnabled;
         await context.globalState.update('tokenSaver.enabled', isEnabled);
-        const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+        const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'current');
         const results = SkillInstaller.syncRules(isEnabled, scope);
         await refreshStatus(context);
         return results;
@@ -259,7 +255,7 @@ async function activate(context) {
     async function promptMissingUpstream(toolKey, toolDisplayName, syncAction, aiPromptKey = null) {
         const promptKey = aiPromptKey || toolKey;
         const choice = await vscode.window.showWarningMessage(
-            `⚠️ ${toolDisplayName} is missing / not detected on system. Would you like to fetch from GitHub or install it now?`,
+            `${toolDisplayName} is not detected on this system. Select how to install or sync it:`,
             '🤖 Ask AI (Copy Prompt)',
             '⭮ Fetch / Sync from GitHub',
             '⚡ Auto-Run in Terminal',
@@ -296,7 +292,7 @@ async function activate(context) {
         ]);
 
         const missing = [];
-        if (!check.installed) missing.push('RTK CLI');
+        if (!check.installed) missing.push('RTK-RG CLI');
         if (!headroomCheck.installed) missing.push('Headroom CCR');
         if (!ponytailCheck.installed) missing.push('Ponytail');
         if (!antiSlopCheck.installed) missing.push('Anti-Slop');
@@ -314,21 +310,21 @@ async function activate(context) {
             const missing = await checkAllUpstreamsInstalled();
             if (missing.length > 0) {
                 vscode.window.showWarningMessage(
-                    `⚡ Token Saver is ENABLED across ${results.length} target(s), but missing upstream tool(s): ${missing.join(', ')}.`,
-                    '🤖 Ask AI (Copy Prompt)',
+                    `Token Saver enabled across ${results.length} target(s). Missing upstream tool(s): ${missing.join(', ')}.`,
+                    'Ask AI (Copy Prompt)',
                     'Open Setup Hub'
                 ).then(sel => {
-                    if (sel === '🤖 Ask AI (Copy Prompt)') {
+                    if (sel === 'Ask AI (Copy Prompt)') {
                         vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
                     } else if (sel === 'Open Setup Hub') {
                         vscode.commands.executeCommand('tokenSaver.openDashboard');
                     }
                 });
             } else {
-                vscode.window.showInformationMessage(`⚡ Token Saver is now ENABLED across ${results.length} AI agent target(s).`);
+                vscode.window.showInformationMessage(`Token Saver enabled across ${results.length} agent target(s).`);
             }
         } else {
-            vscode.window.showInformationMessage('⚪ Token Saver is now DISABLED. All upstream AI token-saving solutions are paused.');
+            vscode.window.showInformationMessage('Token Saver paused across all upstream engines.');
         }
     });
 
@@ -337,24 +333,24 @@ async function activate(context) {
         const missing = await checkAllUpstreamsInstalled();
         if (missing.length > 0) {
             vscode.window.showWarningMessage(
-                `⚡ Token Saver is ENABLED across all configured targets, but missing upstream tool(s): ${missing.join(', ')}.`,
-                '🤖 Ask AI (Copy Prompt)',
+                `Token Saver enabled across configured targets. Missing upstream tool(s): ${missing.join(', ')}.`,
+                'Ask AI (Copy Prompt)',
                 'Open Setup Hub'
             ).then(sel => {
-                if (sel === '🤖 Ask AI (Copy Prompt)') {
+                if (sel === 'Ask AI (Copy Prompt)') {
                     vscode.commands.executeCommand('tokenSaver.copyAiInstallPrompt');
                 } else if (sel === 'Open Setup Hub') {
                     vscode.commands.executeCommand('tokenSaver.openDashboard');
                 }
             });
         } else {
-            vscode.window.showInformationMessage('⚡ Token Saver is now ENABLED across all configured AI Agent targets.');
+            vscode.window.showInformationMessage('Token Saver enabled across configured agent targets.');
         }
     });
 
     const disableCmd = vscode.commands.registerCommand('tokenSaver.disable', async () => {
         await setTokenSaverState(false);
-        vscode.window.showInformationMessage('⚪ Token Saver is now DISABLED. All upstream AI token-saving solutions are paused.');
+        vscode.window.showInformationMessage('Token Saver paused across all upstream engines.');
     });
 
     const syncAllIdeRulesCmd = vscode.commands.registerCommand('tokenSaver.syncAllIdeRules', async () => {
@@ -362,7 +358,7 @@ async function activate(context) {
             const detected = SkillInstaller.detectCurrentIde();
             const results = SkillInstaller.syncRules(isEnabled, 'current');
             vscode.window.showInformationMessage(
-                `🚀 Synced RTK automation rules for ${detected.displayName} (${results.length} target${results.length > 1 ? 's' : ''})!`
+                `Synced Token Saver rules for ${detected.displayName} (${results.length} target${results.length > 1 ? 's' : ''}).`
             );
             await refreshStatus(context);
         } catch (err) {
@@ -371,7 +367,8 @@ async function activate(context) {
     });
 
     const selectIdeTargetsCmd = vscode.commands.registerCommand('tokenSaver.selectIdeTargets', async () => {
-        const ideStatus = SkillInstaller.getIdeStatus();
+        const ideStatus = SkillInstaller.getIdeStatus(true);
+        const detected = ideStatus.detectedIde || SkillInstaller.detectCurrentIde();
         const items = ideStatus.map(target => ({
             label: `${target.synced ? '$(check)' : '$(circle-outline)'} ${target.name}`,
             description: target.path,
@@ -381,7 +378,7 @@ async function activate(context) {
 
         const selected = await vscode.window.showQuickPick(items, {
             canPickMany: true,
-            placeHolder: 'Select AI Agent / IDE targets to synchronize RTK rules with'
+            placeHolder: `Select Rule / Configuration Target(s) for active ${detected.displayName}`
         });
 
         if (selected) {
@@ -389,8 +386,8 @@ async function activate(context) {
             SkillInstaller.syncRules(isEnabled, chosenIds);
             vscode.window.showInformationMessage(
                 isEnabled
-                    ? `⚡ Synced Token Saver rules for: ${selected.map(s => s.label).join(', ')}`
-                    : `⚪ Token Saver Master Switch is OFF. Rules removed for: ${selected.map(s => s.label).join(', ')}`
+                    ? `Synced Token Saver rules for ${detected.displayName}: ${selected.map(s => s.label).join(', ')}`
+                    : `Token Saver master switch is off. Rules removed for: ${selected.map(s => s.label).join(', ')}`
             );
             await refreshStatus(context);
         }
@@ -416,7 +413,7 @@ async function activate(context) {
             const results = SkillInstaller.installAllSkills();
             const dests = results.map(r => `${r.scope}: ${r.destination}`).join(' and ');
             vscode.window.showInformationMessage(
-                `🧠 Successfully installed all 38 AI Agent skills to global default / user-defined path: ${dests}! (Project workspace left clean per /tool-management-rules)`
+                `Installed 38 agent skills to ${dests}.`
             );
         } catch (err) {
             vscode.window.showErrorMessage(`Failed to install skills: ${err.message}`);
@@ -428,13 +425,13 @@ async function activate(context) {
             const res = await SkillInstaller.cleanWorkspaceDumpedSkills();
             if (res.totalRemoved > 0) {
                 vscode.window.showInformationMessage(
-                    `🧹 Successfully cleaned ${res.totalRemoved} dumped skills from project workspace (.agents/skills) to Recycle Bin! All skills remain active via global default or user-defined path per /tool-management-rules.`,
+                    `Cleaned ${res.totalRemoved} redundant skills from project workspace (.agents/skills) to Recycle Bin.`,
                     'Open Recycle Bin'
                 ).then(sel => {
                     if (sel === 'Open Recycle Bin') SkillInstaller.openRecycleBin();
                 });
             } else {
-                vscode.window.showInformationMessage('✓ Project workspace is clean (no redundant dumped skills in .agents/skills).');
+                vscode.window.showInformationMessage('Project workspace is clean (no redundant skills in .agents/skills).');
             }
             await refreshStatus(context);
         } catch (err) {
@@ -445,13 +442,13 @@ async function activate(context) {
     const uninstallSkillsCmd = vscode.commands.registerCommand('tokenSaver.uninstallSkills', async () => {
         // Step 1: Choose Action & Scope
         const scopes = [
-            { label: '🧹 Clean Up Dumped Skills in Project Workspace', description: 'Remove redundant dumped skills from .agents/skills/ to keep project clean', value: 'clean_workspace' },
-            { label: '🏠 Global Config Only', description: 'Preinstalled in user IDE: ~/.gemini/config/skills/ or detected IDE', value: 'global' },
-            { label: '🛠️ User-Defined Path Only', description: 'Skills directory configured via /tool-management-rules', value: 'user_defined' },
-            { label: '📁 Workspace Only (Legacy)', description: 'Based within current project: .agents/skills/', value: 'workspace' },
-            { label: '🌐 All Target Scopes', description: 'Clean global, user-defined, and workspace directories', value: 'all' },
-            { label: '♻️ Recover Uninstalled Skills (Global / User-Defined)', description: 'Restore all preinstalled agent skills to global default or user-defined path', value: 'recover_global' },
-            { label: '🗑️ Open OS Recycle Bin / Trash', description: 'Inspect or restore deleted skill folders directly in OS file manager', value: 'open_recycle_bin' }
+            { label: '$(clear-all) Clean Up Dumped Skills in Project Workspace', description: 'Remove redundant dumped skills from .agents/skills/ to keep project clean', value: 'clean_workspace' },
+            { label: '$(home) Global Config Only', description: 'Preinstalled in user IDE: ~/.gemini/config/skills/ or detected IDE', value: 'global' },
+            { label: '$(tools) User-Defined Path Only', description: 'Skills directory configured via /tool-management-rules', value: 'user_defined' },
+            { label: '$(folder) Workspace Only (Legacy)', description: 'Based within current project: .agents/skills/', value: 'workspace' },
+            { label: '$(globe) All Target Scopes', description: 'Clean global, user-defined, and workspace directories', value: 'all' },
+            { label: '$(history) Recover Uninstalled Skills (Global / User-Defined)', description: 'Restore all preinstalled agent skills to global default or user-defined path', value: 'recover_global' },
+            { label: '$(trash) Open OS Recycle Bin / Trash', description: 'Inspect or restore deleted skill folders directly in OS file manager', value: 'open_recycle_bin' }
         ];
 
         const selectedScope = await vscode.window.showQuickPick(scopes, {
@@ -476,7 +473,7 @@ async function activate(context) {
                 const results = SkillInstaller.installAllSkills();
                 const dests = results.map(r => r.destination).join(' and ');
                 vscode.window.showInformationMessage(
-                    `♻️ Successfully recovered and restored all 38 AI Agent skills to: ${dests}!`,
+                    `Recovered and restored 38 agent skills to ${dests}.`,
                     'Open Recycle Bin'
                 ).then(sel => {
                     if (sel === 'Open Recycle Bin') SkillInstaller.openRecycleBin();
@@ -494,24 +491,24 @@ async function activate(context) {
 
         const methodOptions = [
             {
-                label: `🎯 Choose Individual Skills to Uninstall (${uniqueSkillNames.length} detected)`,
+                label: `$(list-selection) Choose Individual Skills to Uninstall (${uniqueSkillNames.length} detected)`,
                 description: 'Select one or more specific skills from list',
                 value: 'individual'
             },
             {
-                label: '📦 Uninstall by Skill Set (Presets)',
+                label: '$(package) Uninstall by Skill Set (Presets)',
                 description: 'RTK Core, Ponytail, Anti-Slop, JevGraph, CodeGraph, or All',
                 value: 'set'
             },
             {
-                label: '♻️ Recover Uninstalled Skills to this Scope',
-                description: `Restore / Re-install all preinstalled agent skills to ${selectedScope.label}`,
+                label: '$(history) Recover Uninstalled Skills to this Scope',
+                description: `Restore preinstalled agent skills to ${selectedScope.label}`,
                 value: 'recover'
             }
         ];
 
         const selectedMethod = await vscode.window.showQuickPick(methodOptions, {
-            placeHolder: 'How would you like to select skills for uninstallation or recovery?'
+            placeHolder: 'Select how to choose skills for uninstallation or recovery:'
         });
         if (!selectedMethod) return;
 
@@ -520,7 +517,7 @@ async function activate(context) {
                 const results = SkillInstaller.installSkills(selectedScope.value);
                 const dests = results.map(r => r.destination).join(' and ');
                 vscode.window.showInformationMessage(
-                    `♻️ Successfully recovered and restored all 31 AI Agent skills to: ${dests}!`,
+                    `Recovered and restored agent skills to ${dests}.`,
                     'Open Recycle Bin'
                 ).then(sel => {
                     if (sel === 'Open Recycle Bin') SkillInstaller.openRecycleBin();
@@ -549,7 +546,7 @@ async function activate(context) {
                         return `${s.scope} • ${s.ide || 'standalone'}`;
                     }))];
                     return {
-                        label: `🧠 ${name}`,
+                        label: `$(symbol-event) ${name}`,
                         description: `[${origins.join(', ')}] ${found?.description || ''}`,
                         value: name,
                         picked: false
@@ -557,7 +554,7 @@ async function activate(context) {
                 });
 
                 const pickedSkills = await vscode.window.showQuickPick(skillQuickPickItems, {
-                    placeHolder: 'Select individual skill(s) to uninstall into Recycle Bin (Spacebar to toggle):',
+                    placeHolder: 'Select individual skill(s) to move to Recycle Bin (Spacebar to toggle):',
                     canPickMany: true
                 });
                 if (!pickedSkills || pickedSkills.length === 0) return;
@@ -566,7 +563,7 @@ async function activate(context) {
                 let confirmed = false;
                 while (!confirmed) {
                     const confirm = await vscode.window.showWarningMessage(
-                        `Are you sure you want to uninstall ${toRemove.length} skill(s) from ${selectedScope.label}? They will be safely moved to your Recycle Bin.`,
+                        `Uninstall ${toRemove.length} skill(s) from ${selectedScope.label}? They will be moved to your Recycle Bin.`,
                         { modal: true },
                         'Move to Recycle Bin',
                         'Open Recycle Bin'
@@ -583,7 +580,7 @@ async function activate(context) {
 
                 const res = await SkillInstaller.uninstallSelectedSkills(toRemove, selectedScope.value);
                 const afterAction = await vscode.window.showInformationMessage(
-                    `🗑️ Moved ${res.total.length} skill(s) to Recycle Bin from ${selectedScope.label}: ${res.total.join(', ')}.`,
+                    `Moved ${res.total.length} skill(s) to Recycle Bin from ${selectedScope.label}: ${res.total.join(', ')}.`,
                     'Open Recycle Bin'
                 );
                 if (afterAction === 'Open Recycle Bin') {
@@ -591,16 +588,16 @@ async function activate(context) {
                 }
             } else {
                 const skillSets = [
-                    { label: '🗑️ All Skills (All 31 Chat Commands)', description: 'RTK, Ponytail, Anti-Slop, JevGraph & CodeGraph skills', value: 'all' },
-                    { label: '⚡ RTK Core Skills (15 Skills)', description: '/rtk-gain, /rtk-run, /rtk-tree, /rtk-outline, etc.', value: 'rtk' },
-                    { label: '🥋 Ponytail Skills (6 Skills)', description: '/ponytail, /ponytail-audit, /ponytail-gain, etc.', value: 'ponytail' },
-                    { label: '🛡️ Anti-Slop Skills (6 Skills)', description: '/antislop, /antislop-ui, /antislop-code, etc.', value: 'antislop' },
-                    { label: '🕸️ JevGraph Skills (2 Skills)', description: '/jevgraph-build, /jevgraph-query (Doc Graph)', value: 'jevgraph' },
-                    { label: '🧬 CodeGraphContext Skills (2 Skills)', description: '/codegraph-query, /codegraph-index (Code Graph)', value: 'codegraph' }
+                    { label: '$(trash) All Skills (All 38 Chat Commands)', description: 'RTK, Ponytail, Anti-Slop, JevGraph, CodeGraph & ECC skills', value: 'all' },
+                    { label: '$(terminal) RTK Core Skills (15 Skills)', description: '/rtk-gain, /rtk-run, /rtk-tree, /rtk-outline, etc.', value: 'rtk' },
+                    { label: '$(code) Ponytail Skills (6 Skills)', description: '/ponytail, /ponytail-audit, /ponytail-gain, etc.', value: 'ponytail' },
+                    { label: '$(shield) Anti-Slop Skills (6 Skills)', description: '/antislop, /antislop-ui, /antislop-code, etc.', value: 'antislop' },
+                    { label: '$(graph) JevGraph Skills (2 Skills)', description: '/jevgraph-build, /jevgraph-query (Doc Graph)', value: 'jevgraph' },
+                    { label: '$(symbol-class) CodeGraphContext Skills (2 Skills)', description: '/codegraph-query, /codegraph-index (Code Graph)', value: 'codegraph' }
                 ];
 
                 const selectedSet = await vscode.window.showQuickPick(skillSets, {
-                    placeHolder: 'Select the preset skill set you want to uninstall:'
+                    placeHolder: 'Select the preset skill set to uninstall:'
                 });
                 if (!selectedSet) return;
 
@@ -624,7 +621,7 @@ async function activate(context) {
 
                 const res = await SkillInstaller.uninstallSkillSet(selectedSet.value, selectedScope.value);
                 const afterAction = await vscode.window.showInformationMessage(
-                    `🗑️ Successfully moved ${res.total.length} skill(s) (${selectedSet.label}) from ${selectedScope.label} to Recycle Bin.`,
+                    `Moved ${res.total.length} skill(s) (${selectedSet.label}) from ${selectedScope.label} to Recycle Bin.`,
                     'Open Recycle Bin'
                 );
                 if (afterAction === 'Open Recycle Bin') {
@@ -643,18 +640,18 @@ async function activate(context) {
 
         const actionOptions = [
             {
-                label: '🤖 Agent Decide (AI Prompt Mode)',
-                description: 'Copy an optimized prompt for AI agent to pick & ignore irrelevant skills for current session',
+                label: '$(hubot) Agent Decide (AI Prompt Mode)',
+                description: 'Copy a prompt for your AI agent to filter irrelevant skills for the current session',
                 value: 'agent_decide'
             },
             {
-                label: '✋ Manual Temporary Disable (Hide from @ and /)',
-                description: 'Select specific skill(s) to quarantine so they cannot be @-mentioned or shown in / lists',
+                label: '$(eye-closed) Manual Temporary Disable (Hide from @ and /)',
+                description: 'Select specific skill(s) to quarantine so they are hidden from @ and / lists',
                 value: 'manual'
             },
             {
-                label: `⭮ Re-Enable All Skills (${disabledCount} currently disabled)`,
-                description: 'Instantly restore all quarantined skills across project & global repositories',
+                label: `$(sync) Re-Enable All Skills (${disabledCount} currently disabled)`,
+                description: 'Restore all quarantined skills across project and global directories',
                 value: 're_enable'
             }
         ];
@@ -668,7 +665,7 @@ async function activate(context) {
             const prompt = SkillInstaller.generateAgentDecidePrompt();
             await vscode.env.clipboard.writeText(prompt);
             vscode.window.showInformationMessage(
-                '📋 Agent-Decide prompt copied to clipboard! Paste it into your AI assistant chat to have the AI identify and ignore irrelevant skills.',
+                'Agent-Decide prompt copied to clipboard. Paste it into your AI assistant chat to filter irrelevant skills.',
                 'Open Chat / Dismiss'
             );
             return;
@@ -677,7 +674,7 @@ async function activate(context) {
         if (selectedAction.value === 're_enable') {
             const res = SkillInstaller.reEnableAllSkills('all');
             vscode.window.showInformationMessage(
-                `⭮ Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
+                `Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
             );
             await refreshStatus(context);
             return;
@@ -686,13 +683,13 @@ async function activate(context) {
         if (selectedAction.value === 'manual') {
             // Ask for scope
             const scopes = [
-                { label: '📁 Workspace Only', description: 'Current project: .agents/skills/', value: 'workspace' },
-                { label: '🏠 Global Config Only', description: 'Preinstalled in IDE: ~/.gemini/config/skills/', value: 'global' },
-                { label: '🌐 Global & Workspace (All)', description: 'Quarantine across both ~/.gemini/config and .agents', value: 'all' }
+                { label: '$(folder) Workspace Only', description: 'Current project: .agents/skills/', value: 'workspace' },
+                { label: '$(home) Global Config Only', description: 'Preinstalled in IDE: ~/.gemini/config/skills/', value: 'global' },
+                { label: '$(globe) Global & Workspace (All)', description: 'Quarantine across both ~/.gemini/config and .agents', value: 'all' }
             ];
 
             const selectedScope = await vscode.window.showQuickPick(scopes, {
-                placeHolder: 'From which scope do you want to temporarily disable skills?'
+                placeHolder: 'Select scope to temporarily disable skills:'
             });
             if (!selectedScope) return;
 
@@ -714,7 +711,7 @@ async function activate(context) {
                     return `${s.scope} • ${s.ide || 'standalone'}`;
                 }))];
                 return {
-                    label: `🧠 ${name}`,
+                    label: `$(symbol-event) ${name}`,
                     description: `[${origins.join(', ')}] ${found?.description || ''}`,
                     value: name,
                     picked: false
@@ -722,7 +719,7 @@ async function activate(context) {
             });
 
             const picked = await vscode.window.showQuickPick(items, {
-                placeHolder: 'Select skills to temporarily quarantine (they will be hidden from @ and / lists):',
+                placeHolder: 'Select skills to temporarily quarantine (hidden from @ and / lists):',
                 canPickMany: true
             });
             if (!picked || picked.length === 0) return;
@@ -730,7 +727,7 @@ async function activate(context) {
             const toDisable = picked.map(p => p.value);
             const res = SkillInstaller.disableSkills(toDisable, selectedScope.value);
             vscode.window.showInformationMessage(
-                `⏸️ Temporarily disabled ${res.total.length} skill(s) (${toDisable.join(', ')}). They are quarantined and will not appear in @ or / action lists.`
+                `Temporarily disabled ${res.total.length} skill(s) (${toDisable.join(', ')}).`
             );
             await refreshStatus(context);
         }
@@ -739,7 +736,7 @@ async function activate(context) {
     const reEnableAllSkillsCmd = vscode.commands.registerCommand('tokenSaver.reEnableAllSkills', async () => {
         const res = SkillInstaller.reEnableAllSkills('all');
         vscode.window.showInformationMessage(
-            `⭮ Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
+            `Re-enabled ${res.total.length} skill(s). All skills restored to @ mentions and / action lists.`
         );
         await refreshStatus(context);
     });
@@ -749,17 +746,17 @@ async function activate(context) {
         const currentMode = cfg.get('ponytailMode', 'full');
         const newMode = (currentMode === 'off') ? 'full' : 'off';
         await cfg.update('ponytailMode', newMode, vscode.ConfigurationTarget.Global);
-        const scope = cfg.get('targetScope', 'all');
+        const scope = cfg.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         if (newMode !== 'off') {
             const pCheck = await RtkService.checkPonytailInstalled();
             if (!pCheck.installed) {
                 await promptMissingUpstream('ponytail', 'Ponytail YAGNI (GitHub)', 'tokenSaver.syncPonytail');
             } else {
-                vscode.window.showInformationMessage(`🥋 Ponytail YAGNI mode ENABLED (${newMode.toUpperCase()}).`);
+                vscode.window.showInformationMessage(`Ponytail YAGNI mode enabled (${newMode}).`);
             }
         } else {
-            vscode.window.showInformationMessage('⚪ Ponytail YAGNI mode DISABLED.');
+            vscode.window.showInformationMessage('Ponytail YAGNI mode disabled.');
         }
         await refreshStatus(context);
     });
@@ -767,7 +764,7 @@ async function activate(context) {
     const syncGlobalRulesCmd = vscode.commands.registerCommand('tokenSaver.syncGlobalRules', async () => {
         try {
             SkillInstaller.syncRules(isEnabled, 'global');
-            vscode.window.showInformationMessage('⚡ Global Antigravity rules synced to ~/.gemini/config/rules/');
+            vscode.window.showInformationMessage('Global Antigravity rules synced to ~/.gemini/config/rules/.');
         } catch (err) {
             vscode.window.showErrorMessage(`Failed to sync rules: ${err.message}`);
         }
@@ -781,7 +778,7 @@ async function activate(context) {
         try {
             outputChannel.clear();
             outputChannel.show(true);
-            outputChannel.appendLine('Fetching RTK token savings dashboard...\n');
+            outputChannel.appendLine('Fetching RTK-RG token savings scoreboard...\n');
             const data = await RtkService.getSavingsRaw();
             outputChannel.appendLine(data);
         } catch (err) {
@@ -795,6 +792,21 @@ async function activate(context) {
         const installPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
         const cmds = RtkService.getInstallCommands(isWindows, isMac, installPath);
         RtkService.runInTerminal(cmds.combinedCmd);
+        try {
+            await RtkService.installRtkRgBridge();
+        } catch (_) {}
+    });
+
+    const repairRtkRgBridgeCmd = vscode.commands.registerCommand('tokenSaver.repairRtkRgBridge', async () => {
+        try {
+            const res = await RtkService.installRtkRgBridge();
+            vscode.window.showInformationMessage(
+                `RTK-RG Bridge generated and verified (${res.createdFiles.length} bridge files in ${res.localBin}).`
+            );
+            await refreshStatus(context);
+        } catch (err) {
+            vscode.window.showErrorMessage(`Failed to generate RTK-RG bridge files: ${err.message}`);
+        }
     });
 
     const copyAiInstallPromptCmd = vscode.commands.registerCommand('tokenSaver.copyAiInstallPrompt', async (elementKey) => {
@@ -807,7 +819,7 @@ async function activate(context) {
             prompt = RtkService.generateSingleElementAiPrompt(elementKey, isWindows, isMac, installPath);
             await vscode.env.clipboard.writeText(prompt);
             vscode.window.showInformationMessage(
-                `🤖 AI setup prompt for ${elementKey.toUpperCase()} copied to clipboard! Paste it into your AI assistant chat to install automatically.`,
+                `AI setup prompt for ${elementKey.toUpperCase()} copied to clipboard. Paste it into your AI assistant chat to install.`,
                 'Open Chat'
             );
         } else {
@@ -817,13 +829,13 @@ async function activate(context) {
             const antiSlopCheck = await RtkService.checkAntiSlopInstalled();
             const jevGraphCheck = await RtkService.checkJevGraphInstalled();
             const codeGraphCheck = await CodeGraphService.checkInstalled();
-            const omniStatus = await OmniRouteService.getGatewayStatus(omniPort);
 
             const crwCheck = await CrwService.checkInstalled();
             const { LightpandaService } = require('./lightpanda-service');
             const lightpandaCheck = await LightpandaService.checkInstalled();
+            const { EccService } = require('./ecc-service');
+            const eccCheck = await EccService.checkInstalled();
 
-            const omniMissing = !omniStatus.installed && !omniStatus.running;
             const rtkMissing = !check.installed;
             const headroomMissing = !headroomCheck.installed;
             const ponytailMissing = !ponytailCheck.installed;
@@ -832,6 +844,7 @@ async function activate(context) {
             const codeGraphMissing = !codeGraphCheck.installed;
             const crwMissing = !crwCheck.installed;
             const lightpandaMissing = !lightpandaCheck.installed;
+            const eccMissing = !eccCheck.installed;
 
             prompt = RtkService.generateAiInstallPrompt(
                 isWindows,
@@ -839,18 +852,19 @@ async function activate(context) {
                 rtkMissing,
                 headroomMissing,
                 ponytailMissing,
-                omniMissing,
+                false,
                 antiSlopMissing,
                 jevGraphMissing,
                 codeGraphMissing,
                 crwMissing,
                 lightpandaMissing,
-                installPath
+                installPath,
+                eccMissing
             );
             await vscode.env.clipboard.writeText(prompt);
 
             vscode.window.showInformationMessage(
-                '🤖 AI Agent setup prompt copied to clipboard! Paste it into your AI assistant chat (Antigravity, Cursor, Windsurf, Claude Code, Cline) to install & fetch tools automatically.',
+                'AI setup prompt copied to clipboard. Paste it into your AI assistant chat to install and verify tools.',
                 'Open Chat'
             );
         }
@@ -871,17 +885,17 @@ async function activate(context) {
         const current = cfg.get('antiSlopEnabled', true);
         const next = !current;
         await cfg.update('antiSlopEnabled', next, vscode.ConfigurationTarget.Global);
-        const scope = cfg.get('targetScope', 'all');
+        const scope = cfg.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         if (next) {
             const aCheck = await RtkService.checkAntiSlopInstalled();
             if (!aCheck.installed) {
                 await promptMissingUpstream('antislop', 'Anti-Slop (GitHub)', 'tokenSaver.syncAntiSlop');
             } else {
-                vscode.window.showInformationMessage('🛡️ Anti-Slop protection is now ENABLED.');
+                vscode.window.showInformationMessage('Anti-Slop filter enabled.');
             }
         } else {
-            vscode.window.showInformationMessage('⚪ Anti-Slop protection is now DISABLED.');
+            vscode.window.showInformationMessage('Anti-Slop filter disabled.');
         }
         await refreshStatus(context);
     });
@@ -896,16 +910,16 @@ async function activate(context) {
                 { label: 'Ask', description: 'Ask user before running Anti-Slop audit or fixes', value: 'ask' },
                 { label: 'Off', description: 'Disable Anti-Slop framework rules', value: 'off' }
             ];
-            const sel = await vscode.window.showQuickPick(picks, { placeHolder: `Current Anti-Slop mode: ${currentMode.toUpperCase()}` });
+            const sel = await vscode.window.showQuickPick(picks, { placeHolder: `Current Anti-Slop mode: ${currentMode}` });
             if (!sel) return;
             chosenMode = sel.value;
         }
 
         const cfg = vscode.workspace.getConfiguration('tokenSaver');
         await cfg.update('antiSlopMode', chosenMode, vscode.ConfigurationTarget.Global);
-        const scope = cfg.get('targetScope', 'all');
+        const scope = cfg.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(`🛡️ Anti-Slop mode set to: ${chosenMode.toUpperCase()}`);
+        vscode.window.showInformationMessage(`Anti-Slop mode set to ${chosenMode}.`);
         await refreshStatus(context);
     });
 
@@ -920,7 +934,7 @@ async function activate(context) {
         const installPath = vscode.workspace.getConfiguration('tokenSaver').get('upstreamInstallPath', '');
         const cmds = RtkService.getInstallCommands(isWindows, isMac, installPath);
         await vscode.env.clipboard.writeText(cmds.combinedCmd);
-        vscode.window.showInformationMessage('📋 Raw install commands copied to clipboard: ' + cmds.combinedCmd);
+        vscode.window.showInformationMessage('Raw install commands copied to clipboard: ' + cmds.combinedCmd);
     });
 
     const setPonytailModeCmd = vscode.commands.registerCommand('tokenSaver.setPonytailMode', async (modeArg) => {
@@ -933,16 +947,16 @@ async function activate(context) {
                 { label: 'Ultra', description: 'Extremist YAGNI, immediate challenge of speculative code, one-liners', value: 'ultra' },
                 { label: 'Off', description: 'Disable Ponytail generation optimization', value: 'off' }
             ];
-            const sel = await vscode.window.showQuickPick(picks, { placeHolder: `Current Ponytail mode: ${currentMode.toUpperCase()}` });
+            const sel = await vscode.window.showQuickPick(picks, { placeHolder: `Current Ponytail mode: ${currentMode}` });
             if (!sel) return;
             chosenMode = sel.value;
         }
 
         const cfg = vscode.workspace.getConfiguration('tokenSaver');
         await cfg.update('ponytailMode', chosenMode, vscode.ConfigurationTarget.Global);
-        const scope = cfg.get('targetScope', 'all');
+        const scope = cfg.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
-        vscode.window.showInformationMessage(`🥋 Ponytail Token Saver mode set to: ${chosenMode.toUpperCase()}`);
+        vscode.window.showInformationMessage(`Ponytail mode set to ${chosenMode}.`);
         await refreshStatus(context);
     });
 
@@ -951,7 +965,7 @@ async function activate(context) {
         const current = config.get('headroomEnabled', true);
         const next = !current;
         await config.update('headroomEnabled', next, vscode.ConfigurationTarget.Global);
-        const scope = config.get('targetScope', 'all');
+        const scope = config.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         if (next) {
             const hrCheck = await RtkService.checkHeadroomInstalled();
@@ -960,10 +974,10 @@ async function activate(context) {
                     RtkUpdater.performHeadroomUpdate();
                 });
             } else {
-                vscode.window.showInformationMessage('⚡ Headroom context compression ENABLED.');
+                vscode.window.showInformationMessage('Headroom context compression enabled.');
             }
         } else {
-            vscode.window.showInformationMessage('⚪ Headroom context compression DISABLED.');
+            vscode.window.showInformationMessage('Headroom context compression disabled.');
         }
         await refreshStatus(context);
     });
@@ -979,7 +993,7 @@ async function activate(context) {
     const generateAstOutlineCmd = vscode.commands.registerCommand('tokenSaver.generateAstOutline', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor || !editor.document) {
-            vscode.window.showWarningMessage('Please open a code file to generate its AST/Symbol outline.');
+            vscode.window.showWarningMessage('Open a code file to generate its AST/Symbol outline.');
             return;
         }
         const filePath = editor.document.uri.fsPath;
@@ -1020,14 +1034,14 @@ async function activate(context) {
         const port = config.get('omniRoutePort', 20128);
         const presets = OmniRouteService.getIdePresets(port);
         const picks = Object.values(presets).map(p => ({
-            label: `${p.icon} ${p.name}`,
+            label: `$(plug) ${p.name}`,
             description: p.quickSnippet.replace(/\n/g, ' | '),
             preset: p
         }));
         const sel = await vscode.window.showQuickPick(picks, { placeHolder: 'Select AI coding tool to copy OmniRoute configuration for:' });
         if (sel) {
             await vscode.env.clipboard.writeText(sel.preset.configJson);
-            vscode.window.showInformationMessage(`📋 Copied OmniRoute configuration for ${sel.preset.name} to clipboard!`);
+            vscode.window.showInformationMessage(`Copied OmniRoute configuration for ${sel.preset.name} to clipboard.`);
         }
     });
 
@@ -1036,18 +1050,11 @@ async function activate(context) {
         const current = config.get('omniRouteEnabled', true);
         const next = !current;
         await config.update('omniRouteEnabled', next, vscode.ConfigurationTarget.Global);
+        SkillInstaller.syncUpstreamSkillsVisibility(isEnabled);
         if (next) {
-            const port = config.get('omniRoutePort', 20128);
-            const omniStatus = await OmniRouteService.getGatewayStatus(port);
-            if (!omniStatus.installed && !omniStatus.running) {
-                await promptMissingUpstream('omniroute', 'OmniRoute AI Gateway (diegosouzapw/OmniRoute)', () => {
-                    RtkUpdater.performOmniRouteUpdate();
-                });
-            } else {
-                vscode.window.showInformationMessage('🌐 OmniRoute AI Gateway feature is now ENABLED.');
-            }
+            vscode.window.showInformationMessage('OmniRoute gateway (self-installed) enabled.');
         } else {
-            vscode.window.showInformationMessage('⚪ OmniRoute AI Gateway feature is now DISABLED.');
+            vscode.window.showInformationMessage('OmniRoute gateway (self-installed) disabled.');
         }
         await refreshStatus(context);
     });
@@ -1055,22 +1062,16 @@ async function activate(context) {
     const enableOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.enableOmniRoute', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         await config.update('omniRouteEnabled', true, vscode.ConfigurationTarget.Global);
-        const port = config.get('omniRoutePort', 20128);
-        const omniStatus = await OmniRouteService.getGatewayStatus(port);
-        if (!omniStatus.installed && !omniStatus.running) {
-            await promptMissingUpstream('omniroute', 'OmniRoute AI Gateway (diegosouzapw/OmniRoute)', () => {
-                RtkUpdater.performOmniRouteUpdate();
-            });
-        } else {
-            vscode.window.showInformationMessage('🌐 OmniRoute AI Gateway feature ENABLED.');
-        }
+        SkillInstaller.syncUpstreamSkillsVisibility(isEnabled);
+        vscode.window.showInformationMessage('OmniRoute gateway (self-installed) enabled.');
         await refreshStatus(context);
     });
 
     const disableOmniRouteCmd = vscode.commands.registerCommand('tokenSaver.disableOmniRoute', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         await config.update('omniRouteEnabled', false, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage('⚪ OmniRoute AI Gateway feature DISABLED.');
+        SkillInstaller.syncUpstreamSkillsVisibility(isEnabled);
+        vscode.window.showInformationMessage('OmniRoute gateway (self-installed) disabled.');
         await refreshStatus(context);
     });
 
@@ -1089,13 +1090,13 @@ async function activate(context) {
                     RtkUpdater.performEccSync();
                 });
             } else {
-                vscode.window.showInformationMessage('🧠 ECC strategic context compaction & keeper mode ENABLED.');
+                vscode.window.showInformationMessage('ECC strategic context compaction and keeper mode enabled.');
             }
         } else {
-            vscode.window.showInformationMessage('⚪ ECC strategic context compaction & keeper mode DISABLED.');
+            vscode.window.showInformationMessage('ECC strategic context compaction and keeper mode disabled.');
         }
 
-        const scope = config.get('targetScope', 'all');
+        const scope = config.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         await refreshStatus(context);
     });
@@ -1110,9 +1111,9 @@ async function activate(context) {
                 RtkUpdater.performEccSync();
             });
         } else {
-            vscode.window.showInformationMessage('🧠 ECC optimization ENABLED.');
+            vscode.window.showInformationMessage('ECC optimization enabled.');
         }
-        const scope = config.get('targetScope', 'all');
+        const scope = config.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         await refreshStatus(context);
     });
@@ -1120,8 +1121,8 @@ async function activate(context) {
     const disableEccCmd = vscode.commands.registerCommand('tokenSaver.disableEcc', async () => {
         const config = vscode.workspace.getConfiguration('tokenSaver');
         await config.update('eccEnabled', false, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage('⚪ ECC optimization DISABLED.');
-        const scope = config.get('targetScope', 'all');
+        vscode.window.showInformationMessage('ECC optimization disabled.');
+        const scope = config.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         await refreshStatus(context);
     });
@@ -1135,7 +1136,7 @@ async function activate(context) {
         const { EccService } = require('./ecc-service');
         const res = await EccService.saveSessionCheckpoint('Milestone saved via Token Saver');
         if (res.success) {
-            vscode.window.showInformationMessage(`💾 Context Keeper checkpoint saved to ${res.path}`);
+            vscode.window.showInformationMessage(`Context Keeper checkpoint saved to ${res.path}.`);
         } else {
             vscode.window.showErrorMessage(`Failed to save checkpoint: ${res.error}`);
         }
@@ -1143,13 +1144,13 @@ async function activate(context) {
 
     const runStrategicCompactCmd = vscode.commands.registerCommand('tokenSaver.runStrategicCompact', async () => {
         vscode.window.showInformationMessage(
-            '✂️ Strategic Compaction Prompt: Run `/compact [focus summary]` in chat at this milestone to prune accumulated context and start clean!'
+            'Strategic Compaction: Run `/compact [focus summary]` in chat at this milestone to prune accumulated context.'
         );
     });
 
     const runEccCouncilCmd = vscode.commands.registerCommand('tokenSaver.runEccCouncil', async () => {
         vscode.window.showInformationMessage(
-            '⚖️ Council & Evaluator Prompt: Type `/council` in your AI chat to review architecture trade-offs or `/agent-evaluator` to verify outputs against rubrics.'
+            'Council & Evaluator: Run `/council` in chat to review architecture trade-offs or `/agent-evaluator` to verify outputs against rubrics.'
         );
     });
 
@@ -1224,17 +1225,17 @@ async function activate(context) {
         const current = cfg.get('jevGraphEnabled', true);
         const next = !current;
         await cfg.update('jevGraphEnabled', next, vscode.ConfigurationTarget.Global);
-        const scope = cfg.get('targetScope', 'all');
+        const scope = cfg.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         if (next) {
             const jCheck = await RtkService.checkJevGraphInstalled();
             if (!jCheck.installed) {
                 await promptMissingUpstream('jevgraph', 'JevGraph Knowledge Graph (chenmingtang830/jevgraph)', 'tokenSaver.syncJevGraph');
             } else {
-                vscode.window.showInformationMessage('🕸️ JevGraph Knowledge Graph optimization is now ENABLED.');
+                vscode.window.showInformationMessage('JevGraph knowledge graph optimization enabled.');
             }
         } else {
-            vscode.window.showInformationMessage('⚪ JevGraph Knowledge Graph optimization is now DISABLED.');
+            vscode.window.showInformationMessage('JevGraph knowledge graph optimization disabled.');
         }
         await refreshStatus(context);
     });
@@ -1263,17 +1264,17 @@ async function activate(context) {
         const current = cfg.get('codeGraphEnabled', true);
         const next = !current;
         await cfg.update('codeGraphEnabled', next, vscode.ConfigurationTarget.Global);
-        const scope = cfg.get('targetScope', 'all');
+        const scope = cfg.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         if (next) {
             const cgCheck = await CodeGraphService.checkInstalled();
             if (!cgCheck.installed) {
                 await promptMissingUpstream('codegraph', 'CodeGraphContext (CodeGraphContext/CodeGraphContext)', 'tokenSaver.syncCodeGraph');
             } else {
-                vscode.window.showInformationMessage('🧬 CodeGraphContext semantic code graph optimization is now ENABLED.');
+                vscode.window.showInformationMessage('CodeGraphContext semantic code graph optimization enabled.');
             }
         } else {
-            vscode.window.showInformationMessage('⚪ CodeGraphContext semantic code graph optimization is now DISABLED.');
+            vscode.window.showInformationMessage('CodeGraphContext semantic code graph optimization disabled.');
         }
         await refreshStatus(context);
     });
@@ -1295,7 +1296,7 @@ async function activate(context) {
         await config.update('hybridWebEnabled', next, vscode.ConfigurationTarget.Global);
         await config.update('crwEnabled', next, vscode.ConfigurationTarget.Global);
         await config.update('lightpandaEnabled', next, vscode.ConfigurationTarget.Global);
-        const scope = config.get('targetScope', 'all');
+        const scope = config.get('targetScope', 'current');
         SkillInstaller.syncRules(isEnabled, scope);
         if (next) {
             const crwCheck = await CrwService.checkInstalled();
@@ -1308,10 +1309,10 @@ async function activate(context) {
             } else if (!lpCheck.installed) {
                 await promptMissingUpstream('lightpanda', 'Lightpanda Browser (lightpanda-io/browser)', 'tokenSaver.syncLightpanda');
             } else {
-                vscode.window.showInformationMessage('🌐 3-Tier Hybrid Web Research & Scraping (fastCRW + Lightpanda) is now ENABLED.');
+                vscode.window.showInformationMessage('3-Tier Hybrid Web research and scraping (fastCRW + Lightpanda) enabled.');
             }
         } else {
-            vscode.window.showInformationMessage('⚪ Hybrid Web Research & Scraping is now DISABLED.');
+            vscode.window.showInformationMessage('Hybrid Web research and scraping disabled.');
         }
         await refreshStatus(context);
     });
@@ -1350,7 +1351,7 @@ async function activate(context) {
         const port = vscode.workspace.getConfiguration('tokenSaver').get('lightpandaMcpPort', 8000);
         const snippet = LightpandaService.getMcpConfigSnippet(port);
         await vscode.env.clipboard.writeText(snippet);
-        vscode.window.showInformationMessage('📋 Lightpanda MCP configuration JSON copied to clipboard!');
+        vscode.window.showInformationMessage('Lightpanda MCP configuration JSON copied to clipboard.');
     });
 
     // Background watcher for code file saves to keep semantic graph fresh
@@ -1421,6 +1422,7 @@ async function activate(context) {
         refreshCmd,
         showSavingsCmd,
         installCliCmd,
+        repairRtkRgBridgeCmd,
         copyAiInstallPromptCmd,
         copyInstallCommandsCmd,
         setPonytailModeCmd,

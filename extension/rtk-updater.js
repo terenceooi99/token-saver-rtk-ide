@@ -117,17 +117,15 @@ class RtkUpdater {
 
     static async checkForUpdates(silent = false) {
         try {
-            const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease] = await Promise.all([
+            const [rtkCheck, headroomCheck, ponytailCheck, antiSlopCheck, jevCheck, rtkRelease, headroomRelease, ponytailRelease, antiSlopRelease, jevRelease] = await Promise.all([
                 RtkService.checkInstalled(),
                 RtkService.checkHeadroomInstalled(),
                 RtkService.checkPonytailInstalled(),
-                RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : require('./omniroute-service').checkInstalled(),
                 RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
                 RtkService.checkJevGraphInstalled ? RtkService.checkJevGraphInstalled() : { installed: false },
                 this.getLatestRelease('rtk-ai/rtk'),
                 this.getLatestRelease('headroomlabs-ai/headroom'),
                 this.getLatestRelease('DietrichGebert/ponytail'),
-                this.getLatestRelease('diegosouzapw/OmniRoute'),
                 this.getLatestRelease('miqdadbadjuber/anti-slop'),
                 this.getLatestRelease('chenmingtang830/jevgraph')
             ]);
@@ -135,57 +133,51 @@ class RtkUpdater {
             const rtkHasUpdate = rtkRelease.success && rtkCheck.installed && this.isNewer(rtkRelease.tag, rtkCheck.version);
             const headroomHasUpdate = headroomRelease.success && headroomCheck.installed && this.isNewer(headroomRelease.tag, headroomCheck.version);
             const ponytailHasUpdate = ponytailRelease.success && (!ponytailCheck.installed || (ponytailCheck.skillsCount && ponytailCheck.skillsCount < 6));
-            const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
             const antiSlopHasUpdate = antiSlopRelease.success && (!antiSlopCheck.installed || (antiSlopCheck.skillsCount && antiSlopCheck.skillsCount < 6));
             const jevHasUpdate = jevRelease.success && (!jevCheck.installed);
-            const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || omniHasUpdate || antiSlopHasUpdate || jevHasUpdate;
+            const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || jevHasUpdate;
 
             if (hasAnyUpdate) {
                 const updatesList = [];
                 if (rtkHasUpdate) updatesList.push(`RTK ${rtkRelease.tag}`);
                 if (headroomHasUpdate) updatesList.push(`Headroom ${headroomRelease.tag}`);
                 if (ponytailHasUpdate) updatesList.push(`Ponytail (${ponytailRelease.tag || 'Latest'})`);
-                if (omniHasUpdate) updatesList.push(`OmniRoute ${omniRelease.tag}`);
                 if (antiSlopHasUpdate) updatesList.push(`Anti-Slop (${antiSlopRelease.tag || 'Latest'})`);
                 if (jevHasUpdate) updatesList.push(`JevGraph (${jevRelease.tag || 'Latest'})`);
 
                 const choice = await vscode.window.showInformationMessage(
-                    `🚀 Upstream updates available: ${updatesList.join(' & ')}`,
+                    `Upstream updates available: ${updatesList.join(', ')}`,
                     'Update / Sync All',
-                    'Sync JevGraph GitHub',
-                    'Sync Anti-Slop GitHub',
-                    'Sync Ponytail GitHub',
-                    'Update RTK',
+                    'Sync JevGraph',
+                    'Sync Anti-Slop',
+                    'Sync Ponytail',
+                    'Update RTK-RG',
                     'Update Headroom',
-                    'Update OmniRoute',
                     'Release Notes'
                 );
 
                 if (choice === 'Update / Sync All') {
                     this.performAllUpdates();
-                } else if (choice === 'Sync JevGraph GitHub') {
+                } else if (choice === 'Sync JevGraph') {
                     await this.performJevGraphSync();
-                } else if (choice === 'Sync Anti-Slop GitHub') {
+                } else if (choice === 'Sync Anti-Slop') {
                     await this.performAntiSlopSync();
-                } else if (choice === 'Sync Ponytail GitHub') {
+                } else if (choice === 'Sync Ponytail') {
                     await this.performPonytailSync();
-                } else if (choice === 'Update RTK') {
+                } else if (choice === 'Update RTK-RG') {
                     this.performUpdate();
                 } else if (choice === 'Update Headroom') {
                     this.performHeadroomUpdate();
-                } else if (choice === 'Update OmniRoute') {
-                    this.performOmniRouteUpdate();
                 } else if (choice === 'Release Notes') {
                     if (rtkRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(rtkRelease.htmlUrl));
                     if (headroomRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(headroomRelease.htmlUrl));
                     if (ponytailRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(ponytailRelease.htmlUrl));
                     if (antiSlopRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
-                    if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
                     if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
                 }
             } else if (!silent) {
                 vscode.window.showInformationMessage(
-                    `✓ All upstream layers (RTK ${rtkCheck.version || 'installed'}, Headroom ${headroomCheck.version || 'installed'}, Ponytail, Anti-Slop, OmniRoute & JevGraph) are up-to-date!`
+                    `All upstream layers (RTK-RG ${rtkCheck.version || 'installed'}, Headroom ${headroomCheck.version || 'installed'}, Ponytail, Anti-Slop, JevGraph) are up to date.`
                 );
             }
 
@@ -217,12 +209,6 @@ class RtkUpdater {
                     currentVersion: antiSlopCheck.version || 'v3.2.20',
                     skillsCount: antiSlopCheck.skillsCount || 0
                 },
-                omniroute: {
-                    hasUpdate: omniHasUpdate,
-                    release: omniRelease,
-                    installed: omniCheck.installed,
-                    currentVersion: omniCheck.version
-                },
                 jevgraph: {
                     hasUpdate: jevHasUpdate,
                     release: jevRelease,
@@ -241,17 +227,11 @@ class RtkUpdater {
     static performUpdate() {
         const isWindows = process.platform === 'win32';
         const isMac = process.platform === 'darwin';
-
-        let updateCmd;
-        if (isWindows) {
-            updateCmd = 'winget upgrade --id rtk-ai.rtk --accept-source-agreements --accept-package-agreements';
-        } else if (isMac) {
-            updateCmd = 'brew upgrade rtk || (curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash)';
-        } else {
-            updateCmd = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash';
-        }
-
-        RtkService.runInTerminal(updateCmd);
+        const cmds = RtkService.getInstallCommands(isWindows, isMac);
+        RtkService.runInTerminal(cmds.rtkCmd);
+        try {
+            RtkService.installRtkRgBridge();
+        } catch (_) {}
     }
 
     static performHeadroomUpdate() {
@@ -269,16 +249,16 @@ class RtkUpdater {
 
     static async performAntiSlopSync() {
         try {
-            vscode.window.showInformationMessage('⭮ Fetching & synchronizing Anti-Slop from GitHub (miqdadbadjuber/anti-slop)...');
+            vscode.window.showInformationMessage('Syncing Anti-Slop from GitHub (miqdadbadjuber/anti-slop)...');
             const results = SkillInstaller.installAllSkills();
             const config = vscode.workspace.getConfiguration('tokenSaver');
             const isEnabled = config.get('enableOnStartup', true);
-            const scope = config.get('targetScope', 'all');
+            const scope = config.get('targetScope', 'current');
             SkillInstaller.syncRules(isEnabled, scope);
 
             const dests = results.map(r => r.destination).join(' and ');
             vscode.window.showInformationMessage(
-                `🛡️ Successfully fetched and synchronized Anti-Slop suite from GitHub to global IDE: ${dests}!`
+                `Synchronized Anti-Slop suite from GitHub to ${dests}.`
             );
             return { success: true, results };
         } catch (err) {
@@ -289,16 +269,16 @@ class RtkUpdater {
 
     static async performPonytailSync() {
         try {
-            vscode.window.showInformationMessage('⭮ Fetching & synchronizing Ponytail from GitHub (DietrichGebert/ponytail)...');
+            vscode.window.showInformationMessage('Syncing Ponytail from GitHub (DietrichGebert/ponytail)...');
             const results = SkillInstaller.installAllSkills();
             const config = vscode.workspace.getConfiguration('tokenSaver');
             const isEnabled = config.get('enableOnStartup', true);
-            const scope = config.get('targetScope', 'all');
+            const scope = config.get('targetScope', 'current');
             SkillInstaller.syncRules(isEnabled, scope);
 
             const dests = results.map(r => r.destination).join(' and ');
             vscode.window.showInformationMessage(
-                `🥋 Successfully fetched and synchronized Ponytail YAGNI suite from GitHub to global IDE: ${dests}!`
+                `Synchronized Ponytail YAGNI suite from GitHub to ${dests}.`
             );
             return { success: true, results };
         } catch (err) {
@@ -326,12 +306,7 @@ class RtkUpdater {
             ? 'python -m pip install --upgrade "headroom-ai[all]" 2>$null; if (!$?) { pip install --upgrade "headroom-ai[all]" }'
             : 'python3 -m pip install --upgrade "headroom-ai[all]" 2>/dev/null || pip install --upgrade "headroom-ai[all]" || pipx upgrade headroom-ai';
 
-        const omniCmd = isWindows
-            ? (omniEnabled ? `if (Get-Command npm -ErrorAction SilentlyContinue) { npm install -g omniroute } else { Write-Host 'ℹ️ Node.js / npm not detected (OmniRoute update skipped)' }` : '')
-            : (omniEnabled ? `command -v npm >/dev/null 2>&1 && npm install -g omniroute || true` : '');
-
         const commands = [rtkCmd, headroomCmd];
-        if (omniCmd) commands.push(omniCmd);
 
         const fullCmd = commands.join(' ; ');
         RtkService.runInTerminal(fullCmd);
@@ -348,12 +323,12 @@ class RtkUpdater {
         const cmds = JevGraphService.getInstallCommands(isWindows);
 
         try {
-            vscode.window.showInformationMessage('🕸️ Syncing JevGraph knowledge graph engine from GitHub (chenmingtang830/jevgraph)...');
+            vscode.window.showInformationMessage('Syncing JevGraph knowledge graph engine from GitHub (chenmingtang830/jevgraph)...');
             JevGraphService.runInTerminal(cmds.combinedCmd);
-            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'current');
             SkillInstaller.installJevGraphSkills(scope);
             SkillInstaller.syncRules(true, scope);
-            vscode.window.showInformationMessage('✓ JevGraph skills & directives synced across IDE.');
+            vscode.window.showInformationMessage('JevGraph skills and directives synced.');
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to sync JevGraph: ${e.message}`);
         }
@@ -365,12 +340,12 @@ class RtkUpdater {
         const cmds = CodeGraphService.getInstallCommands(isWindows);
 
         try {
-            vscode.window.showInformationMessage('🧬 Syncing CodeGraphContext semantic code graph engine from GitHub (CodeGraphContext/CodeGraphContext)...');
+            vscode.window.showInformationMessage('Syncing CodeGraphContext semantic code graph engine from GitHub (CodeGraphContext/CodeGraphContext)...');
             RtkService.runInTerminal(cmds.primaryCmd);
-            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'current');
             SkillInstaller.installAllSkills(scope);
             SkillInstaller.syncRules(true, scope);
-            vscode.window.showInformationMessage('✓ CodeGraphContext skills & directives synced across IDE.');
+            vscode.window.showInformationMessage('CodeGraphContext skills and directives synced.');
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to sync CodeGraphContext: ${e.message}`);
         }
@@ -382,12 +357,12 @@ class RtkUpdater {
         const cmds = CrwService.getInstallCommands(isWindows);
 
         try {
-            vscode.window.showInformationMessage('🕷️ Fetching & installing fastCRW from GitHub (fastcrw/crw)...');
+            vscode.window.showInformationMessage('Syncing fastCRW from GitHub (fastcrw/crw)...');
             RtkService.runInTerminal(cmds.primaryCmd);
-            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'current');
             SkillInstaller.installAllSkills(scope);
             SkillInstaller.syncRules(true, scope);
-            vscode.window.showInformationMessage('✓ fastCRW hybrid web search optimization & directives synced across IDE.');
+            vscode.window.showInformationMessage('fastCRW hybrid web search directives synced.');
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to sync fastCRW: ${e.message}`);
         }
@@ -401,12 +376,12 @@ class RtkUpdater {
         const cmds = LightpandaService.getInstallCommands(isWindows, isMac);
 
         try {
-            vscode.window.showInformationMessage('🐼 Fetching & installing Lightpanda Browser from GitHub (lightpanda-io/browser)...');
+            vscode.window.showInformationMessage('Syncing Lightpanda Browser from GitHub (lightpanda-io/browser)...');
             RtkService.runInTerminal(cmds.primaryCmd);
-            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'current');
             SkillInstaller.installAllSkills(scope);
             SkillInstaller.syncRules(true, scope);
-            vscode.window.showInformationMessage('✓ Lightpanda Browser & hybrid dynamic MCP directives synced across IDE.');
+            vscode.window.showInformationMessage('Lightpanda Browser and dynamic MCP directives synced.');
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to sync Lightpanda: ${e.message}`);
         }
@@ -419,14 +394,14 @@ class RtkUpdater {
         const cmds = EccService.getInstallCommands(isWindows, installPath);
 
         try {
-            vscode.window.showInformationMessage('🧠 Fetching & syncing ECC skills and harness from GitHub (affaan-m/ECC)...');
+            vscode.window.showInformationMessage('Syncing ECC skills and harness from GitHub (affaan-m/ECC)...');
             if (installPath) {
                 RtkService.runInTerminal(cmds.cloneCmd);
             }
-            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'all');
+            const scope = vscode.workspace.getConfiguration('tokenSaver').get('targetScope', 'current');
             SkillInstaller.installAllSkills(scope);
             SkillInstaller.syncRules(true, scope);
-            vscode.window.showInformationMessage('✓ ECC strategic compaction & context keeper skills synced across IDE.');
+            vscode.window.showInformationMessage('ECC strategic compaction and context keeper skills synced.');
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to sync ECC: ${e.message}`);
         }
@@ -603,11 +578,11 @@ class RtkUpdater {
         switch (layerKey) {
             case 'rtk': {
                 this.createRestorePoint('rtk', {
-                    name: 'RTK CLI (rtk-ai/rtk)',
+                    name: 'RTK-RG CLI (rtk-ai/rtk)',
                     repo: 'rtk-ai/rtk',
                     stateBefore: { rtkEnabled: config.get('rtkEnabled', true) }
                 });
-                vscode.window.showInformationMessage('🗑️ Moving RTK CLI to Recycle Bin & launching uninstaller...');
+                vscode.window.showInformationMessage('Moving RTK-RG CLI to Recycle Bin and starting uninstaller...');
                 RtkService.uninstallRtk();
                 break;
             }
@@ -617,7 +592,7 @@ class RtkUpdater {
                     repo: 'headroomlabs-ai/headroom',
                     stateBefore: { headroomEnabled: config.get('headroomEnabled', true) }
                 });
-                vscode.window.showInformationMessage('🗑️ Moving Headroom CCR to Recycle Bin & launching uninstaller...');
+                vscode.window.showInformationMessage('Moving Headroom CCR to Recycle Bin and starting uninstaller...');
                 RtkService.uninstallHeadroom();
                 break;
             }
@@ -625,7 +600,7 @@ class RtkUpdater {
                 try {
                     const res = await SkillInstaller.uninstallPonytailSkills();
                     await config.update('ponytailMode', 'off', vscode.ConfigurationTarget.Global);
-                    const scope = config.get('targetScope', 'all');
+                    const scope = config.get('targetScope', 'current');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     this.createRestorePoint('ponytail', {
                         name: 'Ponytail YAGNI Suite (DietrichGebert/ponytail)',
@@ -634,7 +609,7 @@ class RtkUpdater {
                         stateBefore: { ponytailMode: 'full' }
                     });
                     vscode.window.showInformationMessage(
-                        `🥋 Uninstalled Ponytail YAGNI suite (${res.total.length} skills moved to Recycle Bin). Ponytail mode set to OFF. Restore point saved.`
+                        `Uninstalled Ponytail YAGNI suite (${res.total.length} skills moved to Recycle Bin). Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Ponytail skills: ${e.message}`);
@@ -645,7 +620,7 @@ class RtkUpdater {
                 try {
                     const res = await SkillInstaller.uninstallAntiSlopSkills();
                     await config.update('antiSlopEnabled', false, vscode.ConfigurationTarget.Global);
-                    const scope = config.get('targetScope', 'all');
+                    const scope = config.get('targetScope', 'current');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     this.createRestorePoint('antislop', {
                         name: 'Anti-Slop Framework (miqdadbadjuber/anti-slop)',
@@ -654,7 +629,7 @@ class RtkUpdater {
                         stateBefore: { antiSlopEnabled: true }
                     });
                     vscode.window.showInformationMessage(
-                        `🛡️ Uninstalled Anti-Slop suite (${res.total.length} skills moved to Recycle Bin). Anti-Slop disabled. Restore point saved.`
+                        `Uninstalled Anti-Slop suite (${res.total.length} skills moved to Recycle Bin). Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Anti-Slop skills: ${e.message}`);
@@ -668,7 +643,7 @@ class RtkUpdater {
                     await trashDirs(cands);
                     const res = await SkillInstaller.uninstallJevGraphSkills();
                     await config.update('jevGraphEnabled', false, vscode.ConfigurationTarget.Global);
-                    const scope = config.get('targetScope', 'all');
+                    const scope = config.get('targetScope', 'current');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     this.createRestorePoint('jevgraph', {
                         name: 'JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
@@ -681,7 +656,7 @@ class RtkUpdater {
                     const cmds = JevGraphService.getUninstallCommands(isWindows);
                     JevGraphService.runInTerminal(cmds.combinedUninstallCmd);
                     vscode.window.showInformationMessage(
-                        `🕸️ Uninstalled JevGraph engine & moved directory and ${res.total.length} skills to Recycle Bin. Restore point saved.`
+                        `Uninstalled JevGraph engine and moved directory and ${res.total.length} skills to Recycle Bin. Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall JevGraph: ${e.message}`);
@@ -694,7 +669,7 @@ class RtkUpdater {
                     const cands = CodeGraphService.getCandidateDirs();
                     await trashDirs(cands);
                     await config.update('codeGraphEnabled', false, vscode.ConfigurationTarget.Global);
-                    const scope = config.get('targetScope', 'all');
+                    const scope = config.get('targetScope', 'current');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     this.createRestorePoint('codegraph', {
                         name: 'CodeGraphContext (CodeGraphContext/CodeGraphContext)',
@@ -707,7 +682,7 @@ class RtkUpdater {
                     const cmds = CodeGraphService.getUninstallCommands(isWindows);
                     RtkService.runInTerminal(cmds.primaryCmd);
                     vscode.window.showInformationMessage(
-                        '🧬 CodeGraphContext directory moved to Recycle Bin and uninstaller started. Restore point saved.'
+                        'CodeGraphContext directory moved to Recycle Bin and uninstaller started. Restore point saved.'
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall CodeGraphContext: ${e.message}`);
@@ -720,7 +695,7 @@ class RtkUpdater {
                     const cands = CrwService.getCandidateDirs();
                     await trashDirs(cands);
                     await config.update('crwEnabled', false, vscode.ConfigurationTarget.Global);
-                    const scope = config.get('targetScope', 'all');
+                    const scope = config.get('targetScope', 'current');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     this.createRestorePoint('crw', {
                         name: 'fastCRW Static Scraper (fastcrw/crw)',
@@ -733,7 +708,7 @@ class RtkUpdater {
                     const cmds = CrwService.getUninstallCommands(isWindows);
                     RtkService.runInTerminal(cmds.primaryCmd);
                     vscode.window.showInformationMessage(
-                        '🕷️ fastCRW directory moved to Recycle Bin and uninstaller started. Restore point saved.'
+                        'fastCRW directory moved to Recycle Bin and uninstaller started. Restore point saved.'
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall fastCRW: ${e.message}`);
@@ -748,7 +723,7 @@ class RtkUpdater {
                     const cands = LightpandaService.getCandidateDirs();
                     await trashDirs(cands);
                     await config.update('lightpandaEnabled', false, vscode.ConfigurationTarget.Global);
-                    const scope = config.get('targetScope', 'all');
+                    const scope = config.get('targetScope', 'current');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     this.createRestorePoint('lightpanda', {
                         name: 'Lightpanda Browser (lightpanda-io/browser)',
@@ -761,7 +736,7 @@ class RtkUpdater {
                     const cmds = LightpandaService.getUninstallCommands(isWindows);
                     RtkService.runInTerminal(cmds.primaryCmd);
                     vscode.window.showInformationMessage(
-                        '🐼 Lightpanda Browser directory moved to Recycle Bin and uninstaller started. Restore point saved.'
+                        'Lightpanda Browser directory moved to Recycle Bin and uninstaller started. Restore point saved.'
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall Lightpanda: ${e.message}`);
@@ -775,7 +750,7 @@ class RtkUpdater {
                     await trashDirs(cands);
                     const res = await SkillInstaller.uninstallEccSkills();
                     await config.update('eccEnabled', false, vscode.ConfigurationTarget.Global);
-                    const scope = config.get('targetScope', 'all');
+                    const scope = config.get('targetScope', 'current');
                     SkillInstaller.syncRules(config.get('enableOnStartup', true), scope);
                     this.createRestorePoint('ecc', {
                         name: 'ECC Harness Optimization (affaan-m/ECC)',
@@ -785,7 +760,7 @@ class RtkUpdater {
                         stateBefore: { eccEnabled: true }
                     });
                     vscode.window.showInformationMessage(
-                        `🧠 Uninstalled ECC skills (${res.total.length} skills moved to Recycle Bin). Restore point saved.`
+                        `Uninstalled ECC skills (${res.total.length} skills moved to Recycle Bin). Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall ECC: ${e.message}`);
@@ -794,7 +769,7 @@ class RtkUpdater {
             }
             case 'omniroute': {
                 try {
-                    vscode.window.showInformationMessage('🗑️ Stopping OmniRoute & launching uninstaller...');
+                    vscode.window.showInformationMessage('Stopping OmniRoute and starting uninstaller...');
                     OmniRouteService.uninstallCli();
                     await config.update('omniRouteEnabled', false, vscode.ConfigurationTarget.Global);
                     this.createRestorePoint('omniroute', {
@@ -802,7 +777,7 @@ class RtkUpdater {
                         repo: 'diegosouzapw/OmniRoute',
                         stateBefore: { omniRouteEnabled: true }
                     });
-                    vscode.window.showInformationMessage('🌐 OmniRoute Gateway uninstalled to Recycle Bin and feature disabled. Restore point saved.');
+                    vscode.window.showInformationMessage('OmniRoute gateway uninstalled to Recycle Bin and disabled. Restore point saved.');
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to uninstall OmniRoute: ${e.message}`);
                 }
@@ -818,7 +793,7 @@ class RtkUpdater {
                         stateBefore: {}
                     });
                     vscode.window.showInformationMessage(
-                        `🧹 Cleared all injected Multi-IDE rules and moved ${sRes.total.length} Antigravity/Agent skills to Recycle Bin. Restore point saved.`
+                        `Cleared injected IDE rules and moved ${sRes.total.length} agent skills to Recycle Bin. Restore point saved.`
                     );
                 } catch (e) {
                     vscode.window.showErrorMessage(`Failed to clean rules/skills: ${e.message}`);
@@ -839,9 +814,9 @@ class RtkUpdater {
      */
     static async performLayerRecover(layerKey) {
         const config = vscode.workspace.getConfiguration('tokenSaver');
-        const scope = config.get('targetScope', 'all');
+        const scope = config.get('targetScope', 'current');
 
-        vscode.window.showInformationMessage(`♻️ Recovering ${layerKey} upstream layer and re-enabling configuration...`);
+        vscode.window.showInformationMessage(`Recovering ${layerKey} upstream layer and re-enabling configuration...`);
 
         // Automatically reconstitute vital configs and launcher files from backup
         this.restoreVitalUpstreamArtifacts(layerKey);
@@ -897,7 +872,7 @@ class RtkUpdater {
         }
 
         SkillInstaller.syncRules(true, scope);
-        vscode.window.showInformationMessage(`✓ Upstream layer ${layerKey} successfully restored and active.`);
+        vscode.window.showInformationMessage(`Upstream layer ${layerKey} restored and active.`);
     }
 
     /**
@@ -907,7 +882,7 @@ class RtkUpdater {
         const points = this.getRestorePoints();
         if (points.length === 0) {
             const act = await vscode.window.showInformationMessage(
-                'ℹ️ No restore points recorded yet. Would you like to open the OS Recycle Bin?',
+                'No restore points recorded yet. Open the OS Recycle Bin?',
                 'Open Recycle Bin',
                 'Cancel'
             );
@@ -971,13 +946,13 @@ class RtkUpdater {
 
     static async performAllUninstall() {
         const confirm = await vscode.window.showWarningMessage(
-            '⚠️ Are you sure you want to completely UNINSTALL all upstream GitHub layers (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute) and clean all injected rules & skills? All folders will be moved safely to your Recycle Bin with a Restore Point saved.',
+            'Uninstall all upstream GitHub layers (RTK-RG, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW, Lightpanda, ECC) and remove injected rules and skills? All folders will be moved to the Recycle Bin with a restore point saved.',
             { modal: true },
-            'Yes, Uninstall Everything',
+            'Uninstall All',
             'Cancel'
         );
 
-        if (confirm !== 'Yes, Uninstall Everything') {
+        if (confirm !== 'Uninstall All') {
             return;
         }
 
@@ -1035,7 +1010,7 @@ class RtkUpdater {
         RtkService.runInTerminal(cmds.combinedUninstallCmd);
 
         vscode.window.showInformationMessage(
-            '🧹 Full clean uninstall started in terminal. Folders moved to OS Recycle Bin and restore point saved.'
+            'Full clean uninstall started in terminal. Folders moved to OS Recycle Bin and restore point saved.'
         );
     }
 
@@ -1045,21 +1020,21 @@ class RtkUpdater {
 
         const picks = [
             {
-                label: `$(history) ♻️ Restore Points & Recovery List...${rpCountLabel}`,
+                label: `$(history) Restore Points & Recovery List${rpCountLabel}`,
                 description: 'Recover uninstalled upstream layers from Restore Points or GitHub',
                 detail: 'View recent uninstallation restore points or browse the OS Recycle Bin',
                 actionKey: 'restore_points'
             },
             {
                 label: '$(trash) Open OS Recycle Bin / Trash',
-                description: 'Open the Windows Recycle Bin or Mac Trash directly',
+                description: 'Open the Windows Recycle Bin or macOS Trash directly',
                 detail: 'View deleted files and manually restore files if needed',
                 actionKey: 'open_recycle_bin'
             },
             {
                 label: '$(trash) All Upstream GitHub Layers (Full Clean Purge)',
                 description: 'Move all upstream folders to Recycle Bin and create full Restore Point',
-                detail: 'RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW, Lightpanda & ECC',
+                detail: 'RTK-RG, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW, Lightpanda & ECC',
                 layerKey: 'all'
             },
             {
@@ -1079,12 +1054,12 @@ class RtkUpdater {
             },
             {
                 label: '$(type-hierarchy) JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
-                description: 'Move local directory & skills to Recycle Bin and disable feature',
+                description: 'Move local directory and skills to Recycle Bin and disable feature',
                 layerKey: 'jevgraph'
             },
             {
                 label: '$(circuit-board) ECC Harness Optimization (affaan-m/ECC)',
-                description: 'Move ECC skills & candidate directory to Recycle Bin and disable feature',
+                description: 'Move ECC skills and candidate directory to Recycle Bin and disable feature',
                 layerKey: 'ecc'
             },
             {
@@ -1093,17 +1068,12 @@ class RtkUpdater {
                 layerKey: 'antislop'
             },
             {
-                label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
+                label: '$(code) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
                 description: 'Move /ponytail-* skills to Recycle Bin and turn off Ponytail mode',
                 layerKey: 'ponytail'
             },
             {
-                label: '$(globe) OmniRoute AI Gateway (diegosouzapw/OmniRoute)',
-                description: 'Stop gateway, move configuration to Recycle Bin, and disable feature',
-                layerKey: 'omniroute'
-            },
-            {
-                label: '$(terminal) RTK CLI Binary (rtk-ai/rtk)',
+                label: '$(terminal) RTK-RG CLI Binary (rtk-ai/rtk)',
                 description: 'Uninstall rtk CLI binary via winget / brew / rm',
                 layerKey: 'rtk'
             },
@@ -1138,20 +1108,18 @@ class RtkUpdater {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Checking Upstream GitHub releases (RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW & Lightpanda)...',
+                title: 'Checking upstream GitHub releases (RTK-RG, Headroom, Ponytail, Anti-Slop, JevGraph, CodeGraph, fastCRW, Lightpanda & ECC)...',
                 cancellable: false
             },
             async () => {
-                const OmniRouteService = require('./omniroute-service');
                 const { CodeGraphService } = require('./codegraph-service');
                 const { CrwService } = require('./crw-service');
                 const { LightpandaService } = require('./lightpanda-service');
                 const { EccService } = require('./ecc-service');
-                const [rtkCheck, headroomCheck, ponytailCheck, omniCheck, antiSlopCheck, jevCheck, codeGraphCheck, crwCheck, lightpandaCheck, eccCheck, rtkRelease, headroomRelease, ponytailRelease, omniRelease, antiSlopRelease, jevRelease, codeGraphRelease, crwRelease, lightpandaRelease, eccRelease] = await Promise.all([
+                const [rtkCheck, headroomCheck, ponytailCheck, antiSlopCheck, jevCheck, codeGraphCheck, crwCheck, lightpandaCheck, eccCheck, rtkRelease, headroomRelease, ponytailRelease, antiSlopRelease, jevRelease, codeGraphRelease, crwRelease, lightpandaRelease, eccRelease] = await Promise.all([
                     RtkService.checkInstalled(),
                     RtkService.checkHeadroomInstalled(),
                     RtkService.checkPonytailInstalled(),
-                    RtkService.checkOmniRouteInstalled ? RtkService.checkOmniRouteInstalled() : OmniRouteService.checkInstalled(),
                     RtkService.checkAntiSlopInstalled ? RtkService.checkAntiSlopInstalled() : { installed: false, skillsCount: 0 },
                     RtkService.checkJevGraphInstalled ? RtkService.checkJevGraphInstalled() : { installed: false },
                     CodeGraphService.checkInstalled(),
@@ -1161,7 +1129,6 @@ class RtkUpdater {
                     this.getLatestRelease('rtk-ai/rtk'),
                     this.getLatestRelease('headroomlabs-ai/headroom'),
                     this.getLatestRelease('DietrichGebert/ponytail'),
-                    this.getLatestRelease('diegosouzapw/OmniRoute'),
                     this.getLatestRelease('miqdadbadjuber/anti-slop'),
                     this.getLatestRelease('chenmingtang830/jevgraph'),
                     this.getLatestRelease('CodeGraphContext/CodeGraphContext'),
@@ -1174,105 +1141,96 @@ class RtkUpdater {
                 const headroomHasUpdate = headroomRelease.success && headroomCheck.installed && this.isNewer(headroomRelease.tag, headroomCheck.version);
                 const ponytailHasUpdate = ponytailRelease.success && (!ponytailCheck.installed || (ponytailCheck.skillsCount && ponytailCheck.skillsCount < 6));
                 const antiSlopHasUpdate = antiSlopRelease.success && (!antiSlopCheck.installed || (antiSlopCheck.skillsCount && antiSlopCheck.skillsCount < 6));
-                const omniHasUpdate = omniRelease.success && omniCheck.installed && this.isNewer(omniRelease.tag, omniCheck.version);
                 const jevHasUpdate = jevRelease.success && (!jevCheck.installed);
                 const codeGraphHasUpdate = codeGraphRelease.success && (!codeGraphCheck.installed);
                 const crwHasUpdate = crwRelease.success && (!crwCheck.installed);
                 const lightpandaHasUpdate = lightpandaRelease.success && (!lightpandaCheck.installed);
                 const eccHasUpdate = eccRelease.success && (!eccCheck.installed || (eccCheck.skillsCount && eccCheck.skillsCount < 4));
-                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || omniHasUpdate || jevHasUpdate || codeGraphHasUpdate || crwHasUpdate || lightpandaHasUpdate || eccHasUpdate;
+                const hasAnyUpdate = rtkHasUpdate || headroomHasUpdate || ponytailHasUpdate || antiSlopHasUpdate || jevHasUpdate || codeGraphHasUpdate || crwHasUpdate || lightpandaHasUpdate || eccHasUpdate;
 
                 const picks = [
                     {
                         label: hasAnyUpdate ? '$(cloud-download) Update / Sync All Upstream GitHub Layers' : '$(sync) Sync All Upstream GitHub Layers',
-                        description: 'Batch update & sync RTK, Headroom, Ponytail, Anti-Slop, OmniRoute, JevGraph, CodeGraph, fastCRW & Lightpanda',
-                        detail: hasAnyUpdate ? '🚀 Updates available for one or more layers - Click to update all' : '✓ All components up-to-date - Click to force re-sync',
+                        description: 'Batch update and sync RTK-RG, Headroom, Ponytail, Anti-Slop, JevGraph, CodeGraph, fastCRW & Lightpanda',
+                        detail: hasAnyUpdate ? 'Updates available for one or more layers — click to update all' : 'All components up to date — click to re-sync',
                         actionKey: 'all'
                     },
                     {
                         label: '$(globe) fastCRW Hybrid Scraper & Search (fastcrw/crw)',
-                        description: `Installed: ${crwCheck.installed ? (crwCheck.runner || 'Ready') : 'Not Installed'} | GitHub: ${crwRelease.tag || 'Latest'}`,
+                        description: `Installed: ${crwCheck.installed ? (crwCheck.runner || 'Ready') : 'Not installed'} | GitHub: ${crwRelease.tag || 'Latest'}`,
                         detail: crwHasUpdate
-                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
-                            : (crwCheck.installed ? '✓ Synced & ready for hybrid web search - Click to re-fetch' : '⚡ Click to install fastCRW binary or cargo crate'),
+                            ? 'Update available or not synced — click to fetch from GitHub'
+                            : (crwCheck.installed ? 'Synced and ready for hybrid web search — click to re-fetch' : 'Click to install fastCRW binary or cargo crate'),
                         actionKey: 'crw'
                     },
                     {
                         label: '$(browser) Lightpanda Browser (lightpanda-io/browser)',
-                        description: `Installed: ${lightpandaCheck.installed ? (lightpandaCheck.runner || 'Ready') : 'Not Installed'} | GitHub: ${lightpandaRelease.tag || 'Latest'}`,
+                        description: `Installed: ${lightpandaCheck.installed ? (lightpandaCheck.runner || 'Ready') : 'Not installed'} | GitHub: ${lightpandaRelease.tag || 'Latest'}`,
                         detail: lightpandaHasUpdate
-                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
-                            : (lightpandaCheck.installed ? '✓ Synced & ready for dynamic JS MCP - Click to re-fetch' : '⚡ Click to install Lightpanda via npm / binary'),
+                            ? 'Update available or not synced — click to fetch from GitHub'
+                            : (lightpandaCheck.installed ? 'Synced and ready for dynamic JS MCP — click to re-fetch' : 'Click to install Lightpanda via npm / binary'),
                         actionKey: 'lightpanda'
                     },
                     {
                         label: '$(database) CodeGraphContext Semantic Code Graph (CodeGraphContext/CodeGraphContext)',
-                        description: `Installed: ${codeGraphCheck.installed ? (codeGraphCheck.runner || 'Ready') : 'Not Installed'} | GitHub: ${codeGraphRelease.tag || 'Latest'}`,
+                        description: `Installed: ${codeGraphCheck.installed ? (codeGraphCheck.runner || 'Ready') : 'Not installed'} | GitHub: ${codeGraphRelease.tag || 'Latest'}`,
                         detail: codeGraphHasUpdate
-                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
-                            : (codeGraphCheck.installed ? '✓ Synced & ready for code graph queries - Click to re-fetch' : '⚡ Click to install CodeGraphContext via pip'),
+                            ? 'Update available or not synced — click to fetch from GitHub'
+                            : (codeGraphCheck.installed ? 'Synced and ready for code graph queries — click to re-fetch' : 'Click to install CodeGraphContext via pip'),
                         actionKey: 'codegraph'
                     },
                     {
                         label: '$(type-hierarchy) JevGraph Knowledge Graph (chenmingtang830/jevgraph)',
-                        description: `Installed: ${jevCheck.installed ? (jevCheck.runner || 'Ready') : (jevCheck.uvAvailable ? 'uv Ready' : 'Not Installed')} | GitHub: ${jevRelease.tag || 'Latest'}`,
+                        description: `Installed: ${jevCheck.installed ? (jevCheck.runner || 'Ready') : (jevCheck.uvAvailable ? 'uv ready' : 'Not installed')} | GitHub: ${jevRelease.tag || 'Latest'}`,
                         detail: jevHasUpdate
-                            ? '🚀 New release / Not synced - Click to fetch & sync from GitHub'
-                            : (jevCheck.installed ? '✓ Synced & ready for document graph builds - Click to re-fetch' : '⚡ Click to clone and sync chenmingtang830/jevgraph via uv'),
+                            ? 'Update available or not synced — click to fetch from GitHub'
+                            : (jevCheck.installed ? 'Synced and ready for document graph builds — click to re-fetch' : 'Click to clone and sync chenmingtang830/jevgraph via uv'),
                         actionKey: 'jevgraph'
                     },
                     {
                         label: '$(shield) Anti-Slop Framework (miqdadbadjuber/anti-slop)',
-                        description: `Installed: ${antiSlopCheck.installed ? `${antiSlopCheck.skillsCount || 6}/6 skills active` : 'Not Synced'} | GitHub: ${antiSlopRelease.tag || 'Latest'}`,
+                        description: `Installed: ${antiSlopCheck.installed ? `${antiSlopCheck.skillsCount || 6}/6 skills active` : 'Not synced'} | GitHub: ${antiSlopRelease.tag || 'Latest'}`,
                         detail: antiSlopHasUpdate
-                            ? `🚀 Update / Missing skills detected - Click to fetch & sync from GitHub`
-                            : (antiSlopCheck.installed ? '✓ Synced & active in Global IDE - Click to re-fetch' : '⚡ Click to fetch miqdadbadjuber/anti-slop skills to IDE'),
+                            ? 'Update or missing skills detected — click to fetch from GitHub'
+                            : (antiSlopCheck.installed ? 'Synced and active in IDE — click to re-fetch' : 'Click to fetch miqdadbadjuber/anti-slop skills'),
                         actionKey: 'antislop'
                     },
                     {
-                        label: '$(zap) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
-                        description: `Installed: ${ponytailCheck.installed ? `${ponytailCheck.skillsCount || 6}/6 skills active` : 'Not Synced'} | GitHub: ${ponytailRelease.tag || 'Latest'}`,
+                        label: '$(code) Ponytail YAGNI Suite (DietrichGebert/ponytail)',
+                        description: `Installed: ${ponytailCheck.installed ? `${ponytailCheck.skillsCount || 6}/6 skills active` : 'Not synced'} | GitHub: ${ponytailRelease.tag || 'Latest'}`,
                         detail: ponytailHasUpdate
-                            ? `🚀 Update / Missing skills detected - Click to fetch & sync from GitHub`
-                            : (ponytailCheck.installed ? '✓ Synced & active in Global IDE - Click to re-fetch' : '⚡ Click to fetch DietrichGebert/ponytail skills to IDE'),
+                            ? 'Update or missing skills detected — click to fetch from GitHub'
+                            : (ponytailCheck.installed ? 'Synced and active in IDE — click to re-fetch' : 'Click to fetch DietrichGebert/ponytail skills'),
                         actionKey: 'ponytail'
                     },
                     {
-                        label: '$(terminal) RTK CLI (rtk-ai/rtk)',
-                        description: `Installed: ${rtkCheck.installed ? rtkCheck.version : 'Not Installed'} | GitHub: ${rtkRelease.tag || 'Latest'}`,
+                        label: '$(terminal) RTK-RG CLI (rtk-ai/rtk)',
+                        description: `Installed: ${rtkCheck.installed ? rtkCheck.version : 'Not installed'} | GitHub: ${rtkRelease.tag || 'Latest'}`,
                         detail: rtkHasUpdate
-                            ? `🚀 Update Available (${rtkCheck.version} ➔ ${rtkRelease.tag}) - Click to update`
-                            : (rtkCheck.installed ? `✓ Up to date (${rtkCheck.version})` : '⚡ Not Installed - Click to install via terminal'),
+                            ? `Update available (${rtkCheck.version} → ${rtkRelease.tag}) — click to update`
+                            : (rtkCheck.installed ? `Up to date (${rtkCheck.version})` : 'Not installed — click to install via terminal'),
                         actionKey: 'rtk'
                     },
                     {
                         label: '$(package) Headroom CCR (headroomlabs-ai/headroom)',
-                        description: `Installed: ${headroomCheck.installed ? headroomCheck.version : 'Not Installed'} | GitHub: ${headroomRelease.tag || 'Latest'}`,
+                        description: `Installed: ${headroomCheck.installed ? headroomCheck.version : 'Not installed'} | GitHub: ${headroomRelease.tag || 'Latest'}`,
                         detail: headroomHasUpdate
-                            ? `🚀 Update Available (${headroomCheck.version} ➔ ${headroomRelease.tag}) - Click to update`
-                            : (headroomCheck.installed ? `✓ Up to date (${headroomCheck.version})` : '⚡ Not Installed - Click to install via pip'),
+                            ? `Update available (${headroomCheck.version} → ${headroomRelease.tag}) — click to update`
+                            : (headroomCheck.installed ? `Up to date (${headroomCheck.version})` : 'Not installed — click to install via pip'),
                         actionKey: 'headroom'
                     },
                     {
-                        label: '$(globe) OmniRoute AI Gateway (diegosouzapw/OmniRoute)',
-                        description: `Installed: ${omniCheck.installed ? (omniCheck.version || 'Ready') : 'Not Installed'} | GitHub: ${omniRelease.tag || 'Latest'}`,
-                        detail: omniHasUpdate
-                            ? `🚀 Update Available (${omniCheck.version || 'installed'} ➔ ${omniRelease.tag}) - Click to update`
-                            : (omniCheck.installed ? `✓ Up to date (${omniCheck.version || 'Ready'})` : '⚡ Not Installed - Click to install via npm'),
-                        actionKey: 'omniroute'
-                    },
-                    {
                         label: '$(circuit-board) ECC Harness Optimization (affaan-m/ECC)',
-                        description: `Installed: ${eccCheck.installed ? `${eccCheck.skillsCount || 4}/4 skills active` : 'Not Synced'} | GitHub: ${eccRelease.tag || 'Latest'}`,
+                        description: `Installed: ${eccCheck.installed ? `${eccCheck.skillsCount || 4}/4 skills active` : 'Not synced'} | GitHub: ${eccRelease.tag || 'Latest'}`,
                         detail: eccHasUpdate
-                            ? '🚀 Update / Missing skills detected - Click to fetch & sync from GitHub'
-                            : (eccCheck.installed ? '✓ Synced & active in Global IDE - Click to re-fetch' : '⚡ Click to fetch affaan-m/ECC skills to IDE'),
+                            ? 'Update or missing skills detected — click to fetch from GitHub'
+                            : (eccCheck.installed ? 'Synced and active in IDE — click to re-fetch' : 'Click to fetch affaan-m/ECC skills'),
                         actionKey: 'ecc'
                     },
                     {
                         label: '$(link-external) View Upstream GitHub Release Notes & Compare',
                         description: 'Open release notes and commit history on GitHub',
-                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, omniroute, jevgraph, codegraph, crw, lightpanda & ecc in your browser',
+                        detail: 'Compare releases for rtk, headroom, ponytail, anti-slop, jevgraph, codegraph, crw, lightpanda & ecc',
                         actionKey: 'notes'
                     }
                 ];
@@ -1303,14 +1261,11 @@ class RtkUpdater {
                     this.performUpdate();
                 } else if (sel.actionKey === 'headroom') {
                     this.performHeadroomUpdate();
-                } else if (sel.actionKey === 'omniroute') {
-                    this.performOmniRouteUpdate();
                 } else if (sel.actionKey === 'notes') {
                     if (rtkRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(rtkRelease.htmlUrl));
                     if (headroomRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(headroomRelease.htmlUrl));
                     if (ponytailRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(ponytailRelease.htmlUrl));
                     if (antiSlopRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(antiSlopRelease.htmlUrl));
-                    if (omniRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(omniRelease.htmlUrl));
                     if (jevRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(jevRelease.htmlUrl));
                     if (codeGraphRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(codeGraphRelease.htmlUrl));
                     if (crwRelease.htmlUrl) vscode.env.openExternal(vscode.Uri.parse(crwRelease.htmlUrl));
@@ -1451,7 +1406,7 @@ class RtkUpdater {
 
                 if (!hasNewer && manual) {
                     const action = await vscode.window.showInformationMessage(
-                        `✓ Token Saver is up-to-date (Current: v${currentVersion}, Open VSX: v${latestVersion}).`,
+                        `Token Saver is up to date (Current: v${currentVersion}, Open VSX: v${latestVersion}).`,
                         'Force Reinstall from Open VSX',
                         'Open in Open VSX'
                     );
@@ -1465,7 +1420,7 @@ class RtkUpdater {
                     }
                 } else if (hasNewer) {
                     const confirm = await vscode.window.showInformationMessage(
-                        `🚀 Token Saver update available on Open VSX: v${currentVersion} ➔ v${latestVersion}!`,
+                        `Token Saver update available on Open VSX: v${currentVersion} → v${latestVersion}.`,
                         'Install Update Now',
                         'View on Open VSX',
                         'Later'
@@ -1503,7 +1458,7 @@ class RtkUpdater {
                             try {
                                 await vscode.commands.executeCommand('workbench.extensions.installExtension', vsixUri);
                                 const reload = await vscode.window.showInformationMessage(
-                                    `🎉 Token Saver successfully updated to v${latestVersion} from Open VSX! Please reload the IDE window to complete the update.`,
+                                    `Token Saver updated to v${latestVersion} from Open VSX. Reload the IDE window to complete the update.`,
                                     'Reload Window'
                                 );
                                 if (reload === 'Reload Window') {
@@ -1515,7 +1470,7 @@ class RtkUpdater {
                                 const ideBin = detected.binaryName || 'code';
                                 RtkService.runInTerminal(`${ideBin} --install-extension "${tempVsix}" --force`);
                                 vscode.window.showInformationMessage(
-                                    `⚡ Extension installation started via terminal for Token Saver v${latestVersion}.`
+                                    `Extension installation started via terminal for Token Saver v${latestVersion}.`
                                 );
                             }
                         } catch (err) {

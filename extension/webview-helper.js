@@ -147,6 +147,11 @@ class WebviewHelper {
             compactDiffContext: config.get('compactDiffContext', true),
             astOutlineContext: config.get('astOutlineContext', true),
             installed: check.installed,
+            rtkBinInstalled: Boolean(check.rtkInstalled),
+            rtkOnlyVersion: check.rtkVersion || 'Not installed',
+            rgInstalled: Boolean(check.rgInstalled),
+            rgVersion: check.rgVersion || 'Not installed',
+            rtkBridgeInstalled: Boolean(check.bridgeInstalled),
             version: check.version || 'Not installed',
             binaryPath: check.path || 'Not detected',
             metrics,
@@ -154,7 +159,7 @@ class WebviewHelper {
             skillsInstalled,
             disabledSkillsCount: SkillInstaller.listDisabledSkills('all').length,
             upstreamInstallPath: config.get('upstreamInstallPath', ''),
-            scope: config.get('targetScope', 'all'),
+            scope: config.get('targetScope', 'current'),
             ideStatus,
             detectedIde: ideStatus.detectedIde,
             isGlobalRuleSynced: SkillInstaller.isGlobalRuleSynced(),
@@ -199,22 +204,33 @@ class WebviewHelper {
                 break;
             case 'syncSingleTarget':
                 if (message.targetId) {
+                    const detected = SkillInstaller.detectCurrentIde();
+                    if (!detected.targetIds.includes(message.targetId)) {
+                        vscode.window.showWarningMessage(
+                            `Skipped target "${message.targetId}" because active IDE/Agent is ${detected.displayName}.`
+                        );
+                        break;
+                    }
                     const isMasterOn = context.globalState.get('tokenSaver.enabled', true);
                     SkillInstaller.syncRules(isMasterOn, [message.targetId]);
                     vscode.window.showInformationMessage(
                         isMasterOn
-                            ? `⚡ Synced Token Saver rule for ${message.targetId}`
-                            : `⚪ Token Saver Master Switch is OFF. Directives removed for ${message.targetId}`
+                            ? `Synced Token Saver rule for ${detected.displayName} (${message.targetId}).`
+                            : `Token Saver master switch is off. Directives removed for ${message.targetId}.`
                     );
                     triggerRefresh();
                 }
                 break;
             case 'toggleTarget':
                 if (message.targetId) {
-                    const isMasterOn = context.globalState.get('tokenSaver.enabled', true);
-                    SkillInstaller.syncRules(isMasterOn && !message.currentlySynced, [message.targetId]);
-                    triggerRefresh();
+                    const detected = SkillInstaller.detectCurrentIde();
+                    if (detected.targetIds.includes(message.targetId)) {
+                        const isMasterOn = context.globalState.get('tokenSaver.enabled', true);
+                        SkillInstaller.syncRules(isMasterOn && !message.currentlySynced, [message.targetId]);
+                        triggerRefresh();
+                    }
                 }
+                break;
             case 'openSyncPicker':
             case 'checkUpdates':
                 await vscode.commands.executeCommand('tokenSaver.checkUpdates');
@@ -235,8 +251,8 @@ class WebviewHelper {
                 }
                 vscode.window.showInformationMessage(
                     isWeekly 
-                        ? '⚡ Weekly auto-sync for upstream GitHub RTK is now ENABLED.' 
-                        : '⚪ Weekly auto-sync for upstream GitHub RTK is now DISABLED.'
+                        ? 'Weekly auto-sync for upstream GitHub RTK-RG is enabled.' 
+                        : 'Weekly auto-sync for upstream GitHub RTK-RG is disabled.'
                 );
                 if (onStateRequest) onStateRequest();
                 break;
@@ -267,20 +283,20 @@ class WebviewHelper {
                 webview.postMessage({
                     type: 'toast',
                     message: message.elementName
-                        ? `🤖 AI prompt for ${message.elementName} copied to clipboard!`
-                        : '🤖 AI Agent prompt copied to clipboard!'
+                        ? `AI prompt for ${message.elementName} copied to clipboard.`
+                        : 'AI setup prompt copied to clipboard.'
                 });
                 break;
             case 'copyInstallCommands':
                 await vscode.commands.executeCommand('tokenSaver.copyInstallCommands');
-                webview.postMessage({ type: 'toast', message: '📋 Raw install commands copied to clipboard!' });
+                webview.postMessage({ type: 'toast', message: 'Raw install commands copied to clipboard.' });
                 break;
             case 'setUpstreamInstallPath':
                 const pathVal = (message.path || '').trim();
                 await vscode.workspace.getConfiguration('tokenSaver').update('upstreamInstallPath', pathVal, vscode.ConfigurationTarget.Global);
                 webview.postMessage({
                     type: 'toast',
-                    message: pathVal ? `📁 Upstream install directory set to: ${pathVal}` : '📁 Upstream install directory reset to default.'
+                    message: pathVal ? `Upstream install directory set to ${pathVal}.` : 'Upstream install directory reset to default.'
                 });
                 triggerRefresh(150);
                 break;
@@ -297,7 +313,7 @@ class WebviewHelper {
                     await vscode.workspace.getConfiguration('tokenSaver').update('upstreamInstallPath', chosenPath, vscode.ConfigurationTarget.Global);
                     webview.postMessage({
                         type: 'toast',
-                        message: `📁 Upstream install directory set to: ${chosenPath}`
+                        message: `Upstream install directory set to ${chosenPath}.`
                     });
                     triggerRefresh(150);
                 }
@@ -327,7 +343,7 @@ class WebviewHelper {
                         // ignore configuration update error
                     }
                     await context.globalState.update('tokenSaver.tokenPricePerMillion', roundedPrice);
-                    vscode.window.showInformationMessage(`💰 Token cost estimate rate updated to $${roundedPrice.toFixed(2)} / 1M tokens.`);
+                    vscode.window.showInformationMessage(`Token cost estimate rate updated to $${roundedPrice.toFixed(2)} / 1M tokens.`);
                     if (onStateRequest) await onStateRequest();
                 }
                 break;
@@ -368,7 +384,7 @@ class WebviewHelper {
                 try {
                     const cfg = vscode.workspace.getConfiguration('tokenSaver');
                     await cfg.update('terseAgentMode', newTerse, vscode.ConfigurationTarget.Global);
-                    const scope = cfg.get('targetScope', 'all');
+                    const scope = cfg.get('targetScope', 'current');
                     SkillInstaller.syncRules(context.globalState.get('tokenSaver.enabled', true), scope);
                 } catch (e) {
                     // ignore
@@ -384,7 +400,7 @@ class WebviewHelper {
                 try {
                     const cfg = vscode.workspace.getConfiguration('tokenSaver');
                     await cfg.update('compactDiffContext', newCompact, vscode.ConfigurationTarget.Global);
-                    const scope = cfg.get('targetScope', 'all');
+                    const scope = cfg.get('targetScope', 'current');
                     SkillInstaller.syncRules(context.globalState.get('tokenSaver.enabled', true), scope);
                 } catch (e) {
                     // ignore
@@ -396,7 +412,7 @@ class WebviewHelper {
                 try {
                     const cfg = vscode.workspace.getConfiguration('tokenSaver');
                     await cfg.update('astOutlineContext', newOutline, vscode.ConfigurationTarget.Global);
-                    const scope = cfg.get('targetScope', 'all');
+                    const scope = cfg.get('targetScope', 'current');
                     SkillInstaller.syncRules(context.globalState.get('tokenSaver.enabled', true), scope);
                 } catch (e) {
                     // ignore
@@ -408,6 +424,10 @@ class WebviewHelper {
                 break;
             case 'runFileOutline':
                 await vscode.commands.executeCommand('tokenSaver.generateAstOutline');
+                break;
+            case 'repairRtkRgBridge':
+                await vscode.commands.executeCommand('tokenSaver.repairRtkRgBridge');
+                triggerRefresh(400);
                 break;
             case 'toggleOmniRoute':
                 await vscode.commands.executeCommand('tokenSaver.toggleOmniRoute');
@@ -543,7 +563,7 @@ class WebviewHelper {
                 const port = vscode.workspace.getConfiguration('tokenSaver').get('lightpandaMcpPort', 8000);
                 const snippet = LightpandaSvc2.getMcpConfigSnippet(port);
                 await vscode.env.clipboard.writeText(snippet);
-                webview.postMessage({ type: 'toast', message: '📋 Lightpanda MCP configuration JSON copied to clipboard!' });
+                webview.postMessage({ type: 'toast', message: 'Lightpanda MCP configuration JSON copied to clipboard.' });
                 break;
             case 'testScrapeCrw':
             case 'testHybridScrape':
@@ -562,13 +582,13 @@ class WebviewHelper {
             case 'copyOmniRoutePreset':
                 if (message.text) {
                     await vscode.env.clipboard.writeText(message.text);
-                    webview.postMessage({ type: 'toast', message: `📋 ${message.presetName || 'Config'} copied to clipboard!` });
+                    webview.postMessage({ type: 'toast', message: `${message.presetName || 'Config'} copied to clipboard.` });
                 }
                 break;
             case 'copyOmniRoutePresetPrompt':
                 if (message.promptText) {
                     await vscode.env.clipboard.writeText(message.promptText);
-                    webview.postMessage({ type: 'toast', message: `🤖 AI setup prompt for ${message.presetName || 'IDE'} copied! Paste into chat window.` });
+                    webview.postMessage({ type: 'toast', message: `AI setup prompt for ${message.presetName || 'IDE'} copied to clipboard.` });
                 }
                 break;
             case 'openUninstallPicker':

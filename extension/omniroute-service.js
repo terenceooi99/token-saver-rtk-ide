@@ -111,7 +111,7 @@ class OmniRouteService {
         terminal.sendText(runCmd);
 
         vscode.window.showInformationMessage(
-            `🌐 Launching OmniRoute AI Gateway on port ${port}... Dashboard available at http://localhost:${port}`,
+            `Starting OmniRoute AI Gateway on port ${port}. Dashboard available at http://localhost:${port}`,
             'Open Web Dashboard'
         ).then(choice => {
             if (choice === 'Open Web Dashboard') {
@@ -125,9 +125,9 @@ class OmniRouteService {
         const terminal = vscode.window.terminals.find(t => t.name === terminalName);
         if (terminal) {
             terminal.dispose();
-            vscode.window.showInformationMessage('🛑 Closed OmniRoute Gateway terminal session.');
+            vscode.window.showInformationMessage('Closed OmniRoute Gateway terminal session.');
         } else {
-            vscode.window.showInformationMessage('ℹ️ OmniRoute terminal session was not active.');
+            vscode.window.showInformationMessage('OmniRoute terminal session was not active.');
         }
     }
 
@@ -176,13 +176,13 @@ class OmniRouteService {
             antigravity: {
                 id: 'antigravity',
                 name: 'Antigravity IDE',
-                icon: '🌌',
+                icon: 'AG',
                 title: 'Antigravity IDE AI Agent Prompt & Gateway Routing',
-                notice: '💡 <strong>Antigravity Dropdown Tip:</strong> Antigravity chat model dropdown does not support custom model URLs directly. Use the <strong>🤖 Copy AI Agent Prompt</strong> button to instruct the Antigravity agent to route tasks through OmniRoute! (Tip: Enable <strong>RTK &rarr; Caveman</strong> compression in OmniRoute Dashboard &rarr; Context &amp; Cache &rarr; Compression).',
+                notice: '<strong>Antigravity Dropdown Note:</strong> Antigravity chat model dropdown does not support custom model URLs directly. Use the <strong>Copy AI Agent Prompt</strong> button to instruct the Antigravity agent to route tasks through OmniRoute. Enable <strong>RTK &rarr; Caveman</strong> compression in OmniRoute Dashboard &rarr; Context &amp; Cache &rarr; Compression.',
                 steps: [
-                    'Click <strong>🤖 Copy AI Agent Prompt</strong> above and paste directly into your Antigravity chat.',
+                    'Click <strong>Copy AI Agent Prompt</strong> above and paste directly into your Antigravity chat.',
                     'The agent will verify the local gateway at <code>http://localhost:' + port + '/v1</code> and route model requests through OmniRoute.',
-                    'Defaults to <strong><code>auto/coding:free</code></strong> for guaranteed 100% zero-cost coding across free models in combo, or switch to <strong><code>auto/coding</code></strong> for uninterrupted fallback.',
+                    'Defaults to <strong><code>auto/coding:free</code></strong> for zero-cost coding across free models in combo, or switch to <strong><code>auto/coding</code></strong> for uninterrupted fallback.',
                     'Use <code>/rtk-omniroute</code> anytime in chat to inspect routing status, pool health, and quota headroom.'
                 ],
                 aiPrompt: `Please configure and route my AI requests through the local OmniRoute AI Gateway at ${baseUrl}.\n` +
@@ -206,9 +206,9 @@ class OmniRouteService {
             cursor: {
                 id: 'cursor',
                 name: 'Cursor IDE',
-                icon: '🎯',
+                icon: 'CR',
                 title: 'Cursor OpenAI-Compatible Config',
-                notice: '💡 <strong>Cursor Setup:</strong> Paste the prompt into Cursor Composer/Chat or set model to <code>auto/coding:free</code> in Settings &rarr; Models.',
+                notice: '<strong>Cursor Setup:</strong> Paste the prompt into Cursor Composer/Chat or set model to <code>auto/coding:free</code> in Settings &rarr; Models.',
                 steps: [
                     'Open <strong>Cursor Settings</strong> (<code>Ctrl+,</code> or <code>Cmd+,</code>) &rarr; <strong>Models</strong>',
                     'Under <strong>OpenAI API Key</strong>, toggle <strong>Override OpenAI Base URL</strong> to ON',
@@ -231,11 +231,11 @@ class OmniRouteService {
             cline: {
                 id: 'cline',
                 name: 'Cline / Roo Code',
-                icon: '💻',
+                icon: 'CL',
                 title: 'Cline & Roo Code Provider Setup',
-                notice: '💡 <strong>Cline / Roo Code:</strong> Switch provider to "OpenAI Compatible" and set model to <code>auto/coding:free</code>.',
+                notice: '<strong>Cline / Roo Code:</strong> Switch provider to "OpenAI Compatible" and set model to <code>auto/coding:free</code>.',
                 steps: [
-                    'Open the <strong>Cline / Roo Code</strong> sidebar settings (⚙️)',
+                    'Open the <strong>Cline / Roo Code</strong> sidebar settings',
                     'Select API Provider: <strong>OpenAI Compatible</strong>',
                     `Set Base URL: <code>${baseUrl}</code>`,
                     'Set API Key: <code>omniroute</code>',
@@ -253,9 +253,9 @@ class OmniRouteService {
             claude: {
                 id: 'claude',
                 name: 'Claude Code CLI',
-                icon: '🧠',
+                icon: 'CC',
                 title: 'Claude Code Local Router Setup',
-                notice: '💡 <strong>Claude Code:</strong> Run automated setup or route through OmniRoute with <code>auto/coding:free</code>.',
+                notice: '<strong>Claude Code:</strong> Run automated setup or route through OmniRoute with <code>auto/coding:free</code>.',
                 steps: [
                     'Run automated configuration: <code>npx -y omniroute setup-claude</code>',
                     `Or export <code>ANTHROPIC_BASE_URL="${baseUrl}"</code> and <code>ANTHROPIC_API_KEY="omniroute"</code> before launching <code>claude</code>.`,
@@ -270,9 +270,9 @@ class OmniRouteService {
             vscode: {
                 id: 'vscode',
                 name: 'VS Code (Continue / Copilot)',
-                icon: '🤖',
+                icon: 'CP',
                 title: 'VS Code Continue Extension Config',
-                notice: '💡 <strong>Continue Extension:</strong> Add an OpenAI provider block for <code>auto/coding:free</code> pointing to OmniRoute.',
+                notice: '<strong>Continue Extension:</strong> Add an OpenAI provider block for <code>auto/coding:free</code> pointing to OmniRoute.',
                 steps: [
                     'Open <code>~/.continue/config.json</code> in VS Code',
                     `Add an OpenAI-compatible model entry pointing to <code>${baseUrl}</code> with API key <code>omniroute</code> and model <code>auto/coding:free</code>.`

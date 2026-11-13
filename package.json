@@ -518,6 +518,11 @@
         "command": "tokenSaver.uninstallEcc",
         "title": "Uninstall ECC Skills & Optimization (affaan-m/ECC)",
         "category": "Token Saver"
+      },
+      {
+        "command": "tokenSaver.repairRtkRgBridge",
+        "title": "Repair / Generate RTK-RG Bridge Files (rtk + ripgrep + .local/bin shims)",
+        "category": "Token Saver"
       }
     ],
     "configuration": {
@@ -556,12 +561,12 @@
         },
         "tokenSaver.jevGraphAutoBuild": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Automatically build initial repository knowledge graph from existing documents on workspace startup."
         },
         "tokenSaver.jevGraphAutoWatch": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Automatically watch repository and AI chat documents to auto-combine new or modified documents into JevGraph."
         },
         "tokenSaver.jevGraphProvider": {
@@ -601,17 +606,18 @@
         },
         "tokenSaver.autoCleanWorkspaceSkills": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Automatically clean up redundant Token Saver skills from individual project repositories (.agents/skills) to keep repos clean, relying on global or user-defined paths per /tool-management-rules."
         },
         "tokenSaver.autoInstallSkills": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Automatically install Antigravity & Agent chat skills (/rtk-*, /ponytail, /antislop, etc.) to the global default path or user-defined path on startup according to /tool-management-rules (never dumps into individual project repos)."
         },
         "tokenSaver.targetScope": {
           "type": "string",
           "enum": [
+            "current",
             "all",
             "global",
             "workspace",
@@ -622,8 +628,8 @@
             "claude",
             "agents"
           ],
-          "default": "all",
-          "description": "Target IDE / Agent rule scope: 'all' (syncs to VS Code, Copilot, Cursor, Windsurf, Cline, Claude, Antigravity, AGENTS.md), 'global' (~/.gemini/config), or specific IDE."
+          "default": "current",
+          "description": "Target IDE / Agent rule scope: 'current' (auto-detects active IDE / AI agent and only runs its specific Rule / Configuration Target), 'global', or 'workspace'."
         },
         "tokenSaver.checkForUpdatesOnStartup": {
           "type": "boolean",
@@ -745,6 +751,14 @@
     }
   },
   "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:manifest": "node --test tests/01-manifest-and-syntax.test.js",
+    "test:startup": "node --test tests/02-startup-and-activation.test.js",
+    "test:ide-rules": "node --test tests/03-ide-detection-and-rule-targets.test.js",
+    "test:rtk-rg": "node --test tests/04-rtk-rg-and-metrics.test.js",
+    "test:skills": "node --test tests/05-skills-lifecycle-and-upstream-visibility.test.js",
+    "test:services": "node --test tests/06-ai-prompts-and-services.test.js",
+    "test:webview": "node --test tests/07-webview-and-updater.test.js",
     "package": "powershell -ExecutionPolicy Bypass -File scripts/package-vsix.ps1",
     "package-vsce": "npx @vscode/vsce package",
     "publish-ovsx": "npx ovsx publish"

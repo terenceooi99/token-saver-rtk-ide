@@ -18,8 +18,12 @@ const toggleHybridWebBtn = document.getElementById('toggleHybridWebBtn');
 const toggleCrwBtn = toggleHybridWebBtn || document.getElementById('toggleCrwBtn');
 const toggleEccBtn = document.getElementById('toggleEccBtn');
 const rtkStatusBadge = document.getElementById('rtkStatusBadge');
+const rtkBinStatusBadge = document.getElementById('rtkBinStatusBadge');
+const rtkRgStatusBadge = document.getElementById('rtkRgStatusBadge');
+const rtkBridgeStatusBadge = document.getElementById('rtkBridgeStatusBadge');
 const rtkInlineSyncBtn = document.getElementById('rtkInlineSyncBtn');
 const rtkTerminalScoreboardBtn = document.getElementById('rtkTerminalScoreboardBtn');
+const rtkRepairBridgeBtn = document.getElementById('rtkRepairBridgeBtn');
 const rtkDoctorBtn = document.getElementById('rtkDoctorBtn');
 const rtkCopyInstallBtn = document.getElementById('rtkCopyInstallBtn');
 const rtkLatencyBtn = document.getElementById('rtkLatencyBtn');
@@ -136,7 +140,7 @@ const initialLoadingDesc = document.querySelector('.initial-loading-desc');
 
 // Start progressive animated checking across upstream GitHub tags
 if (initialLoadingTags && initialLoadingTags.length > 0) {
-    const upstreamTagOrder = ['rtk', 'headroom', 'ponytail', 'antislop', 'omniroute', 'jevgraph', 'codegraph', 'crw', 'lightpanda', 'ecc'];
+    const upstreamTagOrder = ['rtk', 'headroom', 'ponytail', 'antislop', 'jevgraph', 'codegraph', 'crw', 'lightpanda', 'ecc'];
     let stepIndex = 0;
 
     const advanceCheckStep = () => {
@@ -348,14 +352,14 @@ function renderOmniPreset(ideKey) {
 }
 
 const IDE_ICONS = {
-    antigravity_global: '🌌',
-    antigravity_workspace: '🌌',
-    copilot: '🤖',
-    cursor: '🎯',
-    windsurf: '🏄',
-    cline: '💻',
-    claude: '🧠',
-    agents: '🌐'
+    antigravity_global: 'AG',
+    antigravity_workspace: 'AG',
+    copilot: 'CP',
+    cursor: 'CR',
+    windsurf: 'WS',
+    cline: 'CL',
+    claude: 'CC',
+    agents: 'MD'
 };
 
 // State variables
@@ -786,17 +790,17 @@ if (minimizeBtn) {
             isCompact = !isCompact;
             dashboardContainer.classList.toggle('is-compact', isCompact);
             minimizeBtn.classList.toggle('active', isCompact);
-            minimizeBtn.title = isCompact ? "Expand Full View (Show All Details)" : "Minimize / Compact View";
-            minimizeBtn.innerHTML = isCompact ? "🗖" : "🗕";
+            minimizeBtn.title = isCompact ? "Expand full view" : "Toggle compact layout";
+            minimizeBtn.innerHTML = isCompact
+                ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>'
+                : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
 
             if (isCompact) {
-                // In compact mode: automatically tuck secondary sections into sleek single-line summary bars
                 SECONDARY_SECTION_IDS.forEach(id => {
                     const sec = document.getElementById(id);
                     if (sec) sec.classList.add('collapsed');
                 });
             } else {
-                // In expand full view: expand all sections to show full depth and controls
                 document.querySelectorAll('.panel-card.collapsed').forEach(card => {
                     card.classList.remove('collapsed');
                 });
@@ -917,7 +921,7 @@ if (workspaceRuleConfirmBtn) {
             vscode.postMessage({ command: 'syncAllIdeRules' });
             setTimeout(() => {
                 if (syncAllIdesBtn) {
-                    syncAllIdesBtn.textContent = '⚡ Sync All';
+                    syncAllIdesBtn.textContent = 'Sync all';
                 }
             }, 800);
         } else if (targetId) {
@@ -964,6 +968,12 @@ if (rtkTerminalScoreboardBtn) {
 if (rtkDoctorBtn) {
     rtkDoctorBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'runRtkDoctor' });
+    });
+}
+
+if (rtkRepairBridgeBtn) {
+    rtkRepairBridgeBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'repairRtkRgBridge' });
     });
 }
 
@@ -1046,9 +1056,9 @@ if (eccCheckbox) {
 
 if (eccInlineSyncBtn) {
     eccInlineSyncBtn.addEventListener('click', () => {
-        eccInlineSyncBtn.textContent = '⭮ Syncing...';
+        eccInlineSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncEcc' });
-        setTimeout(() => { eccInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
+        setTimeout(() => { eccInlineSyncBtn.textContent = 'Sync from GitHub'; }, 3000);
     });
 }
 
@@ -1151,7 +1161,7 @@ syncAllIdesBtn.addEventListener('click', () => {
     syncAllIdesBtn.textContent = 'Syncing...';
     vscode.postMessage({ command: 'syncAllIdeRules' });
     setTimeout(() => {
-        syncAllIdesBtn.textContent = '⚡ Sync All';
+        syncAllIdesBtn.textContent = 'Sync rules';
     }, 800);
 });
 
@@ -1301,7 +1311,7 @@ if (setupAskAiBtn) {
         const textSpan = setupAskAiBtn.querySelector('.btn-text');
         if (textSpan) {
             const original = textSpan.innerHTML;
-            textSpan.innerHTML = '✓ Prompt Copied! <span class="btn-sub-tag">Paste in Chat</span>';
+            textSpan.innerHTML = '✓ Prompt copied (paste in chat)';
             setTimeout(() => {
                 textSpan.innerHTML = original;
             }, 3000);
@@ -1328,7 +1338,7 @@ if (setupMissingTags) {
             const actionTag = chipBtn.querySelector('.chip-action-tag');
             if (actionTag) {
                 const originalHtml = actionTag.innerHTML;
-                actionTag.innerHTML = '✓ Copied!';
+                actionTag.innerHTML = '✓ Copied';
                 chipBtn.classList.add('chip-copied');
                 setTimeout(() => {
                     actionTag.innerHTML = originalHtml;
@@ -1351,7 +1361,7 @@ if (setupCopyCmdBtn) {
         const textSpan = setupCopyCmdBtn.querySelector('.btn-text');
         if (textSpan) {
             const original = textSpan.textContent;
-            textSpan.textContent = '✓ Copied!';
+            textSpan.textContent = '✓ Copied';
             setTimeout(() => {
                 textSpan.textContent = original;
             }, 2500);
@@ -1364,7 +1374,7 @@ if (rtkDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt' });
         rtkDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { rtkDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { rtkDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
@@ -1380,7 +1390,7 @@ if (headroomDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt' });
         headroomDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { headroomDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { headroomDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
@@ -1401,9 +1411,9 @@ if (syncPonytailBtn) {
 if (ponytailInlineSyncBtn) {
     ponytailInlineSyncBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        ponytailInlineSyncBtn.textContent = '⭮ Syncing...';
+        ponytailInlineSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncPonytail' });
-        setTimeout(() => { ponytailInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
+        setTimeout(() => { ponytailInlineSyncBtn.textContent = 'Sync from GitHub'; }, 3000);
     });
 }
 
@@ -1412,16 +1422,16 @@ if (ponytailDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt' });
         ponytailDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { ponytailDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { ponytailDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
 if (ponytailDiagSyncBtn) {
     ponytailDiagSyncBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        ponytailDiagSyncBtn.textContent = '🥋 Syncing...';
+        ponytailDiagSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncPonytail' });
-        setTimeout(() => { ponytailDiagSyncBtn.textContent = '🥋 Sync'; }, 3000);
+        setTimeout(() => { ponytailDiagSyncBtn.textContent = 'Sync'; }, 3000);
     });
 }
 
@@ -1439,9 +1449,9 @@ if (antiSlopSegmentGroup) {
 if (antiSlopInlineSyncBtn) {
     antiSlopInlineSyncBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        antiSlopInlineSyncBtn.textContent = '⭮ Syncing...';
+        antiSlopInlineSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncAntiSlop' });
-        setTimeout(() => { antiSlopInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
+        setTimeout(() => { antiSlopInlineSyncBtn.textContent = 'Sync from GitHub'; }, 3000);
     });
 }
 
@@ -1456,16 +1466,16 @@ if (antiSlopDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt' });
         antiSlopDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { antiSlopDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { antiSlopDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
 if (antiSlopDiagSyncBtn) {
     antiSlopDiagSyncBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        antiSlopDiagSyncBtn.textContent = '🛡️ Syncing...';
+        antiSlopDiagSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncAntiSlop' });
-        setTimeout(() => { antiSlopDiagSyncBtn.textContent = '🛡️ Sync'; }, 3000);
+        setTimeout(() => { antiSlopDiagSyncBtn.textContent = 'Sync'; }, 3000);
     });
 }
 
@@ -1534,7 +1544,7 @@ if (omniCopyAiPromptBtn) {
 }
 if (quickOmniBtn) {
     quickOmniBtn.addEventListener('click', () => {
-        vscode.postMessage({ command: 'startOmniRoute' });
+        vscode.postMessage({ command: 'toggleOmniRoute' });
     });
 }
 if (omniDiagStartBtn) {
@@ -1613,9 +1623,9 @@ if (antiSlopDiagUninstallBtn) {
 if (jevInlineSyncBtn) {
     jevInlineSyncBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        jevInlineSyncBtn.textContent = '⭮ Syncing...';
+        jevInlineSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncJevGraph' });
-        setTimeout(() => { jevInlineSyncBtn.textContent = '⭮ Sync from GitHub'; }, 3000);
+        setTimeout(() => { jevInlineSyncBtn.textContent = 'Sync from GitHub'; }, 3000);
     });
 }
 
@@ -1689,16 +1699,16 @@ if (jevGraphDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt' });
         jevGraphDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { jevGraphDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { jevGraphDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
 if (jevGraphDiagSyncBtn) {
     jevGraphDiagSyncBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        jevGraphDiagSyncBtn.textContent = '🕸️ Syncing...';
+        jevGraphDiagSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncJevGraph' });
-        setTimeout(() => { jevGraphDiagSyncBtn.textContent = '🕸️ Sync'; }, 3000);
+        setTimeout(() => { jevGraphDiagSyncBtn.textContent = 'Sync'; }, 3000);
     });
 }
 
@@ -1718,16 +1728,16 @@ if (codeGraphDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt' });
         codeGraphDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { codeGraphDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { codeGraphDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
 if (codeGraphDiagSyncBtn) {
     codeGraphDiagSyncBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        codeGraphDiagSyncBtn.textContent = '🧬 Syncing...';
+        codeGraphDiagSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncCodeGraph' });
-        setTimeout(() => { codeGraphDiagSyncBtn.textContent = '🧬 Sync'; }, 3000);
+        setTimeout(() => { codeGraphDiagSyncBtn.textContent = 'Sync'; }, 3000);
     });
 }
 
@@ -1771,7 +1781,7 @@ if (lightpandaCopyMcpConfigBtn) {
     lightpandaCopyMcpConfigBtn.addEventListener('click', () => {
         vscode.postMessage({ command: 'copyLightpandaMcpConfig' });
         const orig = lightpandaCopyMcpConfigBtn.textContent;
-        lightpandaCopyMcpConfigBtn.textContent = '✓ Copied Config';
+        lightpandaCopyMcpConfigBtn.textContent = '✓ Copied config';
         setTimeout(() => { lightpandaCopyMcpConfigBtn.textContent = orig; }, 2500);
     });
 }
@@ -1787,16 +1797,16 @@ if (crwDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt', elementKey: 'fastcrw', elementName: 'fastCRW' });
         crwDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { crwDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { crwDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
 if (crwDiagSyncBtn) {
     crwDiagSyncBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        crwDiagSyncBtn.textContent = '🕷️ Syncing...';
+        crwDiagSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncCrw' });
-        setTimeout(() => { crwDiagSyncBtn.textContent = '🕷️ Sync'; }, 3000);
+        setTimeout(() => { crwDiagSyncBtn.textContent = 'Sync'; }, 3000);
     });
 }
 
@@ -1816,16 +1826,16 @@ if (lightpandaDiagAiBtn) {
         e.stopPropagation();
         vscode.postMessage({ command: 'copyAiInstallPrompt', elementKey: 'lightpanda', elementName: 'Lightpanda Browser' });
         lightpandaDiagAiBtn.textContent = '✓ Copied';
-        setTimeout(() => { lightpandaDiagAiBtn.textContent = '🤖 Ask AI'; }, 2500);
+        setTimeout(() => { lightpandaDiagAiBtn.textContent = 'Ask AI'; }, 2500);
     });
 }
 
 if (lightpandaDiagSyncBtn) {
     lightpandaDiagSyncBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        lightpandaDiagSyncBtn.textContent = '🐼 Syncing...';
+        lightpandaDiagSyncBtn.textContent = 'Syncing...';
         vscode.postMessage({ command: 'syncLightpanda' });
-        setTimeout(() => { lightpandaDiagSyncBtn.textContent = '🐼 Sync'; }, 3000);
+        setTimeout(() => { lightpandaDiagSyncBtn.textContent = 'Sync'; }, 3000);
     });
 }
 
@@ -1878,26 +1888,23 @@ window.addEventListener('message', (event) => {
                 if (message.data.antislop && message.data.antislop.hasUpdate) {
                     parts.push(`Anti-Slop (${(message.data.antislop.release && message.data.antislop.release.tag) || 'GitHub'})`);
                 }
-                if (message.data.omniroute && message.data.omniroute.hasUpdate && message.data.omniroute.release) {
-                    parts.push(`OmniRoute ${message.data.omniroute.release.tag}`);
-                }
                 if (message.data.jevgraph && message.data.jevgraph.hasUpdate) {
                     parts.push(`JevGraph (${(message.data.jevgraph.release && message.data.jevgraph.release.tag) || 'GitHub'})`);
                 }
                 if (checkUpdatesLabel) {
-                    checkUpdatesLabel.textContent = `Update: ${parts.join(' & ')}!`;
+                    checkUpdatesLabel.textContent = `Update available: ${parts.join(', ')}`;
                 }
                 if (checkUpdatesSub) {
-                    checkUpdatesSub.textContent = 'Click to upgrade & sync upstream tools';
+                    checkUpdatesSub.textContent = 'Click to upgrade and sync upstream tools';
                 }
                 if (checkUpdatesBadge) {
                     checkUpdatesBadge.className = 'action-status-badge install';
-                    checkUpdatesBadge.innerHTML = '<span class="badge-text">🚀 Update</span>';
+                    checkUpdatesBadge.innerHTML = '<span class="badge-text">Update</span>';
                 }
             } else {
                 if (checkUpdatesBadge) {
                     checkUpdatesBadge.className = 'action-status-badge';
-                    checkUpdatesBadge.innerHTML = '<span class="badge-text">▾ Sync</span>';
+                    checkUpdatesBadge.innerHTML = '<span class="badge-text">Sync ▾</span>';
                 }
             }
             break;
@@ -1914,7 +1921,6 @@ function renderDashboardState(data) {
             'headroom': Boolean(data.headroomInstalled),
             'ponytail': Boolean(data.ponytailInstalled),
             'antislop': Boolean(data.antiSlopInstalled),
-            'omniroute': Boolean(data.omniRouteInstalled),
             'jevgraph': Boolean(data.jevGraphInstalled),
             'codegraph': Boolean(data.codeGraphInstalled),
             'crw': Boolean(data.crwInstalled),
@@ -1960,22 +1966,24 @@ function renderDashboardState(data) {
     // Adjust button titles and icons according to environment
     if (!isSidebarMode) {
         if (popOutBtn) {
-            popOutBtn.title = "Dock to Sidebar (Minimize)";
-            popOutBtn.innerHTML = "⤓";
+            popOutBtn.title = "Dock to sidebar";
+            popOutBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
         }
         if (minimizeBtn) {
-            minimizeBtn.title = "Minimize / Dock to Sidebar";
-            minimizeBtn.innerHTML = "🗕";
+            minimizeBtn.title = "Dock to sidebar";
+            minimizeBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
             minimizeBtn.classList.remove('active');
         }
     } else {
         if (popOutBtn) {
-            popOutBtn.title = "Pop Out to Editor Tab";
-            popOutBtn.innerHTML = "⤢";
+            popOutBtn.title = "Open in editor tab";
+            popOutBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
         }
         if (minimizeBtn) {
-            minimizeBtn.title = isCompact ? "Expand Full View" : "Minimize / Compact View";
-            minimizeBtn.innerHTML = isCompact ? "🗖" : "🗕";
+            minimizeBtn.title = isCompact ? "Expand full view" : "Toggle compact layout";
+            minimizeBtn.innerHTML = isCompact
+                ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>'
+                : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
             minimizeBtn.classList.toggle('active', isCompact);
         }
     }
@@ -1984,24 +1992,24 @@ function renderDashboardState(data) {
     if (statusPill && statusText) {
         if (isEnabled) {
             statusPill.className = 'status-pill active';
-            statusText.textContent = 'TOKEN SAVER ACTIVE';
+            statusText.textContent = 'Token Saver active';
         } else {
             statusPill.className = 'status-pill inactive';
-            statusText.textContent = 'TOKEN SAVER INACTIVE';
+            statusText.textContent = 'Token Saver off';
         }
     }
-    // RTK Header Button
+    // RTK-RG Header Button
     if (toggleRtkBtn) {
         const isRtkInstalled = Boolean(installed);
         const isRtkOn = Boolean(isEnabled) && isRtkInstalled;
         if (isRtkOn) {
-            toggleRtkBtn.textContent = 'RTK ON';
+            toggleRtkBtn.textContent = 'RTK-RG ON';
             toggleRtkBtn.className = 'btn btn-primary';
-            toggleRtkBtn.title = 'RTK CLI transparent command compression proxy is active';
+            toggleRtkBtn.title = 'RTK-RG transparent command compression & ripgrep bridge is active';
         } else {
-            toggleRtkBtn.textContent = 'RTK OFF';
+            toggleRtkBtn.textContent = 'RTK-RG OFF';
             toggleRtkBtn.className = 'btn btn-ghost';
-            toggleRtkBtn.title = !isRtkInstalled ? 'RTK CLI is not installed locally' : 'RTK CLI token compression is paused';
+            toggleRtkBtn.title = !isRtkInstalled ? 'RTK-RG (rtk + ripgrep + bridge) is not fully installed locally' : 'RTK-RG token compression is paused';
         }
     }
     if (isEnabled) {
@@ -2179,20 +2187,20 @@ function renderDashboardState(data) {
     // IDE Targets Summary & Auto-Detected Host
     const detected = data.detectedIde || { id: 'antigravity', displayName: 'Antigravity IDE', shortName: 'Antigravity' };
     if (ideSyncTitle) {
-        ideSyncTitle.textContent = `🤖 ${detected.displayName} Hub`;
+        ideSyncTitle.textContent = `${detected.displayName} rules & skills`;
     }
     if (ideSyncSubtitle) {
-        ideSyncSubtitle.textContent = `Auto-detected active host: ${detected.displayName}`;
+        ideSyncSubtitle.textContent = `Detected active host: ${detected.displayName}`;
     }
 
     const syncedCount = (ideStatus || []).filter(i => i.synced).length;
     const totalTargets = (ideStatus || []).length;
-    activeTargetsVal.textContent = `${syncedCount} / ${totalTargets} Synced`;
+    activeTargetsVal.textContent = `${syncedCount} / ${totalTargets} synced`;
     activeTargetsVal.style.color = syncedCount > 0 ? 'var(--accent-green)' : 'var(--accent-amber)';
     skillsScopeVal.textContent = detected.displayName;
 
     if (syncAllIdesBtn) {
-        syncAllIdesBtn.textContent = totalTargets > 1 ? '⚡ Sync All' : '⚡ Sync Rule';
+        syncAllIdesBtn.textContent = totalTargets > 1 ? 'Sync all' : 'Sync rule';
     }
 
     latestGlobalRuleSynced = Boolean(data.isGlobalRuleSynced);
@@ -2214,64 +2222,59 @@ function renderDashboardState(data) {
     const isHeadroomMissing = !data.headroomInstalled;
     const isPonytailMissing = !data.ponytailInstalled;
     const isAntiSlopMissing = !data.antiSlopInstalled;
-    const isOmniMissing = !data.omniRouteInstalled && !data.omniRouteRunning;
     const isJevGraphMissing = !data.jevGraphInstalled;
     const isCodeGraphMissing = !data.codeGraphInstalled;
     const isCrwMissing = !data.crwInstalled;
     const isLightpandaMissing = !data.lightpandaInstalled;
     const isEccMissing = !data.eccInstalled;
-    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isOmniMissing || isJevGraphMissing || isCodeGraphMissing || isCrwMissing || isLightpandaMissing || isEccMissing;
+    const isAnyMissing = isRtkMissing || isHeadroomMissing || isPonytailMissing || isAntiSlopMissing || isJevGraphMissing || isCodeGraphMissing || isCrwMissing || isLightpandaMissing || isEccMissing;
 
     if (setupBanner) {
         if (isAnyMissing) {
             setupBanner.style.display = 'flex';
             if (setupMissingTags) {
                 const chips = [];
-                if (isOmniMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-purple" data-element="omniroute" data-name="OmniRoute" title="Click to copy AI prompt to install OmniRoute" style="background: rgba(175, 82, 222, 0.15); color: #d28cff; border: 1px solid rgba(175, 82, 222, 0.3);"><span class="chip-content">🌐 OmniRoute Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
-                }
                 if (isRtkMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-rose" data-element="rtk" data-name="RTK CLI" title="Click to copy AI prompt to install RTK CLI"><span class="chip-content">⚡ RTK CLI Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="rtk" data-name="RTK-RG" title="Copy AI prompt to install RTK, ripgrep (rg), and RTK-RG bridge"><span class="chip-content">RTK-RG missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isHeadroomMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-amber" data-element="headroom" data-name="Headroom" title="Click to copy AI prompt to install Headroom"><span class="chip-content">📦 Headroom Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="headroom" data-name="Headroom" title="Copy AI prompt to install Headroom"><span class="chip-content">Headroom missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isPonytailMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="ponytail" data-name="Ponytail" title="Click to copy AI prompt to install Ponytail"><span class="chip-content">🥋 Ponytail GitHub Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="ponytail" data-name="Ponytail" title="Copy AI prompt to install Ponytail"><span class="chip-content">Ponytail missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isAntiSlopMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="antislop" data-name="Anti-Slop" title="Click to copy AI prompt to install Anti-Slop" style="background: rgba(48, 209, 88, 0.15); color: #30d158; border: 1px solid rgba(48, 209, 88, 0.3);"><span class="chip-content">🛡️ Anti-Slop Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="antislop" data-name="Anti-Slop" title="Copy AI prompt to install Anti-Slop"><span class="chip-content">Anti-Slop missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isJevGraphMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-teal" data-element="jevgraph" data-name="JevGraph" title="Click to copy AI prompt to install JevGraph" style="background: rgba(48, 176, 199, 0.15); color: #30b0c7; border: 1px solid rgba(48, 176, 199, 0.3);"><span class="chip-content">🕸️ JevGraph Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="jevgraph" data-name="JevGraph" title="Copy AI prompt to install JevGraph"><span class="chip-content">JevGraph missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isCodeGraphMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="codegraph" data-name="CodeGraphContext" title="Click to copy AI prompt to install CodeGraphContext" style="background: rgba(0, 122, 255, 0.15); color: #5ac8fa; border: 1px solid rgba(0, 122, 255, 0.3);"><span class="chip-content">🧬 CodeGraph Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="codegraph" data-name="CodeGraphContext" title="Copy AI prompt to install CodeGraphContext"><span class="chip-content">CodeGraph missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isCrwMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-orange" data-element="fastcrw" data-name="fastCRW" title="Click to copy AI prompt to install fastCRW"><span class="chip-content">🕷️ fastCRW Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="fastcrw" data-name="fastCRW" title="Copy AI prompt to install fastCRW"><span class="chip-content">fastCRW missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isLightpandaMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="lightpanda" data-name="Lightpanda Browser" title="Click to copy AI prompt to install Lightpanda" style="background: rgba(255, 149, 0, 0.15); color: #ff9f0a; border: 1px solid rgba(255, 149, 0, 0.3);"><span class="chip-content">🐼 Lightpanda Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="lightpanda" data-name="Lightpanda Browser" title="Copy AI prompt to install Lightpanda"><span class="chip-content">Lightpanda missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 if (isEccMissing) {
-                    chips.push('<button type="button" class="missing-chip chip-cyan" data-element="ecc" data-name="ECC" title="Click to copy AI prompt to install ECC" style="background: rgba(100, 210, 255, 0.15); color: #64d2ff; border: 1px solid rgba(100, 210, 255, 0.3);"><span class="chip-content">🧠 ECC Missing</span> <span class="chip-action-tag">📋 Copy AI Prompt</span></button>');
+                    chips.push('<button type="button" class="missing-chip" data-element="ecc" data-name="ECC" title="Copy AI prompt to install ECC"><span class="chip-content">ECC missing</span> <span class="chip-action-tag">Copy AI prompt</span></button>');
                 }
                 setupMissingTags.innerHTML = chips.join('');
             }
             if (setupBannerDesc) {
                 const missingNames = [];
-                if (isOmniMissing) missingNames.push('OmniRoute Gateway');
-                if (isRtkMissing) missingNames.push('RTK CLI');
+                if (isRtkMissing) missingNames.push('RTK-RG (rtk + rg + bridge)');
                 if (isHeadroomMissing) missingNames.push('Headroom');
-                if (isPonytailMissing) missingNames.push('Ponytail YAGNI');
+                if (isPonytailMissing) missingNames.push('Ponytail');
                 if (isAntiSlopMissing) missingNames.push('Anti-Slop');
-                if (isJevGraphMissing) missingNames.push('JevGraph KG');
+                if (isJevGraphMissing) missingNames.push('JevGraph');
                 if (isCodeGraphMissing) missingNames.push('CodeGraphContext');
-                if (isCrwMissing) missingNames.push('fastCRW Scraper');
-                if (isLightpandaMissing) missingNames.push('Lightpanda Browser');
-                if (isEccMissing) missingNames.push('ECC Pruner');
-                setupBannerDesc.textContent = `Fetch & install ${missingNames.join(' & ')} to slash token consumption, prevent AI slop, route multi-model traffic, build knowledge graphs from specs, hybridize web search, and strategically compact context.`;
+                if (isCrwMissing) missingNames.push('fastCRW');
+                if (isLightpandaMissing) missingNames.push('Lightpanda');
+                if (isEccMissing) missingNames.push('ECC');
+                setupBannerDesc.textContent = `Install ${missingNames.join(', ')} to enable local command filtering, knowledge graphs, and context compression.`;
             }
             if (setupInstallPathInput && document.activeElement !== setupInstallPathInput) {
                 setupInstallPathInput.value = data.upstreamInstallPath || '';
@@ -2347,37 +2350,37 @@ function renderDashboardState(data) {
         renderOmniPreset(activeOmniIde);
     }
 
-    // Quick Action Button for OmniRoute
+    // Quick Action Button for Self-Installed OmniRoute (Enable/Disable + Red/Green Status Dot)
     if (quickOmniBadge && quickOmniSub) {
         if (!omniEnabled) {
             quickOmniBadge.className = 'action-status-badge';
-            quickOmniBadge.innerHTML = '<span class="badge-text">Disabled</span>';
-            quickOmniSub.textContent = 'Disabled (Setting)';
+            quickOmniBadge.innerHTML = '<span class="omni-dot omni-dot-inline" id="quickOmniDot" title="OmniRoute Disabled"></span> <span class="badge-text" id="quickOmniBadgeText">Disabled</span>';
+            quickOmniSub.textContent = 'Disabled (Click to enable)';
         } else if (omniRunning) {
             quickOmniBadge.className = 'action-status-badge synced';
-            quickOmniBadge.innerHTML = '<span class="badge-icon">✓</span> <span class="badge-text">Online</span>';
-            quickOmniSub.textContent = `Active on port ${omniPort}`;
+            quickOmniBadge.innerHTML = '<span class="omni-dot omni-dot-inline online" id="quickOmniDot" title="OmniRoute Enabled & Online"></span> <span class="badge-text" id="quickOmniBadgeText">Enabled</span>';
+            quickOmniSub.textContent = `Enabled • Online on :${omniPort}`;
         } else {
-            quickOmniBadge.className = 'action-status-badge';
-            quickOmniBadge.innerHTML = '<span class="badge-text">⚡ Launch</span>';
-            quickOmniSub.textContent = `Local AI Router (:${omniPort})`;
+            quickOmniBadge.className = 'action-status-badge synced';
+            quickOmniBadge.innerHTML = '<span class="omni-dot omni-dot-inline online" id="quickOmniDot" title="OmniRoute Enabled"></span> <span class="badge-text" id="quickOmniBadgeText">Enabled</span>';
+            quickOmniSub.textContent = `Enabled (Self-installed :${omniPort})`;
         }
     }
 
-    // Helper function to update action button between Uninstall (🗑️) and Recover (♻️)
+    // Helper function to update action button between Uninstall and Recover
     function updateDiagActionButton(btn, isInstalled, layerName) {
         if (!btn) return;
         btn.style.display = 'inline-block';
         if (isInstalled) {
             btn.dataset.mode = 'uninstall';
             btn.className = 'btn-diag-mini btn-diag-trash';
-            btn.textContent = '🗑️';
-            btn.title = `Uninstall ${layerName} to OS Recycle Bin`;
+            btn.textContent = 'Remove';
+            btn.title = `Move ${layerName} to the OS Recycle Bin`;
         } else {
             btn.dataset.mode = 'recover';
             btn.className = 'btn-diag-mini btn-diag-recover';
-            btn.textContent = '♻️ Recover';
-            btn.title = `Recover ${layerName} from Restore Point or GitHub`;
+            btn.textContent = 'Recover';
+            btn.title = `Recover ${layerName} from restore point or GitHub`;
         }
     }
 
@@ -2612,13 +2615,13 @@ function renderDashboardState(data) {
         const eccInstalled = Boolean(data.eccInstalled);
         const eccEnabled = data.eccEnabled !== false;
         if (eccInstalled && eccEnabled) {
-            eccActiveBadge.textContent = '🟢 ACTIVE';
+            eccActiveBadge.textContent = 'Active';
             eccActiveBadge.className = 'panel-tag tag-cyan';
         } else if (eccInstalled && !eccEnabled) {
-            eccActiveBadge.textContent = '⚪ DISABLED';
+            eccActiveBadge.textContent = 'Disabled';
             eccActiveBadge.className = 'panel-tag';
         } else {
-            eccActiveBadge.textContent = '⚠️ NOT DETECTED';
+            eccActiveBadge.textContent = 'Not detected';
             eccActiveBadge.className = 'panel-tag tag-purple';
         }
     }
@@ -2640,13 +2643,13 @@ function renderDashboardState(data) {
         const jEnabled = data.jevGraphEnabled !== false;
         const jProvider = data.jevGraphProvider || 'keyword';
         if (jInstalled && jEnabled) {
-            jevStatusBadge.textContent = `🟢 READY (${jProvider.toUpperCase()})`;
+            jevStatusBadge.textContent = `Ready (${jProvider})`;
             jevStatusBadge.className = 'panel-tag tag-teal';
         } else if (jInstalled && !jEnabled) {
-            jevStatusBadge.textContent = '⚪ DISABLED';
+            jevStatusBadge.textContent = 'Disabled';
             jevStatusBadge.className = 'panel-tag';
         } else {
-            jevStatusBadge.textContent = '⚠️ NOT DETECTED';
+            jevStatusBadge.textContent = 'Not detected';
             jevStatusBadge.className = 'panel-tag tag-purple';
         }
     }
@@ -2689,10 +2692,10 @@ function renderDashboardState(data) {
     const upstreamLayers = [
         {
             key: 'rtk',
-            name: 'RTK CLI Core',
-            icon: '⚡',
+            name: 'RTK-RG Core + Bridge',
+            icon: 'RTK',
             repo: 'rtk-ai/rtk',
-            version: installed ? version : 'Not installed',
+            version: installed ? version : 'Not installed (rtk + rg + bridge required)',
             isInstalled: Boolean(installed),
             isEnabled: isEnabled !== false,
             isActive: Boolean(installed) && (isEnabled !== false)
@@ -2700,7 +2703,7 @@ function renderDashboardState(data) {
         {
             key: 'headroom',
             name: 'Headroom (CCR)',
-            icon: '🧱',
+            icon: 'CCR',
             repo: 'headroomlabs-ai/headroom',
             version: data.headroomInstalled ? data.headroomVersion : 'Not installed',
             isInstalled: Boolean(data.headroomInstalled),
@@ -2710,7 +2713,7 @@ function renderDashboardState(data) {
         {
             key: 'ponytail',
             name: 'Ponytail (YAGNI)',
-            icon: '🥋',
+            icon: 'YGN',
             repo: 'DietrichGebert/ponytail',
             version: data.ponytailInstalled ? `${data.ponytailVersion || 'v1.0.0'} (${data.ponytailSkillsCount || 6}/6 skills)` : 'Not synced',
             isInstalled: Boolean(data.ponytailInstalled),
@@ -2720,7 +2723,7 @@ function renderDashboardState(data) {
         {
             key: 'antislop',
             name: 'Anti-Slop Suite',
-            icon: '🛡️',
+            icon: 'ASL',
             repo: 'miqdadbadjuber/anti-slop',
             version: data.antiSlopInstalled ? `${data.antiSlopVersion || 'v3.2.20'} (${data.antiSlopSkillsCount || 6}/6 skills)` : 'Not synced',
             isInstalled: Boolean(data.antiSlopInstalled),
@@ -2728,19 +2731,9 @@ function renderDashboardState(data) {
             isActive: Boolean(data.antiSlopInstalled) && (data.antiSlopEnabled !== false)
         },
         {
-            key: 'omniroute',
-            name: 'OmniRoute Gateway',
-            icon: '🌐',
-            repo: 'diegosouzapw/OmniRoute',
-            version: data.omniRouteInstalled ? `${data.omniRouteVersion || 'Ready'} (:20128)` : 'Not installed',
-            isInstalled: Boolean(data.omniRouteInstalled),
-            isEnabled: Boolean(data.omniRouteRunning),
-            isActive: Boolean(data.omniRouteInstalled) && Boolean(data.omniRouteRunning)
-        },
-        {
             key: 'jevgraph',
             name: 'JevGraph (Doc KG)',
-            icon: '🕸️',
+            icon: 'JEV',
             repo: 'chenmingtang830/jevgraph',
             version: data.jevGraphInstalled ? `${data.jevGraphVersion || 'Ready'} (${data.jevGraphProvider || 'keyword'})` : 'Not installed',
             isInstalled: Boolean(data.jevGraphInstalled),
@@ -2750,7 +2743,7 @@ function renderDashboardState(data) {
         {
             key: 'codegraph',
             name: 'CodeGraphContext (Code AST)',
-            icon: '🧬',
+            icon: 'CGC',
             repo: 'CodeGraphContext/CodeGraphContext',
             version: data.codeGraphInstalled ? `${data.codeGraphVersion || 'Ready'} (cgc)` : 'Not installed',
             isInstalled: Boolean(data.codeGraphInstalled),
@@ -2760,7 +2753,7 @@ function renderDashboardState(data) {
         {
             key: 'crw',
             name: 'fastCRW (Web Scraper & Search)',
-            icon: '🕷️',
+            icon: 'CRW',
             repo: 'fastcrw/crw',
             version: data.crwInstalled ? `${data.crwVersion || 'Ready'} (crw)` : 'Not installed',
             isInstalled: Boolean(data.crwInstalled),
@@ -2770,7 +2763,7 @@ function renderDashboardState(data) {
         {
             key: 'lightpanda',
             name: 'Lightpanda Browser (Dynamic JS MCP)',
-            icon: '🐼',
+            icon: 'LPD',
             repo: 'lightpanda-io/browser',
             version: data.lightpandaInstalled ? `${data.lightpandaVersion || 'Ready'} (lightpanda)` : 'Not installed',
             isInstalled: Boolean(data.lightpandaInstalled),
@@ -2780,7 +2773,7 @@ function renderDashboardState(data) {
         {
             key: 'ecc',
             name: 'ECC Harness Optimization',
-            icon: '🧠',
+            icon: 'ECC',
             repo: 'affaan-m/ECC',
             version: data.eccInstalled ? `${data.eccVersion || 'Ready'} (${data.eccSkillsCount || 4}/4 skills)` : 'Not synced',
             isInstalled: Boolean(data.eccInstalled),
@@ -2793,7 +2786,7 @@ function renderDashboardState(data) {
     const installedLayersCount = upstreamLayers.filter(l => l.isInstalled).length;
 
     if (diagVersionSummary) {
-        diagVersionSummary.textContent = `${activeLayersCount}/${upstreamLayers.length} Layers Active`;
+        diagVersionSummary.textContent = `${activeLayersCount}/${upstreamLayers.length} layers active`;
         diagVersionSummary.title = `${activeLayersCount} active, ${installedLayersCount} installed out of ${upstreamLayers.length} total layers`;
     }
 
@@ -2804,7 +2797,7 @@ function renderDashboardState(data) {
             return `
             <div class="diag-dropdown-item ${l.isActive ? 'item-active' : (l.isInstalled ? 'item-disabled' : 'item-inactive')}">
                 <div class="dropdown-item-top">
-                    <span class="dropdown-item-name">${l.icon} <strong>${l.name}</strong></span>
+                    <span class="dropdown-item-name"><strong>${l.name}</strong></span>
                     <span class="dropdown-item-badge ${badgeClass}">${statusLabel}</span>
                 </div>
                 <div class="dropdown-item-sub">
@@ -2824,8 +2817,10 @@ function renderDashboardState(data) {
 
     diagBinaryPath.textContent = binaryPath;
     diagBinaryPath.title = binaryPath;
-    diagScope.textContent = scope === 'all' ? 'All Supported IDEs & Agents' : scope;
-    diagActiveTargets.textContent = `${syncedCount} IDE Targets Active`;
+    diagScope.textContent = (scope === 'current' || scope === 'all')
+        ? `${detected.displayName} (Active IDE Only)`
+        : `${detected.displayName} (${scope})`;
+    diagActiveTargets.textContent = `${syncedCount} / ${totalTargets} Active (${detected.shortName || detected.displayName})`;
 
     // 1-Click Skill Installation Status (Green Tick when detected)
     const isSkillsInstalled = (typeof data.skillsInstalled === 'object' && data.skillsInstalled !== null)
@@ -2861,7 +2856,7 @@ function renderDashboardState(data) {
         weeklySyncCheckbox.checked = Boolean(data.weeklyAutoSync);
     }
 
-    // RTK Status Badge
+    // RTK-RG Status Badge & 3-Part Component Badges
     if (rtkStatusBadge) {
         if (installed && isEnabled) {
             rtkStatusBadge.textContent = `Active (${version || 'Ready'})`;
@@ -2870,15 +2865,31 @@ function renderDashboardState(data) {
             rtkStatusBadge.textContent = 'Paused';
             rtkStatusBadge.className = 'panel-tag';
         } else {
-            rtkStatusBadge.textContent = 'Not Installed';
+            rtkStatusBadge.textContent = 'Incomplete / Not Installed';
             rtkStatusBadge.className = 'panel-tag tag-amber';
         }
+    }
+    if (rtkBinStatusBadge) {
+        const hasRtk = Boolean(data.rtkBinInstalled || installed);
+        rtkBinStatusBadge.textContent = hasRtk ? `✓ RTK (${data.rtkOnlyVersion || 'Ready'})` : '✗ RTK Missing';
+        rtkBinStatusBadge.className = hasRtk ? 'panel-tag tag-green' : 'panel-tag tag-amber';
+    }
+    if (rtkRgStatusBadge) {
+        const hasRg = Boolean(data.rgInstalled);
+        rtkRgStatusBadge.textContent = hasRg ? `✓ rg (${data.rgVersion || 'Ready'})` : '✗ rg (ripgrep) Missing';
+        rtkRgStatusBadge.className = hasRg ? 'panel-tag tag-green' : 'panel-tag tag-amber';
+    }
+    if (rtkBridgeStatusBadge) {
+        const hasBridge = Boolean(data.rtkBridgeInstalled);
+        rtkBridgeStatusBadge.textContent = hasBridge ? '✓ RTK-RG Bridge Active' : '✗ Bridge Shims Missing';
+        rtkBridgeStatusBadge.className = hasBridge ? 'panel-tag tag-green' : 'panel-tag tag-amber';
     }
 
     // Output & Context Token Optimization
     const pMode = data.ponytailMode || 'full';
+    const formatModeLabel = (m) => m ? (m.charAt(0).toUpperCase() + m.slice(1).toLowerCase()) : '';
     if (ponytailActiveBadge) {
-        ponytailActiveBadge.textContent = `${pMode.toUpperCase()} Mode`;
+        ponytailActiveBadge.textContent = pMode === 'off' ? 'Off' : `${formatModeLabel(pMode)} mode`;
         ponytailActiveBadge.className = pMode === 'off' ? 'panel-tag' : 'panel-tag tag-cyan';
     }
     if (ponytailSegmentGroup) {
@@ -2892,7 +2903,7 @@ function renderDashboardState(data) {
     const aMode = data.antiSlopMode || 'during';
     const aEnabled = data.antiSlopEnabled !== false;
     if (antiSlopActiveBadge) {
-        antiSlopActiveBadge.textContent = (!aEnabled || aMode === 'off') ? 'OFF' : `${aMode.toUpperCase()} Mode`;
+        antiSlopActiveBadge.textContent = (!aEnabled || aMode === 'off') ? 'Off' : `${formatModeLabel(aMode)} mode`;
         antiSlopActiveBadge.className = (!aEnabled || aMode === 'off') ? 'panel-tag' : 'panel-tag tag-cyan';
     }
     if (antiSlopSegmentGroup) {
@@ -2935,7 +2946,7 @@ function renderDashboardState(data) {
         codeGraphAutoWatchToggle.checked = Boolean(data.codeGraphAutoUpdate);
     }
     if (codeGraphStatusBadge && data.codeGraphStatus) {
-        codeGraphStatusBadge.textContent = data.codeGraphStatus.installed ? 'Active & Ready' : 'Ready to Sync';
+        codeGraphStatusBadge.textContent = data.codeGraphStatus.installed ? 'Active' : 'Ready to sync';
         codeGraphStatusBadge.className = data.codeGraphStatus.installed ? 'panel-tag tag-indigo' : 'panel-tag tag-amber';
     }
 
@@ -2947,13 +2958,13 @@ function renderDashboardState(data) {
     if (hybridWebStatusBadge || crwStatusBadge) {
         const badge = hybridWebStatusBadge || crwStatusBadge;
         if (isHybridEnabled && (isCrwInstalled || isLpInstalled)) {
-            badge.textContent = `🟢 READY (${isCrwInstalled && isLpInstalled ? 'CRW + PANDA' : isCrwInstalled ? 'CRW ONLY' : 'PANDA ONLY'})`;
+            badge.textContent = `Ready (${isCrwInstalled && isLpInstalled ? 'CRW + Lightpanda' : isCrwInstalled ? 'CRW only' : 'Lightpanda only'})`;
             badge.className = 'panel-tag tag-orange';
         } else if (!isHybridEnabled && (isCrwInstalled || isLpInstalled)) {
-            badge.textContent = '⚪ DISABLED';
+            badge.textContent = 'Disabled';
             badge.className = 'panel-tag';
         } else {
-            badge.textContent = '⚠️ NOT DETECTED';
+            badge.textContent = 'Not detected';
             badge.className = 'panel-tag tag-amber';
         }
     }
@@ -2999,7 +3010,7 @@ function renderIdeGrid(ideList) {
 
         const icon = document.createElement('span');
         icon.className = 'ide-card-icon';
-        icon.textContent = IDE_ICONS[ide.id] || '🤖';
+        icon.textContent = IDE_ICONS[ide.id] || 'ID';
 
         const textDiv = document.createElement('div');
         const name = document.createElement('div');
@@ -3019,7 +3030,7 @@ function renderIdeGrid(ideList) {
 
         const statusTag = document.createElement('span');
         statusTag.className = `ide-status-tag ${ide.synced ? 'synced' : 'inactive'}`;
-        statusTag.textContent = ide.synced ? 'SYNCED' : 'OFF';
+        statusTag.textContent = ide.synced ? 'Synced' : 'Off';
 
         top.appendChild(iconTitle);
         top.appendChild(statusTag);
@@ -3029,7 +3040,7 @@ function renderIdeGrid(ideList) {
 
         const syncBtn = document.createElement('button');
         syncBtn.className = 'btn-ide-sync';
-        syncBtn.textContent = ide.synced ? '⭮ Re-Sync Rule' : '⚡ Enable Rule';
+        syncBtn.textContent = ide.synced ? 'Re-sync rule' : 'Enable rule';
         syncBtn.addEventListener('click', () => {
             const isGlobalActive = Boolean(latestGlobalRuleSynced) || (ideList && ideList.some(item => item.type === 'global' && item.synced));
             if (!ide.synced && (ide.type === 'workspace' || (ide.id && ide.id.includes('workspace'))) && isGlobalActive) {
@@ -3059,12 +3070,12 @@ function renderMultiChannelBreakdown(multiChannelData, activeTab = 'all') {
 
     // 1. Update Header Badge & Total
     if (distroTotalTokens) {
-        distroTotalTokens.textContent = `${totalEcosystemFormatted} Tokens Saved`;
+        distroTotalTokens.textContent = `${totalEcosystemFormatted} tokens saved`;
     }
 
     if (savingsBreakdownTag) {
         const activeCount = channels.filter(c => c.status === 'active' || c.status === 'synced').length;
-        savingsBreakdownTag.textContent = `${activeCount} / ${channels.length} Channels Active`;
+        savingsBreakdownTag.textContent = `${activeCount} / ${channels.length} channels active`;
     }
 
     // 2. Render Proportional Multi-Channel Distribution Bar
@@ -3207,9 +3218,9 @@ function renderMultiChannelBreakdown(multiChannelData, activeTab = 'all') {
                 toggle.innerHTML = `
                     <div class="dropdown-left">
                         <span class="dropdown-chevron">▾</span>
-                        <span class="dropdown-title">⚡ Command Compression List</span>
+                        <span class="dropdown-title">Command compression list</span>
                     </div>
-                    <span class="dropdown-count">${cmdCount} Tools</span>
+                    <span class="dropdown-count">${cmdCount} tools</span>
                 `;
 
                 const dropdownBody = document.createElement('div');
@@ -3247,7 +3258,7 @@ function renderMultiChannelBreakdown(multiChannelData, activeTab = 'all') {
                         dropdownBody.appendChild(row);
                     });
                 } else {
-                    dropdownBody.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 6px;">Run commands with RTK to see per-tool compression here!</div>';
+                    dropdownBody.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 6px;">Run commands with RTK-RG to view per-tool compression metrics.</div>';
                 }
 
                 toggle.addEventListener('click', () => {
@@ -3296,7 +3307,7 @@ function renderChart(breakdown) {
     chartContainer.innerHTML = '';
 
     if (!breakdown || breakdown.length === 0) {
-        chartContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Run commands in your terminal with RTK to see per-tool compression stats here!</div>';
+        chartContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Run commands in your terminal with RTK-RG to view per-tool compression statistics.</div>';
         return;
     }
 

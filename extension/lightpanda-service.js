@@ -60,7 +60,6 @@ class LightpandaService {
         return new Promise((resolve) => {
             const fs = require('fs');
             const path = require('path');
-            this.ensureCdpLauncherBackup();
             const candidateDirs = this.getCandidateDirs();
             for (const cand of candidateDirs) {
                 if (fs.existsSync(cand)) {

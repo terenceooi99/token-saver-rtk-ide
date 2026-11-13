@@ -1,15 +1,23 @@
 # RTK (Rust Token Killer) Automation Rule
 
 ## RTK (Rust Token Killer) Optimization Rule
-Prefix every shell/terminal execution command with `rtk`:
+Prefix shell/terminal execution commands with `rtk` when running supported CLI tools or standalone binaries:
 - `rtk git status`, `rtk git diff`, `rtk git log -n 5`
 - `rtk npm test`, `rtk npm run build`, `rtk pnpm test`, `rtk yarn test`
 - `rtk cargo check`, `rtk cargo test`, `rtk cargo build`
 - `rtk pytest`, `rtk vitest`
-- `rtk ls src/`, `rtk tree -L 2`, `rtk rg "pattern"`
+- `rtk tree -L 2`, `rtk rg "pattern"`
 
 Keep the prefix inside chains: `rtk git add . && rtk git commit -m "msg"`.
-Commands RTK has no filter for run as-is, so the prefix is always safe.
+
+### Windows Shell Built-in & Command Availability Invariant
+On Windows / PowerShell, shell built-ins and Unix tools not present on PATH must NOT be prefixed directly:
+- **Never execute `rtk dir`, `rtk ls`, or `rtk grep`** directly on Windows (these binaries do not exist on Windows PATH and will fail with `[rtk: program not found]`).
+- For directory listing: use `rtk tree [dir]` or native PowerShell `Get-ChildItem [dir]`.
+- For text/string search:
+  - If `rg.exe` (ripgrep) is installed: use `rtk rg "pattern" [file]`.
+  - Otherwise, use native Windows `findstr /c:"pattern" [file]`, PowerShell `Select-String`, or use the agent's built-in `grep_search` / `read_file` tools.
+- To execute shell commands or built-ins through RTK, pass via `rtk run`: e.g. `rtk run "cmd /c dir [dir]"`.
 
 ### Output & Token Optimization
 Command output is condensed to save 60-90% LLM context window tokens while preserving every critical signal, error, and exit code.

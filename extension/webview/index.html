@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; img-src {{cspSource}} https: data:; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
-    <title>Token Saver (RTK) Dashboard</title>
+    <title>Token Saver (RTK-RG) Dashboard</title>
     <link rel="stylesheet" href="{{styleUri}}">
 </head>
 
@@ -19,17 +19,16 @@
                     onerror="this.style.display='none';" />
             </div>
             <div class="initial-loading-content">
-                <h2 class="initial-loading-title">Checking Upstream Tools</h2>
-                <p class="initial-loading-desc">Verifying local installations and upstream GitHub layers...</p>
+                <h2 class="initial-loading-title">Checking upstream tools</h2>
+                <p class="initial-loading-desc">Verifying local installations and upstream layers...</p>
                 <div class="initial-progress-track">
                     <div class="initial-progress-bar"></div>
                 </div>
                 <div class="initial-loading-footer">
-                    <span class="initial-loading-tag" data-upstream-id="rtk">RTK</span>
+                    <span class="initial-loading-tag" data-upstream-id="rtk">RTK-RG</span>
                     <span class="initial-loading-tag" data-upstream-id="headroom">Headroom</span>
                     <span class="initial-loading-tag" data-upstream-id="ponytail">Ponytail</span>
                     <span class="initial-loading-tag" data-upstream-id="antislop">Anti-Slop</span>
-                    <span class="initial-loading-tag" data-upstream-id="omniroute">OmniRoute</span>
                     <span class="initial-loading-tag" data-upstream-id="jevgraph">JevGraph</span>
                     <span class="initial-loading-tag" data-upstream-id="codegraph">CodeGraph</span>
                     <span class="initial-loading-tag" data-upstream-id="crw">fastCRW</span>
@@ -37,18 +36,18 @@
                     <span class="initial-loading-tag" data-upstream-id="ecc">ECC</span>
                 </div>
 
-                <!-- Upstream Waiting Window Advertisement & Sponsorship Box -->
+                <!-- Upstream Waiting Window Sponsorship Box -->
                 <div class="initial-ad-box">
                     <div class="initial-ad-header">
-                        <span class="initial-ad-badge">📢 Sponsor Placement</span>
+                        <span class="initial-ad-badge">Sponsor placement</span>
                         <span class="initial-ad-rate">$5 USD / week</span>
                     </div>
-                    <p class="initial-ad-desc">Advertise your tool, project, or AI product to active developers and vibe coders.</p>
+                    <p class="initial-ad-desc">Feature your developer tool or open-source project in this workspace panel.</p>
                     <div class="initial-ad-actions">
                         <a href="mailto:terenceooi1688@gmail.com?subject=Token%20Saver%20Dashboard%20Ad%20Inquiry" class="initial-ad-link" title="Send email to terenceooi1688@gmail.com">
-                            ✉️ terenceooi1688@gmail.com
+                            terenceooi1688@gmail.com
                         </a>
-                        <button type="button" class="initial-ad-copy-btn" id="copyAdEmailBtn" title="Copy email address to clipboard">📋 Copy</button>
+                        <button type="button" class="initial-ad-copy-btn" id="copyAdEmailBtn" title="Copy email address to clipboard">Copy</button>
                     </div>
                 </div>
             </div>
@@ -62,8 +61,8 @@
                 <div class="brand-icon">
                     <img src="{{iconUri}}" class="brand-icon-img" alt="Token Saver"
                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                    <svg class="brand-icon-fallback" style="display:none;" viewBox="0 0 24 24" width="22" height="22"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    <svg class="brand-icon-fallback" style="display:none;" viewBox="0 0 24 24" width="20" height="20"
+                        fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                         stroke-linejoin="round">
                         <path d="M4.5 16.5A8.5 8.5 0 1 1 19.5 16.5" />
                         <line x1="12" y1="12" x2="16" y2="8" />
@@ -74,42 +73,55 @@
                     <div class="brand-title-row">
                         <h1>Token Saver</h1>
                         <a href="https://wise.com/pay/me/terenceooit" target="_blank" class="tip-link tip-link-header"
-                            id="wiseTipLink" title="Tip me @ Wise">☕ Tip me @ Wise</a>
+                            id="wiseTipLink" title="Support on Wise">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                                <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                                <line x1="6" y1="2" x2="6" y2="4" />
+                                <line x1="10" y1="2" x2="10" y2="4" />
+                                <line x1="14" y1="2" x2="14" y2="4" />
+                            </svg>
+                            <span>Tip via Wise</span>
+                        </a>
                     </div>
-                    <p class="subtitle">Universal Token Optimization Proxy</p>
+                    <p class="subtitle">Local command proxy and context compression telemetry</p>
                 </div>
             </div>
             <div class="header-actions">
-                <button class="btn btn-ghost" id="toggleModeBtn">Token Saver OFF</button>
-                <button class="btn btn-ghost" id="toggleRtkBtn">RTK OFF</button>
-                <button class="btn btn-ghost" id="toggleHeadroomBtn">Headroom OFF</button>
-                <button class="btn btn-ghost" id="togglePonytailBtn">Ponytail OFF</button>
-                <button class="btn btn-ghost" id="toggleAntiSlopBtn">Anti-Slop OFF</button>
-                <button class="btn btn-ghost" id="toggleOmniRouteBtn">OmniRoute OFF</button>
-                <button class="btn btn-ghost" id="toggleJevGraphBtn">JevGraph OFF</button>
-                <button class="btn btn-ghost" id="toggleCodeGraphBtn">CodeGraph OFF</button>
-                <button class="btn btn-ghost" id="toggleHybridWebBtn">Hybrid Web OFF</button>
-                <button class="btn btn-ghost" id="toggleEccBtn">ECC OFF</button>
+                <button class="btn btn-ghost" id="toggleModeBtn">Token Saver off</button>
+                <button class="btn btn-ghost" id="toggleRtkBtn">RTK-RG off</button>
+                <button class="btn btn-ghost" id="toggleHeadroomBtn">Headroom off</button>
+                <button class="btn btn-ghost" id="togglePonytailBtn">Ponytail off</button>
+                <button class="btn btn-ghost" id="toggleAntiSlopBtn">Anti-Slop off</button>
+                <button class="btn btn-ghost" id="toggleJevGraphBtn">JevGraph off</button>
+                <button class="btn btn-ghost" id="toggleCodeGraphBtn">CodeGraph off</button>
+                <button class="btn btn-ghost" id="toggleHybridWebBtn">Hybrid Web off</button>
+                <button class="btn btn-ghost" id="toggleEccBtn">ECC off</button>
 
                 <!-- Refresh Button with Auto-Refresh Dropdown -->
                 <div class="refresh-dropdown-group" id="refreshDropdownGroup">
-                    <button class="btn btn-ghost btn-refresh-action" id="refreshBtn" title="Click to Refresh Metrics">
-                        <span class="refresh-icon" id="refreshIcon">⭮</span>
+                    <button class="btn btn-ghost btn-refresh-action" id="refreshBtn" title="Refresh metrics">
+                        <span class="refresh-icon" id="refreshIcon" aria-hidden="true">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                                <polyline points="21 3 21 9 15 9" />
+                            </svg>
+                        </span>
                         <span class="refresh-timer-badge" id="refreshTimerBadge" style="display: none;">1m</span>
                     </button>
                     <button class="btn btn-ghost btn-refresh-dropdown" id="refreshMenuBtn"
-                        title="Auto-Refresh Timer Options" aria-label="Auto-Refresh Interval Options">
-                        <span class="dropdown-chevron">▼</span>
+                        title="Auto-refresh interval options" aria-label="Auto-refresh interval options">
+                        <span class="dropdown-chevron">▾</span>
                     </button>
                     <div class="refresh-dropdown-menu" id="refreshDropdownMenu">
                         <div class="dropdown-menu-header">
-                            <span>⏱️ Auto-Refresh Interval</span>
+                            <span>Auto-refresh interval</span>
                         </div>
                         <div class="refresh-custom-input-box">
-                            <label for="customMinuteInput" class="custom-input-label">Refresh Every (Minutes):</label>
+                            <label for="customMinuteInput" class="custom-input-label">Refresh every (minutes):</label>
                             <div class="custom-input-row">
                                 <input type="number" id="customMinuteInput" min="0.5" max="1440" step="0.5"
-                                    placeholder="e.g. 1" class="minute-input" />
+                                    placeholder="1" class="minute-input" />
                                 <span class="input-unit">min</span>
                                 <button class="btn btn-sm btn-primary" id="applyMinuteBtn">Set</button>
                             </div>
@@ -117,80 +129,98 @@
                         <div class="dropdown-divider"></div>
                         <button class="dropdown-menu-item active" data-minutes="0">
                             <span class="menu-item-check">✓</span>
-                            <span class="menu-item-text">Off (Manual Only)</span>
+                            <span class="menu-item-text">Off (manual only)</span>
                         </button>
                         <button class="dropdown-menu-item" data-minutes="1">
                             <span class="menu-item-check"></span>
-                            <span class="menu-item-text">⏱️ Every 1 minute</span>
+                            <span class="menu-item-text">Every 1 minute</span>
                         </button>
                         <button class="dropdown-menu-item" data-minutes="2">
                             <span class="menu-item-check"></span>
-                            <span class="menu-item-text">⏱️ Every 2 minutes</span>
+                            <span class="menu-item-text">Every 2 minutes</span>
                         </button>
                         <button class="dropdown-menu-item" data-minutes="5">
                             <span class="menu-item-check"></span>
-                            <span class="menu-item-text">⏱️ Every 5 minutes</span>
+                            <span class="menu-item-text">Every 5 minutes</span>
                         </button>
                         <button class="dropdown-menu-item" data-minutes="10">
                             <span class="menu-item-check"></span>
-                            <span class="menu-item-text">⏱️ Every 10 minutes</span>
+                            <span class="menu-item-text">Every 10 minutes</span>
                         </button>
                     </div>
                 </div>
 
                 <button class="btn btn-ghost" id="openVsxUpdateBtn" title="Update Token Saver from Open VSX"
-                    aria-label="Update from Open VSX">🢁</button>
-                <button class="btn btn-ghost btn-theme-toggle" id="themeToggleBtn" title="Switch to Light Mode"
-                    aria-label="Toggle Theme">
+                    aria-label="Update from Open VSX">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 19V5" />
+                        <polyline points="5 12 12 5 19 12" />
+                    </svg>
+                </button>
+                <button class="btn btn-ghost btn-theme-toggle" id="themeToggleBtn" title="Switch to light mode"
+                    aria-label="Toggle theme">
                     <span id="themeIcon">☀︎</span>
                 </button>
-                <button class="btn btn-ghost" id="popOutBtn" title="Pop Out to Editor Tab">⤢</button>
-                <button class="btn btn-ghost" id="minimizeBtn" title="Minimize / Compact Dashboard">🗕</button>
+                <button class="btn btn-ghost" id="popOutBtn" title="Open in editor tab" aria-label="Open in editor tab">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="15 3 21 3 21 9" />
+                        <polyline points="9 21 3 21 3 15" />
+                        <line x1="21" y1="3" x2="14" y2="10" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                    </svg>
+                </button>
+                <button class="btn btn-ghost" id="minimizeBtn" title="Toggle compact layout" aria-label="Toggle compact layout">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                </button>
             </div>
         </header>
 
-        <!-- Setup Alert & Installation Hub (Visible when RTK CLI or Headroom is not detected) -->
+        <!-- Setup Alert & Installation Hub (Visible when required upstream tools are missing) -->
         <div class="setup-alert-banner" id="setupBanner" style="display: none;">
             <div class="setup-banner-top">
                 <div class="setup-banner-title-block">
-                    <span class="setup-banner-icon">⚡</span>
+                    <span class="setup-banner-icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </span>
                     <div>
-                        <h3 class="setup-banner-title">Installation Required</h3>
-                        <p class="setup-banner-desc" id="setupBannerDesc">Install RTK CLI and Headroom to start saving
-                            60-90% token consumption across your AI agent interactions.</p>
+                        <h3 class="setup-banner-title">Installation required</h3>
+                        <p class="setup-banner-desc" id="setupBannerDesc">Install missing upstream tools to enable command proxy filtering and context compression.</p>
                     </div>
                 </div>
                 <div class="setup-missing-tags" id="setupMissingTags">
-                    <!-- Dynamic missing chips (e.g. RTK CLI Missing, Headroom Missing) -->
+                    <!-- Dynamic missing chips -->
                 </div>
             </div>
             <div class="setup-banner-path-row">
                 <label for="setupInstallPathInput" class="setup-path-label" title="Custom installation directory for cloning upstream GitHub repositories">
-                    📁 <span>Install Path:</span>
+                    <span>Install path:</span>
                 </label>
                 <div class="setup-path-input-group">
                     <input type="text" id="setupInstallPathInput" class="setup-path-input"
                         placeholder="Default (~/.config / global). Type or select directory e.g. D:\Software\AI Agent Space"
                         spellcheck="false" />
-                    <button type="button" class="btn btn-setup-browse" id="setupBrowsePathBtn" title="Browse for directory folder">📂 Browse</button>
-                    <button type="button" class="btn btn-setup-save-path" id="setupSavePathBtn" title="Save install directory path" style="display: none;">✓ Save</button>
+                    <button type="button" class="btn btn-setup-browse" id="setupBrowsePathBtn" title="Browse for directory folder">Browse</button>
+                    <button type="button" class="btn btn-setup-save-path" id="setupSavePathBtn" title="Save install directory path" style="display: none;">Save</button>
                 </div>
             </div>
             <div class="setup-banner-actions">
                 <button class="btn btn-setup btn-setup-ai" id="setupAskAiBtn"
-                    title="Copy an optimized installation prompt to clipboard for your AI chat assistant">
-                    <span class="btn-icon">🤖</span>
-                    <span class="btn-text">Ask AI to Install <span class="btn-sub-tag">Copy Prompt</span></span>
+                    title="Copy an installation prompt to clipboard for your AI chat assistant">
+                    <span class="btn-text">Ask AI to install (copy prompt)</span>
                 </button>
                 <button class="btn btn-setup btn-setup-terminal" id="setupTerminalBtn"
-                    title="Auto-run installation commands in IDE terminal">
-                    <span class="btn-icon">⚡</span>
-                    <span class="btn-text">Run in Terminal</span>
+                    title="Run installation commands in IDE terminal">
+                    <span class="btn-text">Run in terminal</span>
                 </button>
                 <button class="btn btn-setup btn-setup-copy" id="setupCopyCmdBtn"
-                    title="Copy raw shell install commands to clipboard">
-                    <span class="btn-icon">📋</span>
-                    <span class="btn-text">Copy Commands</span>
+                    title="Copy shell install commands to clipboard">
+                    <span class="btn-text">Copy commands</span>
                 </button>
             </div>
         </div>
@@ -199,8 +229,12 @@
         <section class="metrics-grid">
             <div class="metric-card card-glow-cyan">
                 <div class="metric-header">
-                    <span class="metric-title">Tokens Saved</span>
-                    <span class="metric-icon">🔥</span>
+                    <span class="metric-title">Tokens saved</span>
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                    </span>
                 </div>
                 <div class="metric-value" id="totalSavedVal">0</div>
                 <div class="metric-footer" id="savedRatioVal">Calculating...</div>
@@ -209,7 +243,13 @@
             <div class="metric-card card-glow-green">
                 <div class="metric-header">
                     <span class="metric-title">Efficiency</span>
-                    <span class="metric-icon">📉</span>
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10" />
+                            <line x1="12" y1="20" x2="12" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                    </span>
                 </div>
                 <div class="metric-value" id="efficiencyVal">0%</div>
                 <div class="progress-bar-bg">
@@ -219,14 +259,13 @@
 
             <div class="metric-card card-glow-purple">
                 <div class="metric-header">
-                    <span class="metric-title">Cost Saved</span>
+                    <span class="metric-title">Cost saved</span>
                     <div class="metric-header-actions">
-                        <button class="btn-preset-toggle" id="costPresetToggleBtn" title="Select Model Preset Rate"
-                            aria-label="Model Presets">⚡</button>
-                        <span class="metric-icon">💰</span>
+                        <button class="btn-preset-toggle" id="costPresetToggleBtn" title="Select model preset rate"
+                            aria-label="Model presets">Rates ▾</button>
                         <!-- Model Presets Dropdown Popover -->
                         <div class="cost-presets-popover" id="costPresetsPopover">
-                            <div class="presets-popover-header">⚡ Popular Model Rates</div>
+                            <div class="presets-popover-header">Model token rates (per 1M)</div>
                             <button class="preset-item" data-price="3.00">
                                 <span class="preset-name">Claude 3.7 / 3.5 Sonnet</span>
                                 <span class="preset-price">$3.00</span>
@@ -257,21 +296,28 @@
                 <div class="metric-value" id="costSavedVal">$0.00</div>
                 <div class="metric-footer cost-footer">
                     <div class="cost-input-container" id="costInputContainer"
-                        title="Click to edit token price per 1M tokens">
+                        title="Edit token price per 1M tokens">
                         <span class="cost-prefix">Est. @ $</span>
                         <input type="number" id="costPriceInput" class="cost-price-input" min="0" max="9999" step="0.01"
                             placeholder="3.00" value="3.00"
-                            title="Manually type in estimated token price per 1,000,000 tokens (USD)" />
+                            title="Estimated token price per 1,000,000 tokens (USD)" />
                         <span class="cost-suffix">/ 1M</span>
-                        <button class="btn-cost-save" id="saveCostBtn" title="Apply Rate">✓</button>
+                        <button class="btn-cost-save" id="saveCostBtn" title="Apply rate">Apply</button>
                     </div>
                 </div>
             </div>
 
             <div class="metric-card card-glow-amber">
                 <div class="metric-header">
-                    <span class="metric-title">Active Targets</span>
-                    <span class="metric-icon">🤖</span>
+                    <span class="metric-title">Active targets</span>
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                        </svg>
+                    </span>
                 </div>
                 <div class="metric-value" id="activeTargetsVal">0 Synced</div>
                 <div class="metric-footer" id="skillsScopeVal">Current IDE</div>
@@ -288,11 +334,11 @@
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2 id="ideSyncTitle">🤖 IDE Rules & Skills Hub</h2>
-                                <p class="panel-subtitle" id="ideSyncSubtitle">Auto-detected active IDE integration</p>
+                                <h2 id="ideSyncTitle">IDE rules &amp; skills</h2>
+                                <p class="panel-subtitle" id="ideSyncSubtitle">Detected active IDE configuration targets</p>
                             </div>
                         </div>
-                        <button class="btn btn-sm btn-primary" id="syncAllIdesBtn">⚡ Sync Rule</button>
+                        <button class="btn btn-sm btn-primary" id="syncAllIdesBtn">Sync rules</button>
                     </div>
 
                     <div class="panel-body" id="bodyIdeSync">
@@ -302,55 +348,74 @@
                     </div>
                 </section>
 
-                <!-- RTK CLI Core Engine Section -->
+                <!-- RTK-RG CLI Core & Ripgrep Bridge Section -->
                 <section class="panel-card rtk-core-section" id="sectionRtk">
                     <div class="panel-header collapsible" data-target="bodyRtk">
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>⚡ RTK (Rust Token Killer) CLI Core</h2>
-                                <p class="panel-subtitle">Transparent command execution proxy cutting terminal tokens by 60%–90%</p>
+                                <h2>RTK-RG (command proxy + ripgrep bridge)</h2>
+                                <p class="panel-subtitle">Command output condensation with bridged <code>rg</code> and Windows shell shims</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
                             <a href="https://github.com/rtk-ai/rtk" target="_blank" class="repo-badge-link"
-                                title="Upstream GitHub: rtk-ai/rtk">GitHub: rtk-ai/rtk ↗</a>
+                                title="Upstream GitHub: rtk-ai/rtk">rtk-ai/rtk ↗</a>
+                            <a href="https://github.com/BurntSushi/ripgrep" target="_blank" class="repo-badge-link"
+                                title="Upstream GitHub: BurntSushi/ripgrep">BurntSushi/ripgrep ↗</a>
                             <span class="panel-tag tag-orange" id="rtkStatusBadge">Checking...</span>
                         </div>
                     </div>
 
                     <div class="panel-body" id="bodyRtk">
-                        <!-- RTK Engine Description & Sync -->
+                        <!-- RTK-RG Engine Description & Sync -->
                         <div class="opt-row">
                             <div class="opt-info">
                                 <div class="opt-title-line">
-                                    <span class="opt-title">Automatic Command Prefixing:</span>
+                                    <span class="opt-title">RTK-RG command proxy &amp; ripgrep bridge</span>
                                     <button class="btn-mini-sync" id="rtkInlineSyncBtn"
-                                        title="Fetch & install latest RTK CLI from GitHub">⭮ Sync from GitHub</button>
+                                        title="Fetch and install RTK CLI, ripgrep (rg), and RTK-RG bridge shims">Sync RTK-RG from GitHub</button>
                                 </div>
-                                <span class="opt-desc">Directs AI coding agents to prefix all terminal and shell commands with <code>rtk</code> (e.g. <code>rtk git status</code>, <code>rtk npm test</code>, <code>rtk cargo test</code>, <code>rtk pytest</code>, <code>rtk vitest</code>), saving massive LLM prompt tokens while preserving critical errors and exit codes.</span>
+                                <span class="opt-desc">Prefixes agent shell commands with <code>rtk</code> (<code>rtk git status</code>, <code>rtk npm test</code>, <code>rtk ls src/</code>, <code>rtk rg "pattern" .</code>) and co-locates <code>rg.exe</code> alongside <code>rtk.exe</code> with <code>~/.local/bin</code> shims (<code>ls.cmd</code>, <code>dir.cmd</code>, <code>grep.cmd</code>, <code>rtk-rg.cmd</code>).</span>
+                            </div>
+                        </div>
+
+                        <!-- RTK-RG 3-Part Requirement & Bridge Status -->
+                        <div class="opt-row">
+                            <div class="opt-info">
+                                <div class="opt-title-line">
+                                    <span class="opt-title">Required RTK-RG components</span>
+                                    <span class="panel-tag" id="rtkBinStatusBadge">RTK: checking...</span>
+                                    <span class="panel-tag" id="rtkRgStatusBadge">rg: checking...</span>
+                                    <span class="panel-tag" id="rtkBridgeStatusBadge">Bridge shims: checking...</span>
+                                </div>
+                                <span class="opt-desc">
+                                    <strong>Search invariants:</strong> Always pass an explicit directory to <code>rtk rg "&lt;pattern&gt;" .</code>, pipe <code>$null | rtk rg ...</code> or <code>--max-depth 6</code> from project roots, and prefer <code>rtk ls &lt;path&gt;</code> over <code>rtk dir</code> on Windows.
+                                </span>
                             </div>
                         </div>
 
                         <!-- Deactivation Impact Callout -->
-                        <div class="warning-feature-item" style="margin-top: 10px; margin-bottom: 12px; background: rgba(255, 159, 10, 0.08); border-color: rgba(255, 159, 10, 0.25);">
-                            <span class="warning-feature-icon" style="color: var(--apple-orange);">ℹ️</span>
+                        <div class="warning-feature-item">
+                            <span class="warning-feature-icon">i</span>
                             <div class="warning-feature-content">
-                                <span class="warning-feature-title" style="color: var(--apple-orange);">If RTK / Token Saver is turned OFF:</span>
-                                <span class="warning-feature-desc">AI agent terminal command compression (60%–90% savings) is suspended, and rule blocks in <code>.cursorrules</code>, <code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, etc., are deactivated so AI models bypass AST knowledge graphs and context compression.</span>
+                                <span class="warning-feature-title">When RTK-RG or Token Saver is off</span>
+                                <span class="warning-feature-desc">Terminal command filtering is paused, RTK-RG skills are hidden from the agent quick list, and rule blocks in <code>.cursorrules</code>, <code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, and <code>AGENTS.md</code> are removed.</span>
                             </div>
                         </div>
 
                         <!-- Quick Actions Grid -->
                         <div class="jev-quick-actions">
                             <button class="btn btn-sm btn-primary" id="rtkTerminalScoreboardBtn"
-                                title="Run rtk gain interactively in terminal">🖥️ Terminal Scoreboard</button>
+                                title="Run rtk gain interactively in terminal">Terminal scoreboard</button>
+                            <button class="btn btn-sm btn-ghost" id="rtkRepairBridgeBtn"
+                                title="Create or repair RTK-RG bridge shims (ls.cmd, dir.cmd, grep.cmd, rtk-rg.cmd) and co-locate rg.exe with rtk.exe">Repair RTK-RG bridge</button>
                             <button class="btn btn-sm btn-ghost" id="rtkDoctorBtn"
-                                title="Run RTK diagnostic doctor in terminal">🩺 RTK Doctor</button>
+                                title="Run RTK diagnostic doctor in terminal">RTK doctor</button>
                             <button class="btn btn-sm btn-ghost" id="rtkCopyInstallBtn"
-                                title="Copy raw RTK CLI installation commands">📋 Copy Install Cmd</button>
+                                title="Copy RTK-RG, ripgrep, and bridge installation commands">Copy install command</button>
                             <button class="btn btn-sm btn-ghost" id="rtkLatencyBtn"
-                                title="Test RTK proxy response time & latency">⏱️ Test Latency</button>
+                                title="Test RTK-RG proxy response time">Test latency</button>
                         </div>
                     </div>
                 </section>
@@ -361,15 +426,14 @@
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🥋 Output & Context Token Saver</h2>
-                                <p class="panel-subtitle">Ponytail YAGNI philosophy, terse agent rules, & minimal diffs
-                                </p>
+                                <h2>Output &amp; context token saver</h2>
+                                <p class="panel-subtitle">Ponytail YAGNI rules, terse output directives, and compact diffs</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
                             <a href="https://github.com/DietrichGebert/ponytail" target="_blank" class="repo-badge-link"
-                                title="Upstream GitHub: DietrichGebert/ponytail">GitHub: DietrichGebert/ponytail ↗</a>
-                            <span class="panel-tag tag-cyan" id="ponytailActiveBadge">Full Mode</span>
+                                title="Upstream GitHub: DietrichGebert/ponytail">DietrichGebert/ponytail ↗</a>
+                            <span class="panel-tag tag-cyan" id="ponytailActiveBadge">Full mode</span>
                         </div>
                     </div>
 
@@ -378,13 +442,11 @@
                         <div class="opt-row">
                             <div class="opt-info">
                                 <div class="opt-title-line">
-                                    <span class="opt-title">Ponytail YAGNI Mode:</span>
+                                    <span class="opt-title">Ponytail YAGNI mode</span>
                                     <button class="btn-mini-sync" id="ponytailInlineSyncBtn"
-                                        title="Fetch & sync latest Ponytail skills from GitHub to global IDE">⭮ Sync
-                                        from GitHub</button>
+                                        title="Fetch and sync latest Ponytail skills from GitHub">Sync from GitHub</button>
                                 </div>
-                                <span class="opt-desc">Directs AI to prioritize stdlib, shortest diffs, and max 3-line
-                                    explanations (no essays)</span>
+                                <span class="opt-desc">Prioritizes standard library usage, shortest diffs, and concise explanations.</span>
                             </div>
                             <div class="mode-segment-group" id="ponytailSegmentGroup">
                                 <button class="segment-btn" data-mode="off">Off</button>
@@ -397,11 +459,10 @@
                         <!-- Terse Agent Output Toggle -->
                         <div class="opt-row">
                             <div class="opt-info">
-                                <span class="opt-title">Terse Agent Directives:</span>
-                                <span class="opt-desc">Strips greetings, filler words, and conversational fluff to slash
-                                    output tokens</span>
+                                <span class="opt-title">Terse agent directives</span>
+                                <span class="opt-desc">Omits conversational filler and re-printed unchanged code blocks.</span>
                             </div>
-                            <label class="custom-toggle" for="terseAgentCheckbox" title="Toggle Terse Agent Directives">
+                            <label class="custom-toggle" for="terseAgentCheckbox" title="Toggle terse agent directives">
                                 <input type="checkbox" id="terseAgentCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
                             </label>
@@ -410,11 +471,10 @@
                         <!-- AST Symbol Outlines Toggle -->
                         <div class="opt-row">
                             <div class="opt-info">
-                                <span class="opt-title">AST Symbol Outlines (/rtk-outline):</span>
-                                <span class="opt-desc">Directs AI to inspect class/function signatures before reading
-                                    full files (saves 80–95% tokens)</span>
+                                <span class="opt-title">AST symbol outlines (<code>/rtk-outline</code>)</span>
+                                <span class="opt-desc">Inspects class and function signatures before reading full source files.</span>
                             </div>
-                            <label class="custom-toggle" for="astOutlineCheckbox" title="Toggle AST Symbol Outlines">
+                            <label class="custom-toggle" for="astOutlineCheckbox" title="Toggle AST symbol outlines">
                                 <input type="checkbox" id="astOutlineCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
                             </label>
@@ -423,12 +483,11 @@
                         <!-- Headroom Context Compression Toggle -->
                         <div class="opt-row">
                             <div class="opt-info">
-                                <span class="opt-title">Headroom Context Compression (CCR):</span>
-                                <span class="opt-desc">Compresses heavy JSON payloads, tool responses, and code context
-                                    via upstream headroomlabs-ai/headroom</span>
+                                <span class="opt-title">Headroom context compression (CCR)</span>
+                                <span class="opt-desc">Compresses JSON payloads, tool responses, and long file reads via <code>headroomlabs-ai/headroom</code>.</span>
                             </div>
                             <label class="custom-toggle" for="headroomCheckbox"
-                                title="Toggle Headroom Context Compression">
+                                title="Toggle Headroom context compression">
                                 <input type="checkbox" id="headroomCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
                             </label>
@@ -437,11 +496,10 @@
                         <!-- Compact Diff Context (-U1) Toggle -->
                         <div class="opt-row">
                             <div class="opt-info">
-                                <span class="opt-title">Compact Diffs (-U1 Context):</span>
-                                <span class="opt-desc">Directs AI to use single-line context diffs (rtk git diff -U1),
-                                    saving 50–70% diff tokens</span>
+                                <span class="opt-title">Compact diffs (<code>-U1</code> context)</span>
+                                <span class="opt-desc">Uses single-line context diffs (<code>rtk git diff -U1</code>) to reduce diff payload size.</span>
                             </div>
-                            <label class="custom-toggle" for="compactDiffCheckbox" title="Toggle Compact Diffs">
+                            <label class="custom-toggle" for="compactDiffCheckbox" title="Toggle compact diffs">
                                 <input type="checkbox" id="compactDiffCheckbox" checked>
                                 <span class="custom-toggle-slider"></span>
                             </label>
@@ -455,16 +513,14 @@
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🛡️ Anti-Slop AI Quality Framework</h2>
-                                <p class="panel-subtitle">Eliminates AI clichés, generic code, lazy design, & robotic
-                                    copywriting</p>
+                                <h2>Anti-Slop quality filter</h2>
+                                <p class="panel-subtitle">Filters generic AI aesthetic clichés, ungrounded visual effects, and filler copy</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
                             <a href="https://github.com/miqdadbadjuber/anti-slop" target="_blank"
-                                class="repo-badge-link" title="Upstream GitHub: miqdadbadjuber/anti-slop">GitHub:
-                                miqdadbadjuber/anti-slop ↗</a>
-                            <span class="panel-tag tag-cyan" id="antiSlopActiveBadge">During Mode</span>
+                                class="repo-badge-link" title="Upstream GitHub: miqdadbadjuber/anti-slop">miqdadbadjuber/anti-slop ↗</a>
+                            <span class="panel-tag tag-cyan" id="antiSlopActiveBadge">During mode</span>
                         </div>
                     </div>
 
@@ -473,13 +529,11 @@
                         <div class="opt-row">
                             <div class="opt-info">
                                 <div class="opt-title-line">
-                                    <span class="opt-title">Anti-Slop Mode:</span>
+                                    <span class="opt-title">Anti-Slop enforcement mode</span>
                                     <button class="btn-mini-sync" id="antiSlopInlineSyncBtn"
-                                        title="Fetch & sync latest Anti-Slop skills from GitHub to global IDE">⭮ Sync
-                                        from GitHub</button>
+                                        title="Fetch and sync latest Anti-Slop skills from GitHub">Sync from GitHub</button>
                                 </div>
-                                <span class="opt-desc">Controls how AI guards against slop: 'During' (direct execution),
-                                    'After' (two-phase audit), 'Ask' (prompt user), 'Off'</span>
+                                <span class="opt-desc">Selects when quality rules run: During (inline), After (two-phase review), Ask (prompt first), or Off.</span>
                             </div>
                             <div class="mode-segment-group" id="antiSlopSegmentGroup">
                                 <button class="segment-btn" data-mode="off">Off</button>
@@ -497,16 +551,14 @@
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🕸️ JevGraph Knowledge Graph Engine (Non-Code Docs)</h2>
-                                <p class="panel-subtitle">Evidence-backed candidate graphs for non-code files (PDF,
-                                    DOCX, TXT, MD specs/PRDs)</p>
+                                <h2>JevGraph document knowledge graph</h2>
+                                <p class="panel-subtitle">Evidence-backed knowledge graphs for non-code documents (PDF, DOCX, TXT, MD)</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
                             <a href="https://github.com/chenmingtang830/jevgraph" target="_blank"
-                                class="repo-badge-link" title="Upstream GitHub: chenmingtang830/jevgraph">GitHub:
-                                chenmingtang830/jevgraph ↗</a>
-                            <span class="panel-tag tag-teal" id="jevStatusBadge">Active & Ready</span>
+                                class="repo-badge-link" title="Upstream GitHub: chenmingtang830/jevgraph">chenmingtang830/jevgraph ↗</a>
+                            <span class="panel-tag tag-teal" id="jevStatusBadge">Active</span>
                         </div>
                     </div>
 
@@ -515,29 +567,23 @@
                         <div class="opt-row">
                             <div class="opt-info">
                                 <div class="opt-title-line">
-                                    <span class="opt-title">Document Knowledge Graph Engine:</span>
+                                    <span class="opt-title">Document knowledge graph engine</span>
                                     <button class="btn-mini-sync" id="jevInlineSyncBtn"
-                                        title="Fetch & sync latest JevGraph engine from GitHub via uv">⭮ Sync from
-                                        GitHub</button>
+                                        title="Fetch and sync latest JevGraph engine from GitHub via uv">Sync from GitHub</button>
                                 </div>
-                                <span class="opt-desc">Converts raw specs, PRDs, and PDFs to bounded knowledge graphs
-                                    with character-level page evidence, cutting prompt tokens by 80–95%. Exclusively for
-                                    non-code documents.</span>
+                                <span class="opt-desc">Indexes specifications, PRDs, and PDFs into bounded graphs with character-level page maps. Reserved strictly for non-code files.</span>
                             </div>
                         </div>
 
                         <!-- Relation Extraction Provider Selector -->
                         <div class="opt-row">
                             <div class="opt-info">
-                                <span class="opt-title">Relation Extraction Provider:</span>
-                                <span class="opt-desc">Select pipeline decision engine: <strong>Keyword</strong> (100%
-                                    offline, zero token spend), <strong>Jev</strong> (routes via OmniRoute / OpenAI
-                                    Gateway for deep semantic relations), or <strong>Local</strong> (on-device local LLM
-                                    embeddings).</span>
+                                <span class="opt-title">Relation extraction provider</span>
+                                <span class="opt-desc"><strong>Keyword</strong> (offline, zero token spend), <strong>Jev</strong> (routes via OmniRoute / OpenAI gateway), or <strong>Local</strong> (local embeddings).</span>
                             </div>
                             <div class="mode-segment-group" id="jevProviderSegmentGroup">
-                                <button class="segment-btn active" data-provider="keyword">Keyword (Offline)</button>
-                                <button class="segment-btn" data-provider="jev">Jev (Gateway)</button>
+                                <button class="segment-btn active" data-provider="keyword">Keyword</button>
+                                <button class="segment-btn" data-provider="jev">Jev</button>
                                 <button class="segment-btn" data-provider="local">Local</button>
                             </div>
                         </div>
@@ -545,32 +591,28 @@
                         <!-- Quick Actions Grid -->
                         <div class="jev-quick-actions">
                             <button class="btn btn-sm btn-primary" id="jevManualInsertBtn"
-                                title="Search for local documents (PDF, DOCX, PPTX, TXT, MD) or enter web link to link into JevGraph">📁
-                                Manual Insert Documents</button>
+                                title="Select local documents (PDF, DOCX, PPTX, TXT, MD) or a URL to ingest into JevGraph">Insert documents</button>
                             <button class="btn btn-sm btn-ghost" id="jevResetBtn"
-                                title="Reset and wipe knowledge graph for this active repository">🗑️ Reset Repo
-                                Graph</button>
+                                title="Reset and clear the document graph for this repository">Reset repo graph</button>
                         </div>
                     </div>
                 </section>
 
-                <!-- CodeGraphContext Semantic Code Graph Engine (Code Files AST & Call Graphs) -->
+                <!-- CodeGraphContext Semantic Code Graph Engine -->
                 <section class="panel-card codegraph-section" id="sectionCodeGraph">
                     <div class="panel-header collapsible" data-target="bodyCodeGraph">
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🧬 CodeGraphContext Semantic Code Graph</h2>
-                                <p class="panel-subtitle">Pre-indexed AST & call hierarchy query engine for code files
-                                    (Tree-sitter & SCIP)</p>
+                                <h2>CodeGraphContext semantic code graph</h2>
+                                <p class="panel-subtitle">Pre-indexed AST and call-hierarchy query engine for source code (Tree-sitter &amp; SCIP)</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
                             <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank"
                                 class="repo-badge-link"
-                                title="Upstream GitHub: CodeGraphContext/CodeGraphContext">GitHub:
-                                CodeGraphContext/CodeGraphContext ↗</a>
-                            <span class="panel-tag tag-indigo" id="codeGraphStatusBadge">Active & Ready</span>
+                                title="Upstream GitHub: CodeGraphContext/CodeGraphContext">CodeGraphContext/CodeGraphContext ↗</a>
+                            <span class="panel-tag tag-indigo" id="codeGraphStatusBadge">Active</span>
                         </div>
                     </div>
 
@@ -579,40 +621,34 @@
                         <div class="opt-row">
                             <div class="opt-info">
                                 <div class="opt-title-line">
-                                    <span class="opt-title">Code Knowledge Graph Engine:</span>
+                                    <span class="opt-title">Code knowledge graph engine</span>
                                     <button class="btn-mini-sync" id="codeGraphInlineSyncBtn"
-                                        title="Fetch & sync latest CodeGraphContext engine from GitHub via pip">⭮ Sync
-                                        from GitHub</button>
+                                        title="Fetch and sync latest CodeGraphContext engine from GitHub via pip">Sync from GitHub</button>
                                 </div>
-                                <span class="opt-desc">Maps functions, classes, imports, and call graphs. Forces AI
-                                    coding agents to query semantic graphs before reading raw files.</span>
+                                <span class="opt-desc">Indexes functions, classes, imports, and call hierarchies so agents query symbol definitions before reading full files.</span>
                             </div>
                         </div>
 
                         <!-- Live Auto-Update / Watcher Toggle -->
                         <div class="opt-row">
                             <div class="opt-info">
-                                <span class="opt-title">Continuous Live Index Synchronization:</span>
-                                <span class="opt-desc">Automatically refreshes graph on code save or background watcher,
-                                    ensuring AI always has real-time codebase context.</span>
+                                <span class="opt-title">Continuous index synchronization</span>
+                                <span class="opt-desc">Updates the code graph incrementally on file save.</span>
                             </div>
-                            <div class="toggle-container">
-                                <label class="switch">
-                                    <input type="checkbox" id="codeGraphAutoWatchToggle" checked>
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
+                            <label class="custom-toggle" for="codeGraphAutoWatchToggle" title="Toggle continuous index synchronization">
+                                <input type="checkbox" id="codeGraphAutoWatchToggle" checked>
+                                <span class="custom-toggle-slider"></span>
+                            </label>
                         </div>
 
                         <!-- Quick Actions Grid -->
                         <div class="jev-quick-actions">
                             <button class="btn btn-sm btn-primary" id="codeGraphIndexBtn"
-                                title="Index workspace source code into semantic graph">⚡ Index Workspace Code</button>
+                                title="Index workspace source code into semantic graph">Index workspace code</button>
                             <button class="btn btn-sm btn-ghost" id="codeGraphQueryBtn"
-                                title="Interactive symbol, caller, or Cypher query">🔍 Query Code Graph</button>
+                                title="Run an interactive symbol, caller, or Cypher query">Query code graph</button>
                             <button class="btn btn-sm btn-ghost" id="codeGraphResetBtn"
-                                title="Reset and clear code graph database for this workspace">🗑️ Reset Code
-                                Graph</button>
+                                title="Reset and clear code graph database for this workspace">Reset code graph</button>
                         </div>
                     </div>
                 </section>
@@ -623,8 +659,8 @@
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🌐 Hybrid Web Research & Scraping</h2>
-                                <p class="panel-subtitle">3-Tier Pipeline: Discovery ➔ fastCRW Markdown ➔ Lightpanda V8 Dynamic MCP</p>
+                                <h2>Hybrid web research &amp; scraping</h2>
+                                <p class="panel-subtitle">3-tier pipeline: search discovery → fastCRW Markdown → Lightpanda V8 MCP</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
@@ -643,16 +679,16 @@
                         <div class="opt-row">
                             <div class="opt-info">
                                 <div class="opt-title-line">
-                                    <span class="opt-title">3-Tier Autonomous Waterfall:</span>
+                                    <span class="opt-title">3-tier routing waterfall</span>
                                     <button class="btn-mini-sync" id="crwInlineSyncBtn"
-                                        title="Fetch & install latest fastCRW from GitHub">⭮ Sync fastCRW</button>
+                                        title="Fetch and install latest fastCRW from GitHub">Sync fastCRW</button>
                                     <button class="btn-mini-sync" id="lightpandaInlineSyncBtn"
-                                        title="Fetch & install latest Lightpanda Browser">🐼 Sync Lightpanda</button>
+                                        title="Fetch and install latest Lightpanda Browser">Sync Lightpanda</button>
                                 </div>
                                 <span class="opt-desc">
-                                    <strong>Tier 1:</strong> Built-in web search for target discovery. 
-                                    <strong>Tier 2:</strong> fastCRW instant markdown fetch (0-token JS overhead). 
-                                    <strong>Tier 3:</strong> Lightpanda local V8 headless browser via MCP for dynamic React/Vue SPAs, login gates & DOM trees.
+                                    <strong>Tier 1:</strong> Built-in web search for target URLs.
+                                    <strong>Tier 2:</strong> fastCRW Markdown extraction for server-rendered pages.
+                                    <strong>Tier 3:</strong> Lightpanda local V8 browser via MCP for client-rendered SPAs.
                                 </span>
                             </div>
                         </div>
@@ -660,11 +696,11 @@
                         <!-- Engine Status Breakdown -->
                         <div class="hybridweb-engine-status-row">
                             <div class="engine-status-box">
-                                <span class="engine-label">⚡ fastCRW (Static & Search):</span>
+                                <span class="engine-label">fastCRW (static &amp; search)</span>
                                 <span class="engine-val" id="crwSubStatus">Checking...</span>
                             </div>
                             <div class="engine-status-box">
-                                <span class="engine-label">🐼 Lightpanda (Dynamic JS MCP):</span>
+                                <span class="engine-label">Lightpanda (dynamic JS MCP)</span>
                                 <span class="engine-val" id="lightpandaSubStatus">Checking...</span>
                             </div>
                         </div>
@@ -672,13 +708,13 @@
                         <!-- Quick Actions Grid -->
                         <div class="jev-quick-actions">
                             <button class="btn btn-sm btn-primary" id="crwStartServerBtn"
-                                title="Start local fastCRW server (:3000) in terminal">⚡ Start fastCRW (:3000)</button>
+                                title="Start local fastCRW server (:3000) in terminal">Start fastCRW (:3000)</button>
                             <button class="btn btn-sm btn-ghost" id="lightpandaStartMcpBtn"
-                                title="Start Lightpanda MCP Server in terminal">🐼 Start Lightpanda MCP</button>
+                                title="Start Lightpanda MCP server in terminal">Start Lightpanda MCP</button>
                             <button class="btn btn-sm btn-ghost" id="lightpandaCopyMcpConfigBtn"
-                                title="Copy Lightpanda MCP JSON configuration for agent">📋 Copy MCP Config</button>
+                                title="Copy Lightpanda MCP JSON configuration">Copy MCP config</button>
                             <button class="btn btn-sm btn-ghost" id="hybridTestScrapeBtn"
-                                title="Test 3-tier scrape with automatic fallback">🔍 Test Scrape URL</button>
+                                title="Test 3-tier scrape with automatic fallback">Test scrape URL</button>
                         </div>
                     </div>
                 </section>
@@ -689,13 +725,13 @@
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
                             <div>
-                                <h2>🧠 ECC Harness Optimization & Compaction</h2>
-                                <p class="panel-subtitle">Strategic compaction at boundaries, session checkpoints (ck), & anti-loop evaluators</p>
+                                <h2>ECC harness optimization &amp; compaction</h2>
+                                <p class="panel-subtitle">Boundary compaction, session checkpoints (<code>ck</code>), and anti-loop evaluators</p>
                             </div>
                         </div>
                         <div class="header-tags-group">
                             <a href="https://github.com/affaan-m/ECC" target="_blank"
-                                class="repo-badge-link" title="Upstream GitHub: affaan-m/ECC">GitHub: affaan-m/ECC ↗</a>
+                                class="repo-badge-link" title="Upstream GitHub: affaan-m/ECC">affaan-m/ECC ↗</a>
                             <span class="panel-tag tag-cyan" id="eccActiveBadge">Checking...</span>
                         </div>
                     </div>
@@ -703,188 +739,70 @@
                     <div class="panel-body" id="bodyEcc">
                         <!-- ECC Engine Status & Sync Row -->
                         <div class="engine-sync-row">
-                            <div class="engine-info">
-                                <span class="engine-title">Strategic Context Management Engine</span>
-                                <span class="engine-desc">Monitors tool counts & token limits. Prompts clean compaction at phase breaks instead of unguided context wipes.</span>
+                            <div class="engine-sync-info">
+                                <div class="opt-title-line">
+                                    <span class="engine-title">Strategic context management engine</span>
+                                    <button class="btn-mini-sync" id="eccInlineSyncBtn"
+                                        title="Fetch and sync latest ECC skills from GitHub">Sync from GitHub</button>
+                                </div>
+                                <span class="engine-desc">Monitors tool call counts and prompts compaction at logical task boundaries.</span>
                             </div>
-                            <div class="engine-controls">
-                                <button class="btn-mini-sync" id="eccInlineSyncBtn"
-                                    title="Fetch & sync latest ECC skills from GitHub">⭮ Sync from GitHub</button>
-                                <label class="switch-mini" title="Enable/Disable ECC Context Optimization">
-                                    <input type="checkbox" id="eccCheckbox" checked />
-                                    <span class="slider-mini"></span>
-                                </label>
-                            </div>
+                            <label class="custom-toggle" for="eccCheckbox" title="Enable or disable ECC context optimization">
+                                <input type="checkbox" id="eccCheckbox" checked />
+                                <span class="custom-toggle-slider"></span>
+                            </label>
                         </div>
 
-                        <!-- Autonomous Harness Engine: 3 Auto-Trigger Controls with Apple HIG Toggles -->
-                        <div class="vibe-steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 14px; gap: 14px;">
+                        <!-- Autonomous Harness Engine: 3 Auto-Trigger Controls -->
+                        <div class="vibe-steps-grid">
                             <!-- Block 1: Strategic Compact -->
-                            <div class="vibe-step-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <div class="step-badge" style="background: rgba(100, 210, 255, 0.2); color: #64d2ff;">Auto-Prune</div>
-                                        <label class="custom-toggle" title="Auto-prompt compaction at milestone boundaries & 50+ tool calls">
-                                            <input type="checkbox" id="eccAutoCompactToggle" checked />
-                                            <span class="custom-toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <h3 class="step-title">Auto-Prune Messy Context</h3>
-                                    <p class="step-desc">Automatically prompts context pruning after 50+ tool calls or major feature completions so your agent doesn't get sluggish.</p>
+                            <div class="vibe-step-card">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div class="step-badge">Auto-prune</div>
+                                    <label class="custom-toggle" title="Prompt compaction at milestone boundaries and 50+ tool calls">
+                                        <input type="checkbox" id="eccAutoCompactToggle" checked />
+                                        <span class="custom-toggle-slider"></span>
+                                    </label>
                                 </div>
-                                <div class="command-pill-row" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 5px 8px; border: 1px solid rgba(255,255,255,0.06);">
-                                    <code style="font-size: 11px; color: var(--apple-cyan, #64d2ff);">/strategic-compact</code>
-                                    <button class="btn btn-xs btn-ghost copy-cmd-btn" data-cmd="/strategic-compact" title="Copy command to clipboard">📋 Copy</button>
+                                <h3 class="step-title">Boundary context compaction</h3>
+                                <p class="step-desc">Prompts context pruning after 50+ tool calls or completed milestones.</p>
+                                <div class="command-pill-row">
+                                    <code>/strategic-compact</code>
+                                    <button class="btn btn-sm btn-ghost copy-cmd-btn" data-cmd="/strategic-compact" title="Copy command to clipboard">Copy</button>
                                 </div>
                             </div>
 
                             <!-- Block 2: Context Keeper ck -->
-                            <div class="vibe-step-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <div class="step-badge" style="background: rgba(48, 209, 88, 0.2); color: #30d158;">Auto-Save</div>
-                                        <label class="custom-toggle" title="Auto-save memory snapshots before context flushes or topic jumps">
-                                            <input type="checkbox" id="eccAutoCkToggle" checked />
-                                            <span class="custom-toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <h3 class="step-title">Auto-Save Brain Snapshots</h3>
-                                    <p class="step-desc">A game auto-save for your agent. Preserves decisions and roadmap items to <code>.agents/ck/</code> before context prunes or session switches.</p>
+                            <div class="vibe-step-card">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div class="step-badge">Auto-save</div>
+                                    <label class="custom-toggle" title="Save memory snapshots before context flushes or topic switches">
+                                        <input type="checkbox" id="eccAutoCkToggle" checked />
+                                        <span class="custom-toggle-slider"></span>
+                                    </label>
                                 </div>
-                                <div class="command-pill-row" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 5px 8px; border: 1px solid rgba(255,255,255,0.06);">
-                                    <code style="font-size: 11px; color: var(--apple-green, #30d158);">/ck:save [tag]</code>
-                                    <button class="btn btn-xs btn-ghost copy-cmd-btn" data-cmd="/ck:save" title="Copy command to clipboard">📋 Copy</button>
+                                <h3 class="step-title">Session checkpoint snapshots</h3>
+                                <p class="step-desc">Writes state and decisions to <code>.agents/ck/</code> before context compaction or session switches.</p>
+                                <div class="command-pill-row">
+                                    <code>/ck:save [tag]</code>
+                                    <button class="btn btn-sm btn-ghost copy-cmd-btn" data-cmd="/ck:save" title="Copy command to clipboard">Copy</button>
                                 </div>
                             </div>
 
                             <!-- Block 3: Evaluator & Council -->
-                            <div class="vibe-step-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <div class="step-badge" style="background: rgba(175, 82, 222, 0.2); color: #af52de;">Anti-Loop</div>
-                                        <label class="custom-toggle" title="Auto-halt repeated failing retry loops and evaluate root causes">
-                                            <input type="checkbox" id="eccAutoCouncilToggle" checked />
-                                            <span class="custom-toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <h3 class="step-title">Auto-Halt Doom Loops</h3>
-                                    <p class="step-desc">Catches the agent when it retries the same broken fix 3+ times, calling in structured rubric evaluation to unblock the bug immediately.</p>
+                            <div class="vibe-step-card step-card-wide">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div class="step-badge">Anti-loop</div>
+                                    <label class="custom-toggle" title="Halt repeated failing retry loops and evaluate root causes">
+                                        <input type="checkbox" id="eccAutoCouncilToggle" checked />
+                                        <span class="custom-toggle-slider"></span>
+                                    </label>
                                 </div>
-                                <div class="command-pill-row" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 5px 8px; border: 1px solid rgba(255,255,255,0.06);">
-                                    <code style="font-size: 11px; color: var(--apple-purple, #af52de);">/council</code>
-                                    <button class="btn btn-xs btn-ghost copy-cmd-btn" data-cmd="/council" title="Copy command to clipboard">📋 Copy</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- OmniRoute AI Gateway & Router (For Vibe Coders) -->
-                <section class="panel-card omniroute-section" id="sectionOmniRoute">
-                    <div class="panel-header collapsible" data-target="bodyOmniRoute">
-                        <div class="panel-header-left">
-                            <span class="collapse-chevron">▾</span>
-                            <div>
-                                <h2>🌐 OmniRoute AI Gateway & Router</h2>
-                                <p class="panel-subtitle">Unified OpenAI proxy (:20128/v1), quota-aware fallback, & 290+
-                                    providers</p>
-                            </div>
-                        </div>
-                        <div class="header-tags-group">
-                            <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank" class="repo-badge-link"
-                                title="Upstream GitHub: diegosouzapw/OmniRoute">GitHub: diegosouzapw/OmniRoute ↗</a>
-                            <span class="panel-tag tag-purple" id="omniStatusBadge">Checking...</span>
-                        </div>
-                    </div>
-
-                    <div class="panel-body" id="bodyOmniRoute">
-                        <!-- Gateway Status Bar & Quick Actions -->
-                        <div class="omni-gateway-bar">
-                            <div class="omni-status-indicator">
-                                <span class="omni-dot" id="omniLiveDot"></span>
-                                <div class="omni-status-texts">
-                                    <span class="omni-status-main" id="omniStatusMain">Gateway Offline</span>
-                                    <span class="omni-status-sub" id="omniStatusSub">Endpoint:
-                                        http://localhost:20128/v1</span>
-                                </div>
-                            </div>
-                            <div class="omni-bar-actions">
-                                <button class="btn btn-sm btn-primary" id="omniStartBtn"
-                                    title="Start OmniRoute Gateway in Terminal">⚡ Start Gateway</button>
-                                <button class="btn btn-sm btn-ghost" id="omniStopBtn" style="display: none;"
-                                    title="Stop OmniRoute Gateway">🛑 Stop</button>
-                                <button class="btn btn-sm btn-ghost" id="omniOpenUiBtn"
-                                    title="Open OmniRoute Web Dashboard in Browser">🌐 Open Web UI (:20128) ↗</button>
-                                <button class="btn btn-sm btn-ghost" id="omniDoctorBtn"
-                                    title="Run OmniRoute Diagnostics">🩺 Doctor</button>
-                            </div>
-                        </div>
-
-                        <!-- Vibe Coder 3-Step Wizard -->
-                        <div class="vibe-wizard-container">
-                            <div class="vibe-wizard-header">
-                                <span class="wizard-title">✨ 3-Step Guide to Install OmniRoute</span>
-                                <span class="wizard-sub">Bypass rate limits, pool free tiers, and vibe code non-stop
-                                    with smart auto-failover</span>
-                            </div>
-
-                            <div class="vibe-steps-grid">
-                                <!-- Step 1: Launch -->
-                                <div class="vibe-step-card">
-                                    <div class="step-badge">Step 1</div>
-                                    <h3 class="step-title">Launch Gateway</h3>
-                                    <p class="step-desc">Starts local proxy server on port <code>20128</code> with
-                                        built-in token compression.</p>
-                                    <div class="step-code-box">
-                                        <code>npx -y omniroute</code>
-                                        <button class="btn-copy-mini" id="omniCopyLaunchCmdBtn"
-                                            title="Copy launch command">📋</button>
-                                    </div>
-                                </div>
-
-                                <!-- Step 2: Configure Keys -->
-                                <div class="vibe-step-card">
-                                    <div class="step-badge">Step 2</div>
-                                    <h3 class="step-title">Add Provider Keys</h3>
-                                    <p class="step-desc">Connect free/paid keys (Gemini, DeepSeek, OpenAI, Claude,
-                                        OpenRouter, Groq).</p>
-                                    <button class="btn btn-step-action" id="omniStepOpenUiBtn">
-                                        <span>🔑 Open Key Config (:20128)</span>
-                                    </button>
-                                </div>
-
-                                <!-- Step 3: Connect Agent -->
-                                <div class="vibe-step-card step-card-wide">
-                                    <div class="step-badge">Step 3</div>
-                                    <h3 class="step-title">Connect Your Coding Agent</h3>
-                                    <p class="step-desc">Point your IDE or hand off setup to your AI agent with a single prompt to vibe code with auto-failover.</p>
-
-                                    <!-- IDE Tabs Switcher -->
-                                    <div class="ide-preset-tabs" id="omniPresetTabs">
-                                        <button class="preset-tab active" data-ide="antigravity">🌌 Antigravity</button>
-                                        <button class="preset-tab" data-ide="cursor">🎯 Cursor</button>
-                                        <button class="preset-tab" data-ide="cline">💻 Cline / Roo</button>
-                                        <button class="preset-tab" data-ide="claude">🧠 Claude Code</button>
-                                        <button class="preset-tab" data-ide="vscode">🤖 VS Code</button>
-                                    </div>
-
-                                    <!-- Active Preset Content Display -->
-                                    <div class="preset-content-box" id="omniPresetContentBox">
-                                        <div class="preset-content-header">
-                                            <span class="preset-header-title" id="omniPresetTitle">Antigravity IDE Config</span>
-                                            <div class="preset-actions-group">
-                                                <button class="btn btn-sm btn-primary" id="omniCopyAiPromptBtn" title="Copy ready-to-run prompt to paste directly into your AI assistant chat">🤖 Copy AI Agent Prompt</button>
-                                                <button class="btn btn-sm btn-ghost" id="omniCopyPresetBtn" title="Copy raw configuration JSON / snippet">📋 Copy Config</button>
-                                            </div>
-                                        </div>
-                                        <div class="preset-notice-callout" id="omniPresetNotice" style="display: none;"></div>
-                                        <ol class="preset-steps-list" id="omniPresetStepsList">
-                                            <!-- Injected by JS -->
-                                        </ol>
-                                        <div class="preset-code-preview">
-                                            <pre id="omniPresetCodePreview">{ ... }</pre>
-                                        </div>
-                                    </div>
+                                <h3 class="step-title">Retry loop guard</h3>
+                                <p class="step-desc">Detects when an agent repeats a failing fix 3+ times and triggers root-cause evaluation.</p>
+                                <div class="command-pill-row">
+                                    <code>/council</code>
+                                    <button class="btn btn-sm btn-ghost copy-cmd-btn" data-cmd="/council" title="Copy command to clipboard">Copy</button>
                                 </div>
                             </div>
                         </div>
@@ -896,44 +814,41 @@
                     <div class="panel-header collapsible" data-target="bodySavings">
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
-                            <h2>📊 Savings Breakdown</h2>
+                            <h2>Savings breakdown</h2>
                         </div>
-                        <span class="panel-tag" id="savingsBreakdownTag">All Channels Active</span>
+                        <span class="panel-tag" id="savingsBreakdownTag">All channels active</span>
                     </div>
                     <div class="panel-body" id="bodySavings">
                         <!-- Channel Filter Navigation Tabs -->
                         <div class="channel-tabs-bar" id="channelTabsBar">
                             <button class="channel-tab-btn active" data-channel="all" id="tabChannelAll">
-                                <span class="tab-icon">🌐</span> All Channels
+                                All channels
                             </button>
                             <button class="channel-tab-btn" data-channel="rtk" id="tabChannelRtk">
-                                <span class="tab-icon">⚡</span> RTK CLI
+                                RTK-RG
                             </button>
                             <button class="channel-tab-btn" data-channel="headroom" id="tabChannelHeadroom">
-                                <span class="tab-icon">📦</span> Headroom CCR
+                                Headroom CCR
                             </button>
                             <button class="channel-tab-btn" data-channel="prompt" id="tabChannelPrompt">
-                                <span class="tab-icon">🥋</span> Prompt & Hygiene
-                            </button>
-                            <button class="channel-tab-btn" data-channel="omniRoute" id="tabChannelOmni">
-                                <span class="tab-icon">🌐</span> AI Gateway
+                                Prompt &amp; hygiene
                             </button>
                             <button class="channel-tab-btn" data-channel="jevgraph" id="tabChannelJev">
-                                <span class="tab-icon">🕸️</span> JevGraph KG
+                                JevGraph KG
                             </button>
                             <button class="channel-tab-btn" data-channel="crw" id="tabChannelCrw">
-                                <span class="tab-icon">🌐</span> Hybrid Web
+                                Hybrid Web
                             </button>
                             <button class="channel-tab-btn" data-channel="ecc" id="tabChannelEcc">
-                                <span class="tab-icon">🧠</span> ECC Compaction
+                                ECC compaction
                             </button>
                         </div>
 
                         <!-- Proportional Multi-Channel Distribution Bar -->
                         <div class="multi-channel-distro-box" id="channelDistroBox">
                             <div class="distro-bar-header">
-                                <span class="distro-title">Ecosystem Savings Distribution</span>
-                                <span class="distro-total" id="distroTotalTokens">0 Tokens Saved</span>
+                                <span class="distro-title">Channel savings distribution</span>
+                                <span class="distro-total" id="distroTotalTokens">0 tokens saved</span>
                             </div>
                             <div class="distro-progress-track" id="distroProgressTrack">
                                 <!-- Injected dynamically by dashboard.js -->
@@ -949,7 +864,7 @@
                         </div>
 
                         <div class="raw-output-box" id="rawOutputBox">
-                            <div class="raw-output-header">Terminal Scoreboard Snippet (rtk gain)</div>
+                            <div class="raw-output-header">Terminal scoreboard output (<code>rtk gain</code>)</div>
                             <pre id="rawOutputText">Loading RTK statistics...</pre>
                         </div>
                     </div>
@@ -963,48 +878,47 @@
                     <div class="panel-header collapsible" data-target="bodyActions">
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
-                            <h2>⚡ Quick Actions</h2>
+                            <h2>Quick actions</h2>
                         </div>
                     </div>
                     <div class="panel-body" id="bodyActions">
                         <div class="action-buttons-list">
                             <button class="btn btn-action btn-action-omni" id="quickOmniBtn"
-                                title="Start or Manage OmniRoute Gateway">
+                                title="Enable or disable your self-installed OmniRoute gateway">
                                 <div class="btn-action-left">
-                                    <span class="btn-icon">🌐</span>
+                                    <span class="btn-icon">:20128</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label" id="quickOmniLabel">OmniRoute Gateway</span>
-                                        <span class="btn-sub" id="quickOmniSub">Local AI Router (:20128)</span>
+                                        <span class="btn-label" id="quickOmniLabel">OmniRoute gateway</span>
+                                        <span class="btn-sub" id="quickOmniSub">Self-installed AI router (:20128)</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge" id="quickOmniBadge">
-                                    <span class="badge-text">Launch</span>
+                                    <span class="omni-dot omni-dot-inline" id="quickOmniDot"></span>
+                                    <span class="badge-text" id="quickOmniBadgeText">Disabled</span>
                                 </span>
                             </button>
 
                             <button class="btn btn-action" id="quickJevInsertBtn"
-                                title="Manually search for documents (PDF, DOCX, PPTX, TXT, MD) or enter web link to link into repo JevGraph">
+                                title="Select local documents (PDF, DOCX, PPTX, TXT, MD) or a URL to ingest into JevGraph">
                                 <div class="btn-action-left">
-                                    <span class="btn-icon">📁</span>
+                                    <span class="btn-icon">DOC</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label" id="quickJevLabel">Insert Docs to JevGraph</span>
-                                        <span class="btn-sub" id="quickJevSub">File Explorer or Web Link (Per
-                                            Repo)</span>
+                                        <span class="btn-label" id="quickJevLabel">Insert docs to JevGraph</span>
+                                        <span class="btn-sub" id="quickJevSub">File picker or web URL (per repo)</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge" id="quickJevBadge">
-                                    <span class="badge-text">+ Insert</span>
+                                    <span class="badge-text">Insert</span>
                                 </span>
                             </button>
 
                             <button class="btn btn-action" id="syncSkillsBtn"
-                                title="Install or re-sync all AI Agent & RTK chat skills">
+                                title="Install or re-sync AI agent and RTK chat skills">
                                 <div class="btn-action-left">
-                                    <span class="btn-icon">🧠</span>
+                                    <span class="btn-icon">SKL</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label" id="skillsBtnLabel">1-Click Skill Installation</span>
-                                        <span class="btn-sub" id="skillsSubText">Install /rtk-* & /ponytail chat
-                                            commands</span>
+                                        <span class="btn-label" id="skillsBtnLabel">Install agent skills</span>
+                                        <span class="btn-sub" id="skillsSubText">Sync /rtk-* and /ponytail commands</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge" id="skillsStatusBadge">
@@ -1014,28 +928,26 @@
                             </button>
 
                             <button class="btn btn-action" id="quickUninstallSkillsBtn"
-                                title="Uninstall individual skills or presets globally or within project safely to Recycle Bin">
+                                title="Move selected skills to the Recycle Bin">
                                 <div class="btn-action-left">
-                                    <span class="btn-icon">🗑️</span>
+                                    <span class="btn-icon">DEL</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label" id="uninstallSkillsLabel">Uninstall Skills</span>
-                                        <span class="btn-sub" id="uninstallSkillsSub">Global IDE vs Project (Recycle
-                                            Bin)</span>
+                                        <span class="btn-label" id="uninstallSkillsLabel">Uninstall skills</span>
+                                        <span class="btn-sub" id="uninstallSkillsSub">Global IDE or project scope</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge badge-warning">
-                                    <span class="badge-text">Recycle</span>
+                                    <span class="badge-text">Remove</span>
                                 </span>
                             </button>
 
                             <button class="btn btn-action" id="quickDisableSkillsBtn"
-                                title="Temporarily disable skills so they are hidden from @ mentions and / action lists">
+                                title="Temporarily hide skills from agent slash-command lists">
                                 <div class="btn-action-left">
-                                    <span class="btn-icon">⏸️</span>
+                                    <span class="btn-icon">OFF</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label" id="disableSkillsLabel">Temporary Disable Skills</span>
-                                        <span class="btn-sub" id="disableSkillsSub">Agent Decide / Manual /
-                                            Re-Enable</span>
+                                        <span class="btn-label" id="disableSkillsLabel">Disable skills temporarily</span>
+                                        <span class="btn-sub" id="disableSkillsSub">Hide or restore installed skills</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge badge-warning" id="disabledSkillsBadge">
@@ -1045,23 +957,22 @@
 
                             <div class="action-row-split">
                                 <button class="btn btn-action action-btn-main" id="checkUpdatesBtn"
-                                    title="Sync & Check Upstream GitHub repositories (RTK, Headroom, Ponytail & OmniRoute)">
+                                    title="Sync and check upstream GitHub repositories">
                                     <div class="btn-action-left">
-                                        <span class="btn-icon">🚀</span>
+                                        <span class="btn-icon">GIT</span>
                                         <div class="btn-text-block">
-                                            <span class="btn-label" id="checkUpdatesLabel">Sync Upstream GitHub</span>
-                                            <span class="btn-sub" id="checkUpdatesSub">RTK, Headroom, Ponytail &
-                                                OmniRoute</span>
+                                            <span class="btn-label" id="checkUpdatesLabel">Sync upstream GitHub</span>
+                                            <span class="btn-sub" id="checkUpdatesSub">RTK-RG, Headroom, Ponytail, and more</span>
                                         </div>
                                     </div>
                                     <span class="action-status-badge" id="checkUpdatesBadge">
-                                        <span class="badge-text">▾ Sync</span>
+                                        <span class="badge-text">Sync ▾</span>
                                     </span>
                                 </button>
                                 <div class="action-side-toggle" id="weeklySyncWrapper"
-                                    title="Weekly Auto Sync: automatically check for new upstream releases once a week">
+                                    title="Weekly auto-sync: check for upstream releases once per week">
                                     <label class="weekly-toggle-label" for="weeklySyncCheckbox">
-                                        <span class="weekly-toggle-text">Weekly Auto</span>
+                                        <span class="weekly-toggle-text">Weekly auto</span>
                                         <div class="custom-toggle">
                                             <input type="checkbox" id="weeklySyncCheckbox" checked>
                                             <span class="custom-toggle-slider"></span>
@@ -1071,12 +982,12 @@
                             </div>
 
                             <button class="btn btn-action btn-action-danger" id="uninstallUpstreamBtn"
-                                title="Uninstall any upstream GitHub layer (RTK, Headroom, Ponytail, OmniRoute, Rules & Skills)">
+                                title="Uninstall upstream GitHub components, rules, or skills">
                                 <div class="btn-action-left">
-                                    <span class="btn-icon">🗑️</span>
+                                    <span class="btn-icon">CLN</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label" id="uninstallUpstreamLabel">Uninstall Upstream</span>
-                                        <span class="btn-sub" id="uninstallUpstreamSub">Manage / Remove Layers</span>
+                                        <span class="btn-label" id="uninstallUpstreamLabel">Uninstall upstream</span>
+                                        <span class="btn-sub" id="uninstallUpstreamSub">Remove installed layers</span>
                                     </div>
                                 </div>
                                 <span class="action-status-badge badge-danger">
@@ -1085,13 +996,12 @@
                             </button>
 
                             <button class="btn btn-action" id="testLatencyBtn"
-                                title="Test Upstream GitHub Layer Latencies (RTK, Headroom, Ponytail, OmniRoute, JevGraph & CodeGraphContext)">
+                                title="Measure execution latency across installed upstream tools">
                                 <div class="btn-action-left">
-                                    <span class="btn-icon">⏱️</span>
+                                    <span class="btn-icon">MS</span>
                                     <div class="btn-text-block">
-                                        <span class="btn-label" id="testLatencyLabel">Test Upstream Latencies</span>
-                                        <span class="btn-sub" id="latencySubText">Measure RTK, Headroom, Ponytail &
-                                            OmniRoute ms</span>
+                                        <span class="btn-label" id="testLatencyLabel">Test upstream latencies</span>
+                                        <span class="btn-sub" id="latencySubText">Measure installed upstream ms</span>
                                     </div>
                                 </div>
                             </button>
@@ -1104,38 +1014,26 @@
                     <div class="panel-header collapsible" data-target="bodyHealth">
                         <div class="panel-header-left">
                             <span class="collapse-chevron">▾</span>
-                            <h2>🛠️ System Health</h2>
+                            <h2>System health</h2>
                         </div>
                         <div class="header-tags-group">
                             <button class="btn-header-action btn-uninstall-clean" id="headerUninstallBtn"
-                                title="Uninstall any upstream GitHub layer">🗑️ Clean / Uninstall</button>
+                                title="Uninstall upstream GitHub layers">Uninstall</button>
                         </div>
                     </div>
                     <div class="panel-body" id="bodyHealth">
                         <div class="diagnostics-list">
                             <div class="diag-row">
-                                <span class="diag-key">OmniRoute:</span>
-                                <div class="diag-val-wrapper">
-                                    <span class="diag-val" id="diagOmniStatus">Checking...</span>
-                                    <span class="diag-action-btns" id="omniDiagActions">
-                                        <button class="btn-diag-mini btn-diag-run" id="omniDiagStartBtn"
-                                            title="Start Gateway">⚡ Start</button>
-                                        <button class="btn-diag-mini btn-diag-trash" id="omniDiagUninstallBtn"
-                                            title="Uninstall OmniRoute">🗑️</button>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="diag-row">
-                                <span class="diag-key">RTK CLI:</span>
+                                <span class="diag-key">RTK-RG:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagCliStatus">Checking...</span>
                                     <span class="diag-action-btns" id="rtkDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="rtkDiagAiBtn"
-                                            title="Copy AI install prompt for RTK">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for RTK-RG">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-run" id="rtkDiagRunBtn"
-                                            title="Run RTK install in terminal">⚡ Install</button>
+                                            title="Run RTK-RG install in terminal">Install</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="rtkDiagUninstallBtn"
-                                            title="Uninstall RTK CLI">🗑️</button>
+                                            title="Uninstall RTK-RG">Remove</button>
                                     </span>
                                 </div>
                             </div>
@@ -1145,117 +1043,117 @@
                                     <span class="diag-val" id="diagHeadroomStatus">Checking...</span>
                                     <span class="diag-action-btns" id="headroomDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="headroomDiagAiBtn"
-                                            title="Copy AI install prompt for Headroom">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for Headroom">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-run" id="headroomDiagRunBtn"
-                                            title="Run Headroom install in terminal">⚡ Install</button>
+                                            title="Run Headroom install in terminal">Install</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="headroomDiagUninstallBtn"
-                                            title="Uninstall Headroom">🗑️</button>
+                                            title="Uninstall Headroom">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">Ponytail (GitHub):</span>
+                                <span class="diag-key">Ponytail:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagPonytailStatus">Checking...</span>
                                     <span class="diag-action-btns" id="ponytailDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="ponytailDiagAiBtn"
-                                            title="Copy AI install prompt for Ponytail">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for Ponytail">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="ponytailDiagSyncBtn"
-                                            title="Fetch Ponytail from GitHub to Global IDE">🥋 Sync</button>
+                                            title="Fetch Ponytail from GitHub">Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="ponytailDiagUninstallBtn"
-                                            title="Uninstall Ponytail Skills">🗑️</button>
+                                            title="Uninstall Ponytail skills">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">Anti-Slop (GitHub):</span>
+                                <span class="diag-key">Anti-Slop:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagAntiSlopStatus">Checking...</span>
                                     <span class="diag-action-btns" id="antiSlopDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="antiSlopDiagAiBtn"
-                                            title="Copy AI install prompt for Anti-Slop">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for Anti-Slop">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="antiSlopDiagSyncBtn"
-                                            title="Fetch Anti-Slop from GitHub to Global IDE">🛡️ Sync</button>
+                                            title="Fetch Anti-Slop from GitHub">Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="antiSlopDiagUninstallBtn"
-                                            title="Uninstall Anti-Slop Skills">🗑️</button>
+                                            title="Uninstall Anti-Slop skills">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">JevGraph (GitHub):</span>
+                                <span class="diag-key">JevGraph:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagJevGraphStatus">Checking...</span>
                                     <span class="diag-action-btns" id="jevGraphDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="jevGraphDiagAiBtn"
-                                            title="Copy AI install prompt for JevGraph">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for JevGraph">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="jevGraphDiagSyncBtn"
-                                            title="Fetch JevGraph from GitHub via uv">🕸️ Sync</button>
+                                            title="Fetch JevGraph from GitHub via uv">Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="jevGraphDiagUninstallBtn"
-                                            title="Uninstall JevGraph Engine">🗑️</button>
+                                            title="Uninstall JevGraph engine">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">CodeGraph (GitHub):</span>
+                                <span class="diag-key">CodeGraph:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagCodeGraphStatus">Checking...</span>
                                     <span class="diag-action-btns" id="codeGraphDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="codeGraphDiagAiBtn"
-                                            title="Copy AI install prompt for CodeGraphContext">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for CodeGraphContext">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="codeGraphDiagSyncBtn"
-                                            title="Install CodeGraphContext from GitHub via pip">🧬 Sync</button>
+                                            title="Install CodeGraphContext from GitHub via pip">Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="codeGraphDiagUninstallBtn"
-                                            title="Uninstall CodeGraphContext">🗑️</button>
+                                            title="Uninstall CodeGraphContext">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">fastCRW (GitHub):</span>
+                                <span class="diag-key">fastCRW:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagCrwStatus">Checking...</span>
                                     <span class="diag-action-btns" id="crwDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="crwDiagAiBtn"
-                                            title="Copy AI install prompt for fastCRW">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for fastCRW">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="crwDiagSyncBtn"
-                                            title="Install fastCRW binary or cargo crate">⚡ Sync</button>
+                                            title="Install fastCRW binary or crate">Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="crwDiagUninstallBtn"
-                                            title="Uninstall fastCRW Engine">🗑️</button>
+                                            title="Uninstall fastCRW engine">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">Lightpanda (GitHub):</span>
+                                <span class="diag-key">Lightpanda:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagLightpandaStatus">Checking...</span>
                                     <span class="diag-action-btns" id="lightpandaDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="lightpandaDiagAiBtn"
-                                            title="Copy AI install prompt for Lightpanda">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for Lightpanda">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="lightpandaDiagSyncBtn"
-                                            title="Install Lightpanda Browser via npm">🐼 Sync</button>
+                                            title="Install Lightpanda Browser via npm">Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="lightpandaDiagUninstallBtn"
-                                            title="Uninstall Lightpanda Browser">🗑️</button>
+                                            title="Uninstall Lightpanda Browser">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row">
-                                <span class="diag-key">ECC (GitHub):</span>
+                                <span class="diag-key">ECC:</span>
                                 <div class="diag-val-wrapper">
                                     <span class="diag-val" id="diagEccStatus">Checking...</span>
                                     <span class="diag-action-btns" id="eccDiagActions" style="display: none;">
                                         <button class="btn-diag-mini btn-diag-ai" id="eccDiagAiBtn"
-                                            title="Copy AI install prompt for ECC">🤖 Ask AI</button>
+                                            title="Copy AI install prompt for ECC">Ask AI</button>
                                         <button class="btn-diag-mini btn-diag-sync" id="eccDiagSyncBtn"
-                                            title="Fetch ECC skills from GitHub">🧠 Sync</button>
+                                            title="Fetch ECC skills from GitHub">Sync</button>
                                         <button class="btn-diag-mini btn-diag-trash" id="eccDiagUninstallBtn"
-                                            title="Uninstall ECC Skills">🗑️</button>
+                                            title="Uninstall ECC skills">Remove</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="diag-row diag-row-dropdown" id="diagVersionRow">
-                                <span class="diag-key">Upstream Versions:</span>
+                                <span class="diag-key">Upstream versions:</span>
                                 <div class="diag-dropdown-wrapper">
                                     <button class="btn-diag-dropdown" id="diagVersionToggleBtn" type="button"
-                                        title="Click to view all upstream engine versions">
+                                        title="View upstream engine versions">
                                         <span id="diagVersionSummary">Loading versions...</span>
                                         <span class="dropdown-chevron" id="diagVersionChevron">▾</span>
                                     </button>
@@ -1270,7 +1168,7 @@
                             </div>
                             <div class="diag-row">
                                 <span class="diag-key">Scope:</span>
-                                <span class="diag-val" id="diagScope">All Supported IDEs</span>
+                                <span class="diag-val" id="diagScope">Active IDE only</span>
                             </div>
                             <div class="diag-row">
                                 <span class="diag-key">Active:</span>
@@ -1284,15 +1182,15 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <span class="footer-brand-title">🕛 Token Saver <span class="footer-version-badge" id="footerVersionBadge">v1.14.10</span> • <a
+            <span class="footer-brand-title">Token Saver <span class="footer-version-badge" id="footerVersionBadge">v1.14.10</span> • <a
                     href="https://github.com/terenceooi99/token-saver-rtk-ide" target="_blank" class="footer-repo-link"
                     title="Token Saver GitHub Repository">GitHub</a></span>
             <span class="footer-links">
-                <a href="https://github.com/rtk-ai/rtk" target="_blank">RTK Core</a> •
+                <a href="https://github.com/rtk-ai/rtk" target="_blank">RTK-RG Core</a> •
+                <a href="https://github.com/BurntSushi/ripgrep" target="_blank">ripgrep (rg)</a> •
                 <a href="https://github.com/headroomlabs-ai/headroom" target="_blank">Headroom</a> •
                 <a href="https://github.com/DietrichGebert/ponytail" target="_blank">Ponytail (YAGNI)</a> •
                 <a href="https://github.com/miqdadbadjuber/anti-slop" target="_blank">Anti-Slop</a> •
-                <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank">OmniRoute Gateway</a> •
                 <a href="https://github.com/chenmingtang830/jevgraph" target="_blank">JevGraph</a> •
                 <a href="https://github.com/CodeGraphContext/CodeGraphContext" target="_blank">CodeGraphContext</a> •
                 <a href="https://github.com/fastcrw/crw" target="_blank">fastCRW</a> •
@@ -1306,43 +1204,43 @@
     <div class="modal-overlay" id="rtkWarningModal" role="dialog" aria-modal="true" aria-labelledby="rtkWarningTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-header-icon">⚠️</span>
-                <h3 id="rtkWarningTitle">Deactivate RTK & Token Saving?</h3>
+                <span class="modal-header-icon">!</span>
+                <h3 id="rtkWarningTitle">Turn off RTK-RG &amp; Token Saver?</h3>
             </div>
             <div class="modal-body">
                 <p class="modal-lead">
-                    Turning <strong>RTK / Token Saver OFF</strong> disables automated prompt token compression and strips active AI optimization rules across your IDE agent targets.
+                    Turning <strong>RTK-RG / Token Saver off</strong> pauses command output filtering and removes active optimization rule blocks from your IDE configuration files.
                 </p>
                 <div class="modal-warning-list">
                     <div class="warning-feature-item">
-                        <span class="warning-feature-icon">🚫</span>
+                        <span class="warning-feature-icon">1</span>
                         <div class="warning-feature-content">
-                            <span class="warning-feature-title">Shell Command Compression Suspended</span>
-                            <span class="warning-feature-desc">AI agents will no longer prefix commands with <code>rtk</code> (e.g. <code>git status</code>, <code>npm test</code>, <code>cargo test</code>, <code>pytest</code>), forfeiting <strong>60%–90%</strong> prompt token savings.</span>
+                            <span class="warning-feature-title">Shell command compression paused</span>
+                            <span class="warning-feature-desc">Agents will run unfiltered shell commands instead of <code>rtk</code>-prefixed commands.</span>
                         </div>
                     </div>
                     <div class="warning-feature-item">
-                        <span class="warning-feature-icon">🧹</span>
+                        <span class="warning-feature-icon">2</span>
                         <div class="warning-feature-content">
-                            <span class="warning-feature-title">AI Directives & Skills Inactive</span>
-                            <span class="warning-feature-desc">Upstream directives are removed from <code>.cursorrules</code>, <code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, <code>AGENTS.md</code>, etc. AI agents will stop consulting semantic AST knowledge graphs, compact diffs, and Headroom context compression.</span>
+                            <span class="warning-feature-title">Agent directives &amp; skills hidden</span>
+                            <span class="warning-feature-desc">Rule blocks in <code>.cursorrules</code>, <code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, and <code>AGENTS.md</code> are removed and upstream skills are hidden from the slash-command list.</span>
                         </div>
                     </div>
                     <div class="warning-feature-item">
-                        <span class="warning-feature-icon">💸</span>
+                        <span class="warning-feature-icon">3</span>
                         <div class="warning-feature-content">
-                            <span class="warning-feature-title">Higher LLM Token Costs & Context Burn</span>
-                            <span class="warning-feature-desc">Terminal dumps and multi-line file diffs will consume full context window capacity without condensation.</span>
+                            <span class="warning-feature-title">Unfiltered context usage</span>
+                            <span class="warning-feature-desc">Command output and diffs will use full prompt context until re-enabled.</span>
                         </div>
                     </div>
                 </div>
                 <div class="warning-note">
-                    💡 <em>You can re-enable RTK and Token Saver at any time with 1-click from the header toggle or status bar.</em>
+                    You can re-enable RTK-RG and Token Saver at any time from the header toggle or status bar.
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" id="rtkWarningCancelBtn">Cancel (Keep ON)</button>
-                <button class="btn btn-danger" id="rtkWarningConfirmBtn">Turn OFF Anyway</button>
+                <button class="btn btn-ghost" id="rtkWarningCancelBtn">Keep on</button>
+                <button class="btn btn-danger" id="rtkWarningConfirmBtn">Turn off</button>
             </div>
         </div>
     </div>
@@ -1351,40 +1249,40 @@
     <div class="modal-overlay" id="workspaceRuleModal" role="dialog" aria-modal="true" aria-labelledby="workspaceRuleTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-header-icon" style="background: rgba(10, 132, 255, 0.16); color: var(--apple-blue); border-color: rgba(10, 132, 255, 0.3);">ℹ️</span>
-                <h3 id="workspaceRuleTitle">Global Rule Already Active</h3>
+                <span class="modal-header-icon">i</span>
+                <h3 id="workspaceRuleTitle">Global rule already active</h3>
             </div>
             <div class="modal-body">
                 <p class="modal-lead" id="workspaceRuleLead">
-                    The <strong>Global Rule</strong> is already active and protecting all projects across your IDE. AI agents automatically inherit RTK token-saving rules without local project files.
+                    The <strong>Global rule</strong> is already active for your IDE. Agents inherit Token Saver rules automatically without adding files to this repository.
                 </p>
                 <div class="modal-warning-list">
                     <div class="modal-info-item amber">
-                        <span class="warning-feature-icon">📁</span>
+                        <span class="warning-feature-icon">1</span>
                         <div class="warning-feature-content">
-                            <span class="warning-feature-title">Local Workspace Rule File</span>
+                            <span class="warning-feature-title">Workspace rule file</span>
                             <span class="warning-feature-desc" id="workspaceRuleTargetDesc">
-                                Enabling this rule will write <code id="workspaceRulePath">.agents/rules/antigravity-rtk-rules.md</code> into this project repository.
+                                Enabling this option writes <code id="workspaceRulePath">.agents/rules/antigravity-rtk-rules.md</code> into the current repository.
                             </span>
                         </div>
                     </div>
                     <div class="modal-info-item">
-                        <span class="warning-feature-icon">🛡️</span>
+                        <span class="warning-feature-icon">2</span>
                         <div class="warning-feature-content">
-                            <span class="warning-feature-title">Zero Repo Pollution Recommendation</span>
+                            <span class="warning-feature-title">Repository cleanliness</span>
                             <span class="warning-feature-desc">
-                                If you want to keep this repository clean and avoid creating extra tracked or untracked rule files, you can rely entirely on the <strong>Global Rule</strong>.
+                                Keep only the <strong>Global rule</strong> enabled if you prefer not to add rule files to this workspace.
                             </span>
                         </div>
                     </div>
                 </div>
                 <div class="warning-note">
-                    💡 <em>Workspace rules are only needed if you want repository-specific rule overrides or want teammates cloning this repo to share rules.</em>
+                    Use a workspace rule when you want repository-specific overrides or shared rules for collaborators.
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" id="workspaceRuleCancelBtn">Cancel (Keep Global Only)</button>
-                <button class="btn btn-primary" id="workspaceRuleConfirmBtn">Enable in Workspace</button>
+                <button class="btn btn-ghost" id="workspaceRuleCancelBtn">Keep global only</button>
+                <button class="btn btn-primary" id="workspaceRuleConfirmBtn">Enable in workspace</button>
             </div>
         </div>
     </div>

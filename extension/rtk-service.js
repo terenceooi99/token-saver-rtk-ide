@@ -5,20 +5,174 @@ const path = require('path');
 const os = require('os');
 
 class RtkService {
+    static checkBridgeStatus(rtkBinPath = null) {
+        const home = os.homedir();
+        const localBin = path.join(home, '.local', 'bin');
+        if (process.platform === 'win32') {
+            const hasDirCmd = fs.existsSync(path.join(localBin, 'dir.cmd'));
+            const hasLsCmd = fs.existsSync(path.join(localBin, 'ls.cmd'));
+            const hasGrepCmd = fs.existsSync(path.join(localBin, 'grep.cmd'));
+            let hasColocatedRg = false;
+            if (rtkBinPath && rtkBinPath !== 'rtk') {
+                const rtkDir = path.dirname(rtkBinPath);
+                hasColocatedRg = fs.existsSync(path.join(rtkDir, 'rg.exe'));
+            }
+            return {
+                installed: Boolean((hasDirCmd && hasLsCmd) || hasColocatedRg),
+                hasShims: Boolean(hasDirCmd && hasLsCmd && hasGrepCmd),
+                hasColocatedRg,
+                bridgeDir: localBin
+            };
+        } else {
+            const hasWrapper = fs.existsSync(path.join(localBin, 'rtk-rg'));
+            let hasColocatedRg = false;
+            if (rtkBinPath && rtkBinPath !== 'rtk') {
+                const rtkDir = path.dirname(rtkBinPath);
+                hasColocatedRg = fs.existsSync(path.join(rtkDir, 'rg'));
+            }
+            return {
+                installed: true,
+                hasShims: hasWrapper,
+                hasColocatedRg,
+                bridgeDir: localBin
+            };
+        }
+    }
+
     static checkInstalled() {
         return new Promise((resolve) => {
             exec('rtk --version', (error, stdout) => {
-                if (error) {
-                    resolve({ installed: false, version: null, path: null });
-                } else {
-                    const version = stdout.trim();
-                    exec(process.platform === 'win32' ? 'where.exe rtk' : 'which rtk', (wErr, wStdout) => {
-                        const binPath = !wErr && wStdout ? wStdout.trim().split(/\r?\n/)[0] : 'rtk';
-                        resolve({ installed: true, version, path: binPath });
+                const rtkInstalled = !error && Boolean(stdout);
+                const rtkVersion = rtkInstalled ? stdout.trim().split(/\r?\n/)[0] : null;
+
+                exec(process.platform === 'win32' ? 'where.exe rtk' : 'which rtk', (wErr, wStdout) => {
+                    const binPath = rtkInstalled && !wErr && wStdout ? wStdout.trim().split(/\r?\n/)[0] : (rtkInstalled ? 'rtk' : null);
+
+                    exec('rg --version', (rgErr, rgStdout) => {
+                        const rgInstalled = !rgErr && Boolean(rgStdout);
+                        let rgVersion = null;
+                        if (rgInstalled) {
+                            const firstLine = rgStdout.trim().split(/\r?\n/)[0];
+                            const m = firstLine.match(/ripgrep\s+([0-9a-zA-Z\.\-]+)/i);
+                            rgVersion = m ? m[1] : firstLine;
+                        }
+
+                        exec(process.platform === 'win32' ? 'where.exe rg' : 'which rg', (wRgErr, wRgStdout) => {
+                            const rgPath = rgInstalled && !wRgErr && wRgStdout ? wRgStdout.trim().split(/\r?\n/)[0] : null;
+                            const bridge = this.checkBridgeStatus(binPath);
+                            const fullyInstalled = Boolean(rtkInstalled && rgInstalled && bridge.installed);
+                            const combinedVersion = rtkInstalled
+                                ? (rgInstalled ? `${rtkVersion} + rg ${rgVersion}` : `${rtkVersion} (rg missing)`)
+                                : null;
+
+                            resolve({
+                                installed: fullyInstalled,
+                                rtkInstalled,
+                                rgInstalled,
+                                bridgeInstalled: bridge.installed,
+                                hasShims: bridge.hasShims,
+                                hasColocatedRg: bridge.hasColocatedRg,
+                                version: combinedVersion,
+                                rtkVersion,
+                                rgVersion,
+                                path: binPath,
+                                rgPath
+                            });
+                        });
                     });
-                }
+                });
             });
         });
+    }
+
+    /**
+     * Creates/repairs the RTK-RG bridging files (.local/bin/dir.cmd, ls.cmd, grep.cmd, rtk-rg.cmd)
+     * and bridges rg.exe alongside rtk.exe so RTK and ripgrep work seamlessly together.
+     * ONLY invoked upon explicit user action (Install / Sync / Repair Bridge).
+     */
+    static async installRtkRgBridge() {
+        const home = os.homedir();
+        const localBin = path.join(home, '.local', 'bin');
+        const createdFiles = [];
+
+        if (!fs.existsSync(localBin)) {
+            fs.mkdirSync(localBin, { recursive: true });
+        }
+
+        const status = await this.checkInstalled();
+
+        if (process.platform === 'win32') {
+            // 1. dir.cmd shim
+            const dirCmdPath = path.join(localBin, 'dir.cmd');
+            fs.writeFileSync(dirCmdPath, '@cmd /c dir %*\r\n', 'utf8');
+            createdFiles.push(dirCmdPath);
+
+            // 2. ls.cmd shim (prefer Git usr/bin/ls.exe for native forward-slash support)
+            const gitLsCandidates = [
+                path.join(process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'Programs', 'Git', 'usr', 'bin', 'ls.exe'),
+                'C:\\Program Files\\Git\\usr\\bin\\ls.exe',
+                'C:\\Program Files (x86)\\Git\\usr\\bin\\ls.exe'
+            ];
+            const foundGitLs = gitLsCandidates.find(p => fs.existsSync(p));
+            const lsCmdPath = path.join(localBin, 'ls.cmd');
+            if (foundGitLs) {
+                fs.writeFileSync(lsCmdPath, `@"${foundGitLs}" %*\r\n`, 'utf8');
+            } else {
+                fs.writeFileSync(lsCmdPath, '@powershell -NoProfile -Command "Get-ChildItem %* | Select-Object -ExpandProperty Name"\r\n', 'utf8');
+            }
+            createdFiles.push(lsCmdPath);
+
+            // 3. grep.cmd shim (prefer Git usr/bin/grep.exe or rg)
+            const gitGrepCandidates = [
+                path.join(process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'Programs', 'Git', 'usr', 'bin', 'grep.exe'),
+                'C:\\Program Files\\Git\\usr\\bin\\grep.exe',
+                'C:\\Program Files (x86)\\Git\\usr\\bin\\grep.exe'
+            ];
+            const foundGitGrep = gitGrepCandidates.find(p => fs.existsSync(p));
+            const grepCmdPath = path.join(localBin, 'grep.cmd');
+            if (foundGitGrep) {
+                fs.writeFileSync(grepCmdPath, `@"${foundGitGrep}" %*\r\n`, 'utf8');
+            } else {
+                fs.writeFileSync(grepCmdPath, '@rg %*\r\n', 'utf8');
+            }
+            createdFiles.push(grepCmdPath);
+
+            // 4. rtk-rg.cmd bridge wrapper
+            const rtkRgCmdPath = path.join(localBin, 'rtk-rg.cmd');
+            fs.writeFileSync(rtkRgCmdPath, '@rtk rg %*\r\n', 'utf8');
+            createdFiles.push(rtkRgCmdPath);
+
+            // 5. Co-locate rg.exe into rtk.exe directory so rtk and rg are directly bridged
+            if (status.rgPath && fs.existsSync(status.rgPath) && status.path && status.path !== 'rtk') {
+                const rtkDir = path.dirname(status.path);
+                const colocatedRg = path.join(rtkDir, 'rg.exe');
+                try {
+                    if (path.resolve(status.rgPath) !== path.resolve(colocatedRg) && !fs.existsSync(colocatedRg)) {
+                        fs.copyFileSync(status.rgPath, colocatedRg);
+                        createdFiles.push(colocatedRg);
+                    }
+                } catch (_) {
+                    // Fallback: copy rg.exe into ~/.local/bin
+                    const fallbackRg = path.join(localBin, 'rg.exe');
+                    try {
+                        if (!fs.existsSync(fallbackRg)) {
+                            fs.copyFileSync(status.rgPath, fallbackRg);
+                            createdFiles.push(fallbackRg);
+                        }
+                    } catch (_) {}
+                }
+            }
+        } else {
+            const rtkRgPath = path.join(localBin, 'rtk-rg');
+            fs.writeFileSync(rtkRgPath, '#!/usr/bin/env sh\nexec rtk rg "$@"\n', { encoding: 'utf8', mode: 0o755 });
+            createdFiles.push(rtkRgPath);
+        }
+
+        return {
+            success: true,
+            localBin,
+            createdFiles
+        };
     }
 
     static checkHeadroomInstalled() {
@@ -319,10 +473,6 @@ class RtkService {
             ? (isRtkActive ? Math.round(rtkTokens * 0.22) : (pluginStatus.antiSlopInstalled ? 8600 : 0))
             : 0;
 
-        const omniTokens = pluginStatus.omniRouteRunning || pluginStatus.omniRouteInstalled
-            ? (isRtkActive ? Math.round(rtkTokens * 0.58) : (pluginStatus.omniRouteRunning ? 24500 : (pluginStatus.omniRouteInstalled ? 12000 : 0)))
-            : 0;
-
         const jevTokens = pluginStatus.jevGraphInstalled || pluginStatus.jevGraphEnabled
             ? (isRtkActive ? Math.round(rtkTokens * 0.38) : (pluginStatus.jevGraphInstalled ? 16800 : 0))
             : 0;
@@ -331,7 +481,7 @@ class RtkService {
             ? (isRtkActive ? Math.round(rtkTokens * 0.30) : (pluginStatus.eccInstalled ? 13500 : 0))
             : 0;
 
-        const totalEcosystemTokens = rtkTokens + headroomTokens + ponytailTokens + antiSlopTokens + omniTokens + jevTokens + eccTokens;
+        const totalEcosystemTokens = rtkTokens + headroomTokens + ponytailTokens + antiSlopTokens + jevTokens + eccTokens;
 
         const formatTokens = (tokens) => {
             if (tokens >= 1000000) return (tokens / 1000000).toFixed(2) + 'M';
@@ -347,35 +497,35 @@ class RtkService {
         const channels = [
             {
                 id: 'rtk',
-                name: 'RTK Output Proxy',
-                shortName: 'RTK CLI',
-                icon: '⚡',
+                name: 'RTK-RG Output Proxy',
+                shortName: 'RTK-RG',
+                icon: 'RTK',
                 layer: 'CLI Terminal Proxy',
                 category: 'terminal',
-                color: '#0071e3',
-                accentColor: 'var(--apple-blue, #0071e3)',
+                color: '#3b6ef6',
+                accentColor: 'var(--accent-primary, #3b6ef6)',
                 status: pluginStatus.installed ? 'active' : 'not_installed',
-                statusLabel: pluginStatus.installed ? 'Active & Compressing' : 'Not Detected',
+                statusLabel: pluginStatus.installed ? 'Active' : 'Not installed',
                 isLive: true,
                 savedTokens: rtkTokens,
                 savedFormatted: formatTokens(rtkTokens),
                 percentage: (gainMetrics && gainMetrics.savedPercentage) || (rtkTokens > 0 ? 72.4 : 0),
                 dollarSavings: formatDollars(rtkTokens),
                 sharePct: totalEcosystemTokens > 0 ? Math.round((rtkTokens / totalEcosystemTokens) * 100) : 35,
-                description: 'Intercepts & condenses stdout/stderr across git, build tools, package managers, and search.',
+                description: 'Intercepts and condenses stdout/stderr across git, build tools, package managers, and ripgrep search.',
                 commands: gainMetrics ? gainMetrics.commandBreakdown : []
             },
             {
                 id: 'headroom',
                 name: 'Headroom CCR',
                 shortName: 'Headroom',
-                icon: '📦',
+                icon: 'CCR',
                 layer: 'Context Compression & CCR',
                 category: 'context',
-                color: '#ff9500',
-                accentColor: 'var(--apple-amber, #ff9500)',
+                color: '#c2b9a7',
+                accentColor: 'var(--text-secondary, #a1a1a6)',
                 status: pluginStatus.headroomInstalled ? 'active' : (pluginStatus.headroomEnabled ? 'synced' : 'disabled'),
-                statusLabel: pluginStatus.headroomInstalled ? 'Active & Caching' : (pluginStatus.headroomEnabled ? 'Rule Synced' : 'Disabled'),
+                statusLabel: pluginStatus.headroomInstalled ? 'Active' : (pluginStatus.headroomEnabled ? 'Rule synced' : 'Paused'),
                 isLive: false,
                 savedTokens: headroomTokens,
                 savedFormatted: formatTokens(headroomTokens),
@@ -385,7 +535,7 @@ class RtkService {
                 description: 'Compress-Cache-Retrieve engine for heavy JSON payloads, tool schemas, memory logs, and context windows.',
                 subItems: [
                     { name: 'JSON Payloads & Schemas', percentage: 74, description: 'Tool call arguments and API responses' },
-                    { name: 'File Reads & Buffers', percentage: 65, description: 'Source code caching & deduplication' },
+                    { name: 'File Reads & Buffers', percentage: 65, description: 'Source code caching and deduplication' },
                     { name: 'Trace Logs & Memory', percentage: 70, description: 'Stack traces and debug diagnostics' }
                 ]
             },
@@ -393,13 +543,13 @@ class RtkService {
                 id: 'ponytail',
                 name: 'Ponytail YAGNI',
                 shortName: 'Ponytail',
-                icon: '🥋',
+                icon: 'YGN',
                 layer: 'Prompt & Generation Directives',
                 category: 'prompt',
-                color: '#30d158',
-                accentColor: 'var(--apple-green, #30d158)',
+                color: '#a1a1a6',
+                accentColor: 'var(--text-secondary, #a1a1a6)',
                 status: pluginStatus.ponytailInstalled ? 'active' : 'ready',
-                statusLabel: pluginStatus.ponytailInstalled ? 'Active Directives' : 'Ready to Sync',
+                statusLabel: pluginStatus.ponytailInstalled ? 'Active' : 'Ready',
                 isLive: false,
                 savedTokens: ponytailTokens,
                 savedFormatted: formatTokens(ponytailTokens),
@@ -410,20 +560,20 @@ class RtkService {
                 subItems: [
                     { name: 'AST Symbol Outlines (/rtk-outline)', percentage: 92, description: 'Inspects symbols instead of full files' },
                     { name: 'Compact Diffs (-U1)', percentage: 62, description: 'Single-line git diff context' },
-                    { name: 'Terse Generation Directives', percentage: 40, description: 'Eliminates pleasantries & filler code' }
+                    { name: 'Terse Generation Directives', percentage: 40, description: 'Eliminates pleasantries and filler code' }
                 ]
             },
             {
                 id: 'antiSlop',
                 name: 'Anti-Slop AI',
                 shortName: 'Anti-Slop',
-                icon: '🛡️',
+                icon: 'SLP',
                 layer: 'Code Comment & Pattern Hygiene',
                 category: 'hygiene',
-                color: '#ff375f',
-                accentColor: 'var(--apple-rose, #ff375f)',
+                color: '#8e8e95',
+                accentColor: 'var(--text-muted, #85858b)',
                 status: pluginStatus.antiSlopInstalled ? 'active' : 'ready',
-                statusLabel: pluginStatus.antiSlopInstalled ? 'Active Filter' : 'Ready to Sync',
+                statusLabel: pluginStatus.antiSlopInstalled ? 'Active' : 'Ready',
                 isLive: false,
                 savedTokens: antiSlopTokens,
                 savedFormatted: formatTokens(antiSlopTokens),
@@ -433,45 +583,21 @@ class RtkService {
                 description: 'Strips generic AI slop comments, boilerplate summaries, and hallucinated docstrings without touching code logic.',
                 subItems: [
                     { name: 'AI Slop Comment Filter', percentage: 38, description: 'Removes redundant inline commentary' },
-                    { name: 'Docstring Bloat Stripper', percentage: 28, description: 'Cleans over-verbose documentation' },
-                    { name: 'Mobile Layout & UI Hygiene', percentage: 30, description: 'Prevents CSS & component over-engineering' }
-                ]
-            },
-            {
-                id: 'omniRoute',
-                name: 'OmniRoute Gateway',
-                shortName: 'OmniRoute',
-                icon: '🌐',
-                layer: 'Smart AI Routing & Cache',
-                category: 'gateway',
-                color: '#af52de',
-                accentColor: 'var(--apple-purple, #af52de)',
-                status: pluginStatus.omniRouteRunning ? 'active' : (pluginStatus.omniRouteInstalled ? 'standby' : 'offline'),
-                statusLabel: pluginStatus.omniRouteRunning ? 'Gateway Online (:20128)' : (pluginStatus.omniRouteInstalled ? 'CLI Standby' : 'Offline'),
-                isLive: false,
-                savedTokens: omniTokens,
-                savedFormatted: formatTokens(omniTokens),
-                percentage: 55.0,
-                dollarSavings: formatDollars(omniTokens),
-                sharePct: totalEcosystemTokens > 0 ? Math.round((omniTokens / totalEcosystemTokens) * 100) : 17,
-                description: 'Smart multi-model router with prompt cache reuse, tier routing (Flash vs Pro/Sonnet), and rate-limit protection.',
-                subItems: [
-                    { name: 'Prompt Cache Hit Reuse', percentage: 65, description: 'Reuses prompt prefixes for identical tasks' },
-                    { name: 'Model Tier Routing', percentage: 52, description: 'Routes small edits to lightweight models' },
-                    { name: 'Request Deduplication', percentage: 45, description: 'Prevents duplicate concurrent calls' }
+                    { name: 'Docstring Bloat Stripper', percentage: 28, description: 'Cleans verbose documentation' },
+                    { name: 'Mobile Layout & UI Hygiene', percentage: 30, description: 'Prevents CSS and component over-engineering' }
                 ]
             },
             {
                 id: 'jevgraph',
                 name: 'JevGraph Context Graph',
                 shortName: 'JevGraph',
-                icon: '🕸️',
+                icon: 'JEV',
                 layer: 'Document & Knowledge Graph Compression',
                 category: 'context',
-                color: '#30b0c7',
-                accentColor: 'var(--apple-teal, #30b0c7)',
+                color: '#7a7a82',
+                accentColor: 'var(--text-muted, #85858b)',
                 status: pluginStatus.jevGraphInstalled ? 'active' : (pluginStatus.jevGraphEnabled ? 'synced' : 'disabled'),
-                statusLabel: pluginStatus.jevGraphInstalled ? 'Active & Graphing' : (pluginStatus.jevGraphEnabled ? 'Rule Synced' : 'Disabled'),
+                statusLabel: pluginStatus.jevGraphInstalled ? 'Active' : (pluginStatus.jevGraphEnabled ? 'Rule synced' : 'Paused'),
                 isLive: false,
                 savedTokens: jevTokens,
                 savedFormatted: formatTokens(jevTokens),
@@ -489,20 +615,20 @@ class RtkService {
                 id: 'codegraph',
                 name: 'CodeGraphContext Engine',
                 shortName: 'CodeGraph',
-                icon: '🧬',
+                icon: 'AST',
                 layer: 'Codebase Semantic AST & Architecture Graph',
                 category: 'context',
-                color: '#5e5ce6',
-                accentColor: 'var(--apple-indigo, #5e5ce6)',
+                color: '#b0b0b8',
+                accentColor: 'var(--text-secondary, #a1a1a6)',
                 status: pluginStatus.codeGraphInstalled ? 'active' : (pluginStatus.codeGraphEnabled ? 'synced' : 'disabled'),
-                statusLabel: pluginStatus.codeGraphInstalled ? 'Active & Watching' : (pluginStatus.codeGraphEnabled ? 'Rule Synced' : 'Disabled'),
+                statusLabel: pluginStatus.codeGraphInstalled ? 'Active' : (pluginStatus.codeGraphEnabled ? 'Rule synced' : 'Paused'),
                 isLive: false,
                 savedTokens: Math.round(totalEcosystemTokens * 0.22),
                 savedFormatted: formatTokens(Math.round(totalEcosystemTokens * 0.22)),
                 percentage: 88.4,
                 dollarSavings: formatDollars(Math.round(totalEcosystemTokens * 0.22)),
                 sharePct: 22,
-                description: 'Pre-indexed semantic AST property graph (Tree-sitter & SCIP). Forces AI agents to query symbols & callers before reading raw code files.',
+                description: 'Pre-indexed semantic AST property graph (Tree-sitter & SCIP). Queries symbols and callers before reading raw code files.',
                 subItems: [
                     { name: 'Symbol & AST Outlines', percentage: 92, description: 'Direct function and class lookups' },
                     { name: 'Call Hierarchies (Callers/Callees)', percentage: 89, description: 'Deep dependency graphs without file dumps' },
@@ -513,13 +639,13 @@ class RtkService {
                 id: 'crw',
                 name: 'Hybrid Web (fastCRW + Lightpanda)',
                 shortName: 'Hybrid Web',
-                icon: '🌐',
+                icon: 'WEB',
                 layer: '3-Tier Hybrid Web Research & Scraping',
                 category: 'web',
-                color: '#ff9500',
-                accentColor: 'var(--apple-orange, #ff9500)',
+                color: '#696972',
+                accentColor: 'var(--text-muted, #85858b)',
                 status: (pluginStatus.crwInstalled || pluginStatus.lightpandaInstalled) ? 'active' : ((pluginStatus.crwEnabled || pluginStatus.lightpandaEnabled) ? 'synced' : 'disabled'),
-                statusLabel: (pluginStatus.crwInstalled && pluginStatus.lightpandaInstalled) ? 'Active & Ready (Dual)' : ((pluginStatus.crwInstalled || pluginStatus.lightpandaInstalled) ? 'Active & Ready' : ((pluginStatus.crwEnabled || pluginStatus.lightpandaEnabled) ? 'Hybrid Search' : 'Disabled')),
+                statusLabel: (pluginStatus.crwInstalled && pluginStatus.lightpandaInstalled) ? 'Active (dual)' : ((pluginStatus.crwInstalled || pluginStatus.lightpandaInstalled) ? 'Active' : ((pluginStatus.crwEnabled || pluginStatus.lightpandaEnabled) ? 'Rule synced' : 'Paused')),
                 isLive: false,
                 savedTokens: Math.round(totalEcosystemTokens * 0.16),
                 savedFormatted: formatTokens(Math.round(totalEcosystemTokens * 0.16)),
@@ -529,21 +655,21 @@ class RtkService {
                 description: 'Unified 3-tier web pipeline: Tier 1 built-in search, Tier 2 fastCRW instant markdown for static pages, and Tier 3 Lightpanda local V8 JS execution via MCP for dynamic SPAs.',
                 subItems: [
                     { name: 'fastCRW Token-Compressed Markdown', percentage: 86, description: 'Strips HTML boilerplate, scripts, and clutter on static docs' },
-                    { name: 'Lightpanda V8 Dynamic MCP Extraction', percentage: 82, description: '10x lighter headless browser executing client-side JS & SPAs' },
-                    { name: 'Tier 1 Built-in Search & Fallback', percentage: 74, description: 'Zero-failure autonomous discovery with pure markdown output' }
+                    { name: 'Lightpanda V8 Dynamic MCP Extraction', percentage: 82, description: '10x lighter headless browser executing client-side JS and SPAs' },
+                    { name: 'Tier 1 Built-in Search & Fallback', percentage: 74, description: 'Autonomous discovery with clean markdown output' }
                 ]
             },
             {
                 id: 'ecc',
                 name: 'ECC Harness Optimization',
                 shortName: 'ECC Pruner',
-                icon: '🧠',
+                icon: 'ECC',
                 layer: 'Context Compaction & Memory Checkpoints',
                 category: 'context',
-                color: '#64d2ff',
-                accentColor: 'var(--apple-cyan, #64d2ff)',
+                color: '#575760',
+                accentColor: 'var(--text-muted, #85858b)',
                 status: pluginStatus.eccInstalled ? 'active' : (pluginStatus.eccEnabled ? 'synced' : 'disabled'),
-                statusLabel: pluginStatus.eccInstalled ? 'Active & Pruning' : (pluginStatus.eccEnabled ? 'Rule Synced' : 'Disabled'),
+                statusLabel: pluginStatus.eccInstalled ? 'Active' : (pluginStatus.eccEnabled ? 'Rule synced' : 'Paused'),
                 isLive: false,
                 savedTokens: eccTokens,
                 savedFormatted: formatTokens(eccTokens),
@@ -554,7 +680,7 @@ class RtkService {
                 subItems: [
                     { name: 'Strategic Compaction at Boundaries', percentage: 78, description: 'Clears accumulated chatter between research and execution' },
                     { name: 'Context Keeper Checkpoints (ck)', percentage: 80, description: 'Durable session state persistence without carrying bloated context' },
-                    { name: 'Council & Evaluator Rubrics', percentage: 65, description: 'Halts endless speculative retry loops early' }
+                    { name: 'Council & Evaluator Rubrics', percentage: 65, description: 'Halts speculative retry loops early' }
                 ]
             }
         ];
@@ -585,7 +711,7 @@ class RtkService {
                 { command: 'pytest / vitest', savedTokens: 0, savedFormatted: '0', percentage: 0 },
                 { command: 'rg / ls / tree', savedTokens: 0, savedFormatted: '0', percentage: 0 }
             ],
-            rawText: 'RTK is standing by. Run commands with RTK to start accumulating live token savings!'
+            rawText: 'RTK-RG is standing by. Run commands with rtk to record live token savings.'
         };
     }
 
@@ -766,12 +892,11 @@ class RtkService {
             });
         };
 
-        const [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda, ecc] = await Promise.all([
+        const [rtk, headroom, ponytail, antislop, jevgraph, codegraph, crw, lightpanda, ecc] = await Promise.all([
             testRtk(),
             testHeadroom(),
             testPonytail(),
             testAntiSlop(),
-            testOmniRoute(),
             testJevGraph(),
             testCodeGraph(),
             testCrw(),
@@ -779,7 +904,7 @@ class RtkService {
             testEcc()
         ]);
 
-        const allLayers = [rtk, headroom, ponytail, antislop, omniroute, jevgraph, codegraph, crw, lightpanda, ecc];
+        const allLayers = [rtk, headroom, ponytail, antislop, jevgraph, codegraph, crw, lightpanda, ecc];
         // Strictly ignore any upstream that is not installed/available
         const installedLayers = allLayers.filter(l => l && l.available);
         const parts = installedLayers.map(l => `${l.name}: ${l.latency}`);
@@ -796,7 +921,6 @@ class RtkService {
             headroom,
             ponytail,
             antislop,
-            omniroute,
             jevgraph,
             codegraph,
             crw,
@@ -864,14 +988,23 @@ class RtkService {
     }
 
     static getInstallCommands(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), customInstallPath = null) {
-        let rtkCmd;
+        let rtkOnlyCmd;
+        let rgCmd;
+        let bridgeCmd;
         if (isWindows) {
-            rtkCmd = 'winget install --id rtk-ai.rtk --accept-source-agreements --accept-package-agreements';
+            rtkOnlyCmd = 'winget install --id rtk-ai.rtk --accept-source-agreements --accept-package-agreements';
+            rgCmd = 'winget install --id BurntSushi.ripgrep.MSVC --accept-source-agreements --accept-package-agreements';
+            bridgeCmd = 'New-Item -ItemType Directory -Force -Path "$HOME\\.local\\bin" | Out-Null; Set-Content -Path "$HOME\\.local\\bin\\dir.cmd" -Value "@cmd /c dir %*"; if (Test-Path "$env:LOCALAPPDATA\\Programs\\Git\\usr\\bin\\ls.exe") { Set-Content -Path "$HOME\\.local\\bin\\ls.cmd" -Value "@`"$env:LOCALAPPDATA\\Programs\\Git\\usr\\bin\\ls.exe`" %*" } elseif (Test-Path "C:\\Program Files\\Git\\usr\\bin\\ls.exe") { Set-Content -Path "$HOME\\.local\\bin\\ls.cmd" -Value "@`"C:\\Program Files\\Git\\usr\\bin\\ls.exe`" %*" }; if (Test-Path "$env:LOCALAPPDATA\\Programs\\Git\\usr\\bin\\grep.exe") { Set-Content -Path "$HOME\\.local\\bin\\grep.cmd" -Value "@`"$env:LOCALAPPDATA\\Programs\\Git\\usr\\bin\\grep.exe`" %*" } else { Set-Content -Path "$HOME\\.local\\bin\\grep.cmd" -Value "@rg %*" }; Set-Content -Path "$HOME\\.local\\bin\\rtk-rg.cmd" -Value "@rtk rg %*"; $rtkBin = (Get-Command rtk -ErrorAction SilentlyContinue).Source; $rgBin = (Get-Command rg -ErrorAction SilentlyContinue).Source; if ($rtkBin -and $rgBin) { Copy-Item $rgBin (Join-Path (Split-Path $rtkBin) "rg.exe") -Force -ErrorAction SilentlyContinue }';
         } else if (isMac) {
-            rtkCmd = 'brew install rtk-ai/tap/rtk || curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash';
+            rtkOnlyCmd = 'brew install rtk-ai/tap/rtk || curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash';
+            rgCmd = 'brew install ripgrep';
+            bridgeCmd = 'mkdir -p ~/.local/bin && printf "#!/usr/bin/env sh\\nexec rtk rg \\"\\$@\\"\\n" > ~/.local/bin/rtk-rg && chmod +x ~/.local/bin/rtk-rg';
         } else {
-            rtkCmd = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash';
+            rtkOnlyCmd = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/main/install.sh | bash';
+            rgCmd = 'cargo install ripgrep || sudo apt-get install -y ripgrep';
+            bridgeCmd = 'mkdir -p ~/.local/bin && printf "#!/usr/bin/env sh\\nexec rtk rg \\"\\$@\\"\\n" > ~/.local/bin/rtk-rg && chmod +x ~/.local/bin/rtk-rg';
         }
+        const rtkCmd = isWindows ? `${rtkOnlyCmd} ; ${rgCmd} ; ${bridgeCmd}` : `${rtkOnlyCmd} && ${rgCmd} && ${bridgeCmd}`;
 
         const headroomCmd = isWindows
             ? 'python -m pip install "headroom-ai[all]" 2>$null; if (!$?) { pip install "headroom-ai[all]" }'
@@ -937,10 +1070,13 @@ class RtkService {
             lightpandaCmd = lightpandaCmds.primaryCmd;
         }
 
-        const verifyCmd = 'rtk --version ; headroom --version';
+        const verifyCmd = 'rtk --version ; rg --version ; headroom --version';
 
         return {
             rtkCmd,
+            rtkOnlyCmd,
+            rgCmd,
+            bridgeCmd,
             headroomCmd,
             omniRouteCmd,
             ponytailCmd,
@@ -949,7 +1085,7 @@ class RtkService {
             crwCmd,
             lightpandaCmd,
             verifyCmd,
-            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${omniRouteCmd} ; ${jevGraphCmd} ; ${codeGraphCmd} ; ${crwCmd} ; ${lightpandaCmd}` : `${rtkCmd} && ${headroomCmd} && ${omniRouteCmd} && ${jevGraphCmd} && ${codeGraphCmd} && ${crwCmd} && ${lightpandaCmd}`
+            combinedCmd: isWindows ? `${rtkCmd} ; ${headroomCmd} ; ${jevGraphCmd} ; ${codeGraphCmd} ; ${crwCmd} ; ${lightpandaCmd}` : `${rtkCmd} && ${headroomCmd} && ${jevGraphCmd} && ${codeGraphCmd} && ${crwCmd} && ${lightpandaCmd}`
         };
     }
 
@@ -1005,82 +1141,101 @@ class RtkService {
         this.runInTerminal(cmds.headroomUninstallCmd);
     }
 
-    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = true, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true, crwMissing = true, lightpandaMissing = true, customInstallPath = null) {
+    static getPluginManagementHeader(basePath = '') {
+        const storageRoot = (basePath || '').trim() || 'D:\\Software\\AI Agent Space';
+        return [
+            '',
+            `> **Components Storage & Plugin Management Specification (/pluginmanagement V1.4 & /grill-me Protocol)**:`,
+            `> - **Pre-Flight Alignment (\`/grill-me\`)**: If the target Components Storage Path (\`${storageRoot}\`), installation scope, or any naming/path conflict is ambiguous, interview the user one question at a time with \`(Recommended)\` defaults before executing changes. If a question can be answered by inspecting the machine/workspace first, inspect it directly.`,
+            `> - **1. Standard Plugin Directory Structure (\`${storageRoot}/plugins/<plugin-name>/\`)**:`,
+            `>   - \`plugin.json\`: Required manifest file (MUST include \`"upstream": "https://github.com/<owner>/<repo>"\`).`,
+            `>   - \`mcp_config.json\`: Optional MCP server definitions.`,
+            `>   - \`hooks.json\`: Optional hooks definition.`,
+            `>   - \`skills/<skill-name>/SKILL.md\`: Must include \`upstream: "https://github.com/<owner>/<repo>"\` in YAML frontmatter (flat 1-level skill directory structure).`,
+            `>   - \`agents/<agent-name>.md\` & \`rules/<rule-name>.md\`: Must include \`upstream\` in YAML frontmatter.`,
+            `>   - **Duplicate Naming Collision Rule**: If two or more components share the same name, append \`-1\`, \`-2\`, etc. sequentially (\`<name>-1\`, \`<name>-2\`) so nothing collides or overwrites.`,
+            `> - **2. Universal Shared Folder Specification (\`${storageRoot}/shared/\`)**:`,
+            `>   - Preserve \`agent-connectors.json\`, \`handoff/\`, and \`_upstream_backups/\` as the cross-agent IPC and coordination hub; never treat \`shared/\` as loose/orphaned files.`,
+            `>   - Any subfolder in \`shared/\` for collaborating skills MUST be named after the joining skills (e.g. \`stagehand-fastcrw\`).`,
+            `> - **3. Mandatory Upstream Links**: Record the upstream GitHub URL in every \`plugin.json\`, \`SKILL.md\`, rule, and agent frontmatter.`,
+            `> - **4. Centralized Weekly Update Checking (NO Decentralized Scripts)**:`,
+            `>   - **DO NOT** create local \`update_checker.mjs\` or \`update_check_state.json\` files inside component folders; update checking is centralized weekly.`,
+            `> - **5. Mandatory File Encoding (Strict UTF-8 Without BOM)**:`,
+            `>   - Write ALL \`plugin.json\`, \`mcp_config.json\`, \`hooks.json\`, \`SKILL.md\`, and \`*.md\` files strictly in UTF-8 without BOM (\`0xEF,0xBB,0xBF\` is forbidden). Use Node \`fs.writeFileSync(p, c, "utf8")\` or PowerShell \`.NET UTF8Encoding($false)\`.`,
+            `> - **6. One-Time Rearrangement Stability**:`,
+            `>   - If the directory structure in \`${storageRoot}\` is already organized, **STOP** rearranging or moving existing component folders on subsequent runs unless explicitly requested.`
+        ].join('\n');
+    }
+
+    static generateAiInstallPrompt(isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), rtkMissing = true, headroomMissing = true, ponytailMissing = true, omniMissing = false, antiSlopMissing = true, jevGraphMissing = true, codeGraphMissing = true, crwMissing = true, lightpandaMissing = true, customInstallPath = null, eccMissing = false) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const basePath = (customInstallPath || '').trim();
+        const storageRoot = basePath || 'D:\\Software\\AI Agent Space';
         const cmds = this.getInstallCommands(isWindows, isMac, basePath);
 
         let items = [];
         let stepIdx = 1;
 
-        if (omniMissing) {
-            items.push(`${stepIdx}. **Install OmniRoute AI Gateway (Smart Router)**:\n   Run command: \`${cmds.omniRouteCmd}\`\n   (Provides OpenAI-compatible router at \`http://localhost:20128/v1\` with auto-fallback).`);
-            stepIdx++;
-        }
-
         if (rtkMissing) {
-            items.push(`${stepIdx}. **Install RTK CLI (Rust Token Killer)**:\n   Run command: \`${cmds.rtkCmd}\``);
+            items.push(`${stepIdx}. **Install RTK-RG (RTK CLI + ripgrep Upstream + RTK-RG Bridge Shims — Upstream: \`https://github.com/rtk-ai/rtk\` & \`https://github.com/BurntSushi/ripgrep\`)**:\n   Run command: \`${cmds.rtkCmd}\`\n   (Installs \`rtk-ai/rtk\`, upstream \`BurntSushi/ripgrep\` (\`rg\`), co-locates \`rg.exe\` with \`rtk.exe\`, creates \`~/.local/bin\` bridge shims \`ls.cmd\`, \`dir.cmd\`, \`grep.cmd\`, \`rtk-rg.cmd\`, and registers \`plugins/rtk/plugin.json\` with \`"upstream": "https://github.com/rtk-ai/rtk"\`).`);
             stepIdx++;
         }
 
         if (headroomMissing) {
-            items.push(`${stepIdx}. **Install Headroom Context Compression (Python CLI)**:\n   Run command: \`${cmds.headroomCmd}\``);
+            items.push(`${stepIdx}. **Install Headroom Context Compression (Upstream: \`https://github.com/headroomlabs-ai/headroom\`)**:\n   Run command: \`${cmds.headroomCmd}\``);
             stepIdx++;
         }
 
         if (jevGraphMissing) {
-            const locNote = basePath ? ` in \`${basePath}/jevgraph\`` : '';
-            items.push(`${stepIdx}. **Install JevGraph Knowledge Graph Engine (Upstream: chenmingtang830/jevgraph)**:\n   Clone and set up JevGraph via \`uv\`${locNote}:\n   \`${cmds.jevGraphCmd}\`\n   (Provides bounded document-to-graph pipeline and evidence mapping).`);
+            items.push(`${stepIdx}. **Install JevGraph Knowledge Graph Engine (Upstream: \`https://github.com/chenmingtang830/jevgraph\`)**:\n   Clone and set up JevGraph via \`uv\` in \`${storageRoot}/plugins/jevgraph\` (with \`plugin.json\` recording \`"upstream": "https://github.com/chenmingtang830/jevgraph"\`):\n   \`${cmds.jevGraphCmd}\`\n   (Provides bounded document-to-graph pipeline and evidence mapping; ensure skills \`/jevgraph-build\` and \`/jevgraph-query\` include \`upstream\` frontmatter).`);
             stepIdx++;
         }
 
         if (codeGraphMissing) {
-            const locNote = basePath ? ` in \`${basePath}/CodeGraphContext\`` : '';
-            items.push(`${stepIdx}. **Install CodeGraphContext Code AST Engine (Upstream: CodeGraphContext/CodeGraphContext)**:\n   Run command${locNote}:\n   \`${cmds.codeGraphCmd}\`\n   (Provides semantic code knowledge graph, AST indexing, and symbol lookups via \`cgc\`).`);
+            items.push(`${stepIdx}. **Install CodeGraphContext Code AST Engine (Upstream: \`https://github.com/CodeGraphContext/CodeGraphContext\`)**:\n   Run command:\n   \`${cmds.codeGraphCmd}\`\n   (Provides semantic code knowledge graph, AST indexing, and symbol lookups via \`cgc\`; ensure skills \`/codegraph-index\` and \`/codegraph-query\` include \`upstream\` frontmatter).`);
             stepIdx++;
         }
 
         if (crwMissing) {
-            const locNote = basePath ? ` in \`${basePath}/fastcrw\`` : '';
-            items.push(`${stepIdx}. **Install fastCRW Hybrid Scraper & Search Engine (Upstream: fastcrw/crw)**:\n   Run command${locNote}:\n   \`${cmds.crwCmd}\`\n   (Provides fast Rust crawler, scraper, and /v1/search API for AI agents).`);
+            items.push(`${stepIdx}. **Install fastCRW Hybrid Scraper & Search Engine (Upstream: \`https://github.com/fastcrw/crw\`)**:\n   Install/configure under \`${storageRoot}/plugins/fastcrw\` (and shared state in \`${storageRoot}/shared/stagehand-fastcrw\`):\n   \`${cmds.crwCmd}\`\n   (Ensure \`plugin.json\` includes \`"upstream": "https://github.com/fastcrw/crw"\` written in UTF-8 without BOM).`);
             stepIdx++;
         }
 
         if (lightpandaMissing) {
-            const locNote = basePath ? ` in \`${basePath}/lightpanda\`` : '';
-            items.push(`${stepIdx}. **Install Lightpanda Headless Browser Engine (Upstream: lightpanda-io/browser)**:\n   Run command${locNote}:\n   \`${cmds.lightpandaCmd}\`\n   (Provides ultra-lightweight V8 dynamic JS rendering and local MCP server for AI agents).`);
+            items.push(`${stepIdx}. **Install Lightpanda Headless Browser Engine (Upstream: \`https://github.com/lightpanda-io/browser\`)**:\n   Install/configure under \`${storageRoot}/plugins/lightpanda\`:\n   \`${cmds.lightpandaCmd}\`\n   (Provides ultra-lightweight V8 dynamic JS rendering and local MCP server; ensure \`plugin.json\` includes \`"upstream": "https://github.com/lightpanda-io/browser"\`).`);
             stepIdx++;
         }
 
         if (ponytailMissing) {
-            const locNote = basePath ? ` Also clone the upstream repository to \`${basePath}/ponytail\` for full source inspection.` : '';
-            items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: DietrichGebert/ponytail)**:\n   Clone or fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`).${locNote} Ensure skills (\`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\`) are installed.`);
+            items.push(`${stepIdx}. **Fetch & Install Ponytail YAGNI Token Saver (Upstream: \`https://github.com/DietrichGebert/ponytail\`)**:\n   Package into \`${storageRoot}/plugins/ponytail\` (with \`plugin.json\` and \`skills/ponytail*/SKILL.md\` containing \`upstream: "https://github.com/DietrichGebert/ponytail"\` in UTF-8 No BOM) and bridge to the active IDE skills directory (\`~/.gemini/config/skills/\`).`);
             stepIdx++;
         }
 
         if (antiSlopMissing) {
-            const locNote = basePath ? ` Also clone the upstream repository to \`${basePath}/anti-slop\` for source inspection.` : '';
-            items.push(`${stepIdx}. **Fetch & Install Anti-Slop Framework (Upstream: miqdadbadjuber/anti-slop)**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into the local machine's global IDE configuration directory (\`~/.gemini/config/skills/\`) and workspace (\`.agents/skills/\`).${locNote} Ensure skills (\`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\`) are installed.`);
+            items.push(`${stepIdx}. **Fetch & Install Anti-Slop Framework (Upstream: \`https://github.com/miqdadbadjuber/anti-slop\`)**:\n   Package into \`${storageRoot}/plugins/anti-slop\` (with \`plugin.json\` and \`skills/antislop*/SKILL.md\` containing \`upstream: "https://github.com/miqdadbadjuber/anti-slop"\` in UTF-8 No BOM) and bridge to the active IDE skills directory.`);
+            stepIdx++;
+        }
+
+        if (eccMissing) {
+            items.push(`${stepIdx}. **Fetch & Install ECC Agent Harness (Upstream: \`https://github.com/affaan-m/ECC\`)**:\n   Fetch ECC skills (\`/strategic-compact\`, \`/ck\`, \`/council\`, \`/agent-evaluator\`) with \`upstream: "https://github.com/affaan-m/ECC"\` in YAML frontmatter (UTF-8 No BOM).`);
             stepIdx++;
         }
 
         const verifyCmds = [];
-        if (rtkMissing) verifyCmds.push('`rtk --version`');
+        if (rtkMissing) verifyCmds.push('`rtk --version`', '`rg --version`');
         if (headroomMissing) verifyCmds.push('`headroom --version`');
-        if (omniMissing) verifyCmds.push('`omniroute --version`');
         if (jevGraphMissing) verifyCmds.push('`uv run jevgraph --help`');
         if (codeGraphMissing) verifyCmds.push('`cgc --version`');
         if (crwMissing) verifyCmds.push('`crw --version`');
         if (lightpandaMissing) verifyCmds.push('`lightpanda --version`');
-        const verifyText = verifyCmds.length > 0 ? `Run ${verifyCmds.join(', ')} and verify active status in IDE.` : 'Verify all components are active in IDE.';
+        const verifyText = verifyCmds.length > 0 ? `Run ${verifyCmds.join(', ')}, verify all manifest/skill files are UTF-8 without BOM and contain \`upstream\` links, and confirm active status in IDE.` : 'Verify all components are active in IDE and compliant with /pluginmanagement V1.4.';
 
-        items.push(`${stepIdx}. **Verify Installations**:\n   ${verifyText}`);
+        items.push(`${stepIdx}. **Verify Installations & /pluginmanagement Compliance**:\n   ${verifyText}`);
         stepIdx++;
-        items.push(`${stepIdx}. **Confirm Success**:\n   Report the installed version numbers and active status back to me once done.`);
+        items.push(`${stepIdx}. **Confirm Success**:\n   Report the installed version numbers, plugin paths, and active status back to me once done.`);
 
         const missingLabels = [];
-        if (omniMissing) missingLabels.push('OmniRoute');
-        if (rtkMissing) missingLabels.push('RTK');
+        if (rtkMissing) missingLabels.push('RTK-RG');
         if (headroomMissing) missingLabels.push('Headroom');
         if (jevGraphMissing) missingLabels.push('JevGraph');
         if (codeGraphMissing) missingLabels.push('CodeGraphContext');
@@ -1088,23 +1243,17 @@ class RtkService {
         if (lightpandaMissing) missingLabels.push('Lightpanda');
         if (antiSlopMissing) missingLabels.push('Anti-Slop');
         if (ponytailMissing) missingLabels.push('Ponytail');
+        if (eccMissing) missingLabels.push('ECC');
 
         const labelText = missingLabels.length > 0 ? missingLabels.join(', ') : 'necessary';
-        const targetPathHeader = basePath
-            ? `\n> **Target Base Directory & Hierarchy Standard (/tool-management-rules)**:\n` +
-              `> - **Target Base Path**: All cloned upstream GitHub repositories must be installed/cloned into sub-folders under: \`${basePath}\` (e.g. \`${basePath}/<upstream-repo-name>\`).\n` +
-              `> - **Zero Loose Files In Root**: Do NOT place loose scripts, configuration files, virtual environments (\`venv\`), or build caches in \`${basePath}\`. Every component must reside strictly within its dedicated sub-folder.\n` +
-              `> - **Shared Dependencies**: Multi-tool dependencies, bridge scripts, and shared environments must reside in \`${basePath}/shared/<domain-or-tool-combination>/\`.\n` +
-              `> - **Skills Standard**: All agent skills must be placed in the IDE's flat skills discovery directory (\`<SKILLS_DIR>/<skill-name>/SKILL.md\`) or linked via directory junction (\`mklink /J\`).\n` +
-              `> - **7-Day Update Protocol**: Record an initial \`update_check_state.json\` file in each tool's sub-folder (\`{ "last_check_timestamp": ${Math.floor(Date.now() / 1000)}, "tool_version": "...", "status": "up-to-date" }\`) to enforce weekly update checks.\n`
-            : '';
+        const targetPathHeader = this.getPluginManagementHeader(basePath);
 
         const prompt = [
-            `Please help me install, fetch, and configure the missing tools (${labelText}) for Token Saver on this ${osName} machine:${targetPathHeader}`,
+            `Please help me install, fetch, and configure the missing tools (${labelText}) for Token Saver on this ${osName} machine following \`/pluginmanagement\` V1.4 and \`/grill-me\`:${targetPathHeader}`,
             '',
             items.join('\n\n'),
             '',
-            'Please execute these terminal commands and skill setups now to make them globally available on the IDE.'
+            'Please align with me on any ambiguous path/scope decisions first (one question at a time with recommended defaults), then execute these terminal commands and plugin setups to make them globally available in the IDE.'
         ].join('\n');
 
         return prompt;
@@ -1113,6 +1262,7 @@ class RtkService {
     static generateSingleElementAiPrompt(elementKey, isWindows = (process.platform === 'win32'), isMac = (process.platform === 'darwin'), customInstallPath = null) {
         const osName = isWindows ? 'Windows (PowerShell / Command Prompt)' : (isMac ? 'macOS (Homebrew / Terminal)' : 'Linux (Bash / Terminal)');
         const basePath = (customInstallPath || '').trim();
+        const storageRoot = basePath || 'D:\\Software\\AI Agent Space';
         const cmds = this.getInstallCommands(isWindows, isMac, basePath);
 
         let title = '';
@@ -1120,105 +1270,98 @@ class RtkService {
 
         switch (elementKey) {
             case 'omniroute':
-                title = 'OmniRoute AI Gateway (Smart Model Router)';
+                title = 'OmniRoute AI Gateway (Self-Installed Local Router)';
                 instructions.push(
-                    `1. **Install OmniRoute CLI**:\n   Run command: \`${cmds.omniRouteCmd}\``,
+                    `1. **Install Self-Managed OmniRoute CLI**:\n   Run command: \`${cmds.omniRouteCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`omniroute --version\``,
-                    `3. **Start Gateway (Optional)**:\n   Run \`omniroute start\` or configure endpoint at \`http://localhost:20128/v1\` with fallback routing.`
+                    `3. **Enable in Quick Actions**:\n   Toggle **OmniRoute Gateway** ON in Token Saver Quick Actions (status dot turns green) and connect endpoint \`http://localhost:20128/v1\`.`
                 );
                 break;
             case 'jevgraph':
                 title = 'JevGraph Knowledge Graph Engine (chenmingtang830/jevgraph)';
                 instructions.push(
-                    `1. **Clone & Setup JevGraph via uv**${basePath ? ` in \`${basePath}/jevgraph\`` : ''}:\n   Run command: \`${cmds.jevGraphCmd}\``,
-                    `2. **Verify Engine**:\n   Run: \`uv run jevgraph --help\` or verify directory at ${basePath ? `\`${basePath}/jevgraph\`` : '`~/.config/jevgraph`'}.`,
-                    `3. **Skills Integration**:\n   Ensure skills \`/jevgraph-build\` and \`/jevgraph-query\` are available in the IDE.`
+                    `1. **Clone & Setup JevGraph via uv in \`${storageRoot}/plugins/jevgraph\`**:\n   Run command: \`${cmds.jevGraphCmd}\`\n   Ensure \`plugin.json\` includes \`"upstream": "https://github.com/chenmingtang830/jevgraph"\` (UTF-8 No BOM).`,
+                    `2. **Verify Engine**:\n   Run: \`uv run jevgraph --help\` or verify directory at \`${storageRoot}/plugins/jevgraph\`.`,
+                    `3. **Skills Integration**:\n   Ensure skills \`/jevgraph-build\` and \`/jevgraph-query\` include \`upstream: "https://github.com/chenmingtang830/jevgraph"\` in YAML frontmatter.`
                 );
                 break;
             case 'rtk':
-                title = 'RTK CLI (Rust Token Killer)';
+                title = 'RTK-RG (Rust Token Killer + ripgrep Upstream + Bridge)';
                 instructions.push(
-                    `1. **Install RTK CLI**:\n   Run command: \`${cmds.rtkCmd}\``,
-                    `2. **Verify Installation**:\n   Run: \`rtk --version\` and \`rtk gain\`.`,
-                    `3. **Usage**:\n   Commands like \`rtk git status\`, \`rtk npm test\` now condense output to save 60-90% tokens.`
+                    `1. **Install RTK CLI + ripgrep (rg) + RTK-RG Bridge Files (Upstreams: \`rtk-ai/rtk\` & \`BurntSushi/ripgrep\`)**:\n   Run command: \`${cmds.rtkCmd}\``,
+                    `2. **Verify Installation & Bridge**:\n   Run: \`rtk --version\`, \`rg --version\`, and \`rtk gain\`. Verify \`rg.exe\` is co-located alongside \`rtk.exe\`, \`~/.local/bin\` contains \`ls.cmd\`, \`dir.cmd\`, \`grep.cmd\`, \`rtk-rg.cmd\`, and \`${storageRoot}/plugins/rtk/plugin.json\` records \`"upstream": "https://github.com/rtk-ai/rtk"\` (UTF-8 No BOM).`,
+                    `3. **RTK-RG Usage Invariants**:\n   - Always specify an explicit target directory with \`rtk rg "<pattern>" .\` (never bare \`rtk rg "<pattern>"\`, which waits on stdin EOF).\n   - Prefer \`rtk ls <path>\` over \`rtk dir\` on Windows so forward slashes work natively.`
                 );
                 break;
             case 'headroom':
-                title = 'Headroom Context Compression (CCR Layer)';
+                title = 'Headroom Context Compression (headroomlabs-ai/headroom)';
                 instructions.push(
                     `1. **Install Headroom Python Package**:\n   Run command: \`${cmds.headroomCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`headroom --version\`.`,
-                    `3. **Skills Integration**:\n   Ensure \`/rtk-compress\` and CCR compression are active.`
+                    `3. **Skills Integration**:\n   Ensure \`/rtk-compress\` is active with \`upstream: "https://github.com/headroomlabs-ai/headroom"\` in YAML frontmatter (UTF-8 No BOM).`
                 );
                 break;
             case 'ponytail':
                 title = 'Ponytail YAGNI Suite (DietrichGebert/ponytail)';
                 instructions.push(
-                    `1. **Fetch & Install Ponytail Skills**:\n   Fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.${basePath ? ` Also clone to \`${basePath}/ponytail\` for source inspection.` : ''}`,
-                    `2. **Verify Skills**:\n   Ensure \`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\` are registered.`,
-                    `3. **Configure Rules**:\n   Add Ponytail YAGNI directives to AGENTS.md / .cursorrules.`
+                    `1. **Fetch & Package Ponytail Plugin**:\n   Fetch Ponytail from GitHub (\`https://github.com/DietrichGebert/ponytail\`) into \`${storageRoot}/plugins/ponytail\` with \`plugin.json\` (\`"upstream": "https://github.com/DietrichGebert/ponytail"\`) and bridge skills into \`~/.gemini/config/skills/\` (UTF-8 No BOM).`,
+                    `2. **Verify Skills**:\n   Ensure \`/ponytail\`, \`/ponytail-audit\`, \`/ponytail-debt\`, \`/ponytail-gain\`, \`/ponytail-help\`, \`/ponytail-review\` include \`upstream\` in YAML frontmatter.`,
+                    `3. **Configure Rules**:\n   Sync Ponytail YAGNI directives via Token Saver.`
                 );
                 break;
             case 'antislop':
                 title = 'Anti-Slop Framework (miqdadbadjuber/anti-slop)';
                 instructions.push(
-                    `1. **Fetch & Install Anti-Slop Skills**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.${basePath ? ` Also clone to \`${basePath}/anti-slop\` for source inspection.` : ''}`,
-                    `2. **Verify Skills**:\n   Ensure \`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\` are registered.`,
+                    `1. **Fetch & Package Anti-Slop Plugin**:\n   Fetch Anti-Slop from GitHub (\`https://github.com/miqdadbadjuber/anti-slop\`) into \`${storageRoot}/plugins/anti-slop\` with \`plugin.json\` (\`"upstream": "https://github.com/miqdadbadjuber/anti-slop"\`) and bridge skills into \`~/.gemini/config/skills/\` (UTF-8 No BOM).`,
+                    `2. **Verify Skills**:\n   Ensure \`/antislop\`, \`/antislop-ui\`, \`/antislop-copywriting\`, \`/antislop-human\`, \`/antislop-layoutmobile\`, \`/antislop-code\` include \`upstream\` in YAML frontmatter.`,
                     `3. **Configure Rules**:\n   Ensure Anti-Slop hygiene rules are active in IDE agent configuration.`
                 );
                 break;
             case 'codegraph':
                 title = 'CodeGraphContext Code AST Engine (CodeGraphContext/CodeGraphContext)';
                 instructions.push(
-                    `1. **Install CodeGraphContext**${basePath ? ` in \`${basePath}/CodeGraphContext\`` : ''}:\n   Run command: \`${cmds.codeGraphCmd}\``,
+                    `1. **Install CodeGraphContext**:\n   Run command: \`${cmds.codeGraphCmd}\``,
                     `2. **Verify Installation**:\n   Run: \`cgc --version\`.`,
-                    `3. **Index Codebase**:\n   Run \`cgc index\` or \`/codegraph-index\` to build the semantic property graph.`
+                    `3. **Skills & Indexing**:\n   Ensure \`/codegraph-index\` and \`/codegraph-query\` include \`upstream: "https://github.com/CodeGraphContext/CodeGraphContext"\` in YAML frontmatter (UTF-8 No BOM).`
                 );
                 break;
             case 'crw':
             case 'fastcrw':
                 title = 'fastCRW Hybrid Scraper & Search Engine (fastcrw/crw)';
                 instructions.push(
-                    `1. **Install fastCRW CLI / Server**${basePath ? ` in \`${basePath}/fastcrw\`` : ''}:\n   Run command: \`${cmds.crwCmd}\``,
+                    `1. **Install fastCRW CLI / Server in \`${storageRoot}/plugins/fastcrw\`**:\n   Run command: \`${cmds.crwCmd}\`\n   Store shared stagehand/fastcrw state in \`${storageRoot}/shared/stagehand-fastcrw/\` and ensure \`plugin.json\` includes \`"upstream": "https://github.com/fastcrw/crw"\` (UTF-8 No BOM).`,
                     `2. **Verify Installation**:\n   Run: \`crw --version\` or \`crw-server --version\`.`,
-                    `3. **Usage**:\n   Run \`crw <url>\` to scrape websites straight into token-efficient markdown, or run \`crw-server\` on port 3000.`
+                    `3. **Usage**:\n   Run \`crw <url>\` to scrape websites into token-efficient markdown.`
                 );
                 break;
             case 'lightpanda':
                 title = 'Lightpanda Headless Browser Engine (lightpanda-io/browser)';
                 instructions.push(
-                    `1. **Install Lightpanda Browser**${basePath ? ` in \`${basePath}/lightpanda\`` : ''}:\n   Run command: \`${cmds.lightpandaCmd}\``,
+                    `1. **Install Lightpanda Browser in \`${storageRoot}/plugins/lightpanda\`**:\n   Run command: \`${cmds.lightpandaCmd}\`\n   Ensure \`plugin.json\` includes \`"upstream": "https://github.com/lightpanda-io/browser"\` (UTF-8 No BOM).`,
                     `2. **Verify Installation**:\n   Run: \`lightpanda --version\` or \`npx @lightpanda/browser --version\`.`,
-                    `3. **Start Local MCP Server**:\n   Run \`lightpanda mcp --port 8000\` or configure in agent's MCP settings for instant dynamic JS execution.`
+                    `3. **Start Local MCP Server**:\n   Run \`lightpanda mcp --port 8000\` or configure in agent's MCP settings.`
                 );
                 break;
             case 'ecc':
                 title = 'ECC Agent Harness & Context Optimization System (affaan-m/ECC)';
                 instructions.push(
-                    `1. **Fetch & Install ECC Skills**:\n   Clone/fetch ECC from GitHub (\`https://github.com/affaan-m/ECC\`) into \`~/.gemini/config/skills/\` and workspace \`.agents/skills/\`.${basePath ? ` Also clone to \`${basePath}/ECC\` for source inspection.` : ''}`,
-                    `2. **Verify Skills**:\n   Ensure \`/strategic-compact\`, \`/ck\`, \`/council\`, and \`/agent-evaluator\` are registered.`,
-                    `3. **Auto-Trigger Policy**:\n   Ensure agent rules enforce strategic compaction at phase boundaries and snapshot checkpoints before clearing context.`
+                    `1. **Fetch & Install ECC Skills**:\n   Fetch ECC from GitHub (\`https://github.com/affaan-m/ECC\`) into \`${storageRoot}/plugins/ecc\` (with \`plugin.json\`) and bridge skills into \`~/.gemini/config/skills/\` (UTF-8 No BOM).`,
+                    `2. **Verify Skills**:\n   Ensure \`/strategic-compact\`, \`/ck\`, \`/council\`, and \`/agent-evaluator\` include \`upstream: "https://github.com/affaan-m/ECC"\` in YAML frontmatter.`,
+                    `3. **Auto-Trigger Policy**:\n   Ensure agent rules enforce strategic compaction at phase boundaries.`
                 );
                 break;
             default:
-                return this.generateAiInstallPrompt(isWindows, isMac, true, true, true, true, true, true, true, true, true, basePath);
+                return this.generateAiInstallPrompt(isWindows, isMac, true, true, true, false, true, true, true, true, true, basePath, true);
         }
 
-        const targetPathHeader = basePath
-            ? `\n> **Target Base Directory & Hierarchy Standard (/tool-management-rules)**:\n` +
-              `> - **Target Base Path**: Install/clone into dedicated sub-folder under: \`${basePath}\` (e.g. \`${basePath}/<upstream-repo-name>\`).\n` +
-              `> - **Zero Loose Files In Root**: Do NOT place loose scripts, configuration files, virtual environments (\`venv\`), or build caches in \`${basePath}\` root.\n` +
-              `> - **Shared Dependencies**: Multi-tool dependencies and shared environments must reside in \`${basePath}/shared/<domain-or-tool-combination>/\`.\n` +
-              `> - **Skills Standard**: All agent skills must be placed in the IDE's flat skills discovery directory (\`<SKILLS_DIR>/<skill-name>/SKILL.md\`) or linked via directory junction (\`mklink /J\`).\n` +
-              `> - **7-Day Update Protocol**: Record an initial \`update_check_state.json\` file in the tool sub-folder to enforce weekly update checks.\n`
-            : '';
+        const targetPathHeader = this.getPluginManagementHeader(basePath);
 
         return [
-            `Please help me install, configure, and verify **${title}** for Token Saver on this ${osName} machine:${targetPathHeader}`,
+            `Please help me install, configure, and verify **${title}** for Token Saver on this ${osName} machine following \`/pluginmanagement\` V1.4 and \`/grill-me\`:${targetPathHeader}`,
             '',
             instructions.join('\n\n'),
             '',
-            'Please execute these terminal commands and setup steps now, then confirm once complete.'
+            'Please align with me on any ambiguous path/scope decisions first (one question at a time with recommended defaults), then execute these terminal commands and setup steps and confirm once complete.'
         ].join('\n');
     }
 

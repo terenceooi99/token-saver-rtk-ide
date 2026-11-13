@@ -6,16 +6,26 @@ const vscode = require('vscode');
 const RTK_BLOCK_START = '<!-- RTK_TOKEN_SAVER_START -->';
 const RTK_BLOCK_END = '<!-- RTK_TOKEN_SAVER_END -->';
 
-const CORE_RULE_TEXT = `## RTK (Rust Token Killer) Optimization Rule
+const CORE_RULE_TEXT = `## RTK-RG (Rust Token Killer + ripgrep Bridge) Optimization Rule
 Prefix every shell/terminal execution command with \`rtk\`:
 - \`rtk git status\`, \`rtk git diff\`, \`rtk git log -n 5\`
 - \`rtk npm test\`, \`rtk npm run build\`, \`rtk pnpm test\`, \`rtk yarn test\`
 - \`rtk cargo check\`, \`rtk cargo test\`, \`rtk cargo build\`
 - \`rtk pytest\`, \`rtk vitest\`
-- \`rtk ls src/\`, \`rtk tree -L 2\`, \`rtk rg "pattern"\`
+- \`rtk ls src/\`, \`rtk tree -L 2\`, \`rtk rg "pattern" .\`
 
 Keep the prefix inside chains: \`rtk git add . && rtk git commit -m "msg"\`.
 Commands RTK has no filter for run as-is, so the prefix is always safe.
+
+### RTK-RG & Windows Built-in Bridge Invariants
+- **Ripgrep / Search Invariants (\`rtk rg\`)**:
+  - \`rtk\` and \`rg\` (upstream \`BurntSushi/ripgrep\`) are bridged via co-located \`rg\` binary and \`~/.local/bin\` shims.
+  - **Never invoke \`rg\` or \`rtk rg\` without an explicit target directory** (always use \`rtk rg "<pattern>" .\`, NEVER bare \`rtk rg "<pattern>"\`). Omitting the target path in automated command runners causes ripgrep to wait for EOF on stdin indefinitely.
+  - Include \`$null | rtk rg ...\` or limit search depth with \`--max-depth 6\` when searching from project roots.
+  - If ripgrep fails (exit code >= 2), fall back to \`git grep -n -I "<pattern>"\` or PowerShell \`Select-String\`.
+- **Windows Built-ins & Shims (\`ls.cmd\`, \`dir.cmd\`, \`grep.cmd\`)**:
+  - **Directory listing**: Always prefer \`rtk ls <path>\` (e.g. \`rtk ls src/\`) over \`rtk dir\`. \`rtk ls\` handles forward slashes natively via the \`ls.cmd\` bridge shim.
+  - **Never pass forward slashes (\`/\`) to \`rtk dir\`**: On Windows, \`rtk dir\` delegates to \`cmd.exe\`'s \`dir\`, which treats \`/\` as an option switch (\`Invalid switch - ""\`). If \`rtk dir\` is used, strip trailing slashes and use backslashes (\`rtk dir src\\sub\`).
 
 ### Output & Token Optimization
 Command output is condensed to save 60-90% LLM context window tokens while preserving every critical signal, error, and exit code.
@@ -992,7 +1002,8 @@ class SkillInstaller {
     }
 
     static getGlobalDisabledSkillsPath() {
-        return path.join(this.getGlobalConfigPath(), '.disabled-skills');
+        const globalSkills = this.getGlobalSkillsPath();
+        return path.join(path.dirname(globalSkills), '.disabled-skills');
     }
 
     static getWorkspaceRoot() {
@@ -1004,19 +1015,31 @@ class SkillInstaller {
     static getWorkspaceRulePath() {
         const root = this.getWorkspaceRoot();
         if (!root) return null;
+        const detected = this.detectCurrentIde();
+        const targetMap = this.getTargetPaths();
+        const wsTarget = (detected.targetIds || []).find(id => !id.includes('global')) || (detected.targetIds || [])[0];
+        if (wsTarget && targetMap[wsTarget] && targetMap[wsTarget].length > 0) {
+            return targetMap[wsTarget][0];
+        }
         return path.join(root, '.agents', 'rules', 'antigravity-rtk-rules.md');
     }
 
     static getWorkspaceSkillsPath() {
         const root = this.getWorkspaceRoot();
         if (!root) return null;
+        const ide = this.detectCurrentIde();
+        if (ide && ide.id === 'cursor') {
+            return path.join(root, '.cursor', 'skills');
+        } else if (ide && ide.id === 'claude') {
+            return path.join(root, '.claude', 'skills');
+        }
         return path.join(root, '.agents', 'skills');
     }
 
     static getWorkspaceDisabledSkillsPath() {
-        const root = this.getWorkspaceRoot();
-        if (!root) return null;
-        return path.join(root, '.agents', '.disabled-skills');
+        const wsSkills = this.getWorkspaceSkillsPath();
+        if (!wsSkills) return null;
+        return path.join(path.dirname(wsSkills), '.disabled-skills');
     }
 
     /**
@@ -1134,17 +1157,21 @@ class SkillInstaller {
 
         let text = CORE_RULE_TEXT;
 
-        if (hybridWebEnabled || crwEnabled || lightpandaEnabled) {
+        if (hybridWebEnabled && (crwEnabled || lightpandaEnabled)) {
             text += `\n\n## 3-Tier Hybrid Web Research & Scraping Policy (Upstream: fastcrw/crw & lightpanda-io/browser)\n`;
             text += `When your IDE agent receives a task requiring web research or extraction, it follows this strict 3-tier routing logic:\n\n`;
             text += `1. **Discovery (Tier 1 - Default Search)**:\n`;
             text += `   - The agent uses its built-in search tool (\`search_web\` / native search) to find target URLs or documentation links.\n`;
-            text += `2. **Fast Extraction (Tier 2 - fastCRW)**:\n`;
-            text += `   - The agent attempts to fetch the URL using fastCRW (\`crw scrape <url>\`, \`crw_scrape\`, or \`http://127.0.0.1:3000\`).\n`;
-            text += `   - If the page is server-rendered (like a blog, GitHub README, or docs site), fastCRW instantly grabs clean Markdown/text, saving 70-90% context tokens without JS engine overhead.\n`;
-            text += `3. **Deep Dynamic Rendering (Tier 3 - Lightpanda Local via MCP)**:\n`;
-            text += `   - If fastCRW returns empty content, a rendering error, or hits a client-side JavaScript wall (e.g., a React/Vue SPA app or login-gated dashboard), the agent automatically falls back to Lightpanda Local via MCP (\`lightpanda mcp\`).\n`;
-            text += `   - Lightpanda executes the JS via V8 and feeds a clean Accessibility Tree or Markdown back into the IDE context window using ~10x less memory than headless Chrome.\n`;
+            if (crwEnabled) {
+                text += `2. **Fast Extraction (Tier 2 - fastCRW)**:\n`;
+                text += `   - The agent attempts to fetch the URL using fastCRW (\`crw scrape <url>\`, \`crw_scrape\`, or \`http://127.0.0.1:3000\`).\n`;
+                text += `   - If the page is server-rendered (like a blog, GitHub README, or docs site), fastCRW instantly grabs clean Markdown/text, saving 70-90% context tokens without JS engine overhead.\n`;
+            }
+            if (lightpandaEnabled) {
+                text += `${crwEnabled ? '3' : '2'}. **Deep Dynamic Rendering (Tier 3 - Lightpanda Local via MCP)**:\n`;
+                text += `   - If ${crwEnabled ? 'fastCRW returns empty content, a rendering error, or hits' : 'a target page has'} a client-side JavaScript wall (e.g., a React/Vue SPA app or login-gated dashboard), the agent automatically falls back to Lightpanda Local via MCP (\`lightpanda mcp\`).\n`;
+                text += `   - Lightpanda executes the JS via V8 and feeds a clean Accessibility Tree or Markdown back into the IDE context window using ~10x less memory than headless Chrome.\n`;
+            }
         }
 
         if (codeGraphEnabled || jevGraphEnabled) {
@@ -1357,6 +1384,18 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         }
 
         if (filePath.endsWith('antislop.mdc')) {
+            let antiSlopOn = true;
+            try {
+                const cfg = vscode.workspace.getConfiguration('tokenSaver');
+                antiSlopOn = cfg.get('antiSlopEnabled', true) && cfg.get('antiSlopMode', 'during') !== 'off';
+            } catch (_) {}
+            if (!antiSlopOn) {
+                if (exists) {
+                    fs.unlinkSync(filePath);
+                    return { path: filePath, action: 'removed' };
+                }
+                return { path: filePath, action: 'unchanged' };
+            }
             fs.writeFileSync(filePath, this.formatCursorAntiSlopMdc(), 'utf8');
             return { path: filePath, action: 'written' };
         }
@@ -1384,9 +1423,63 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
     }
 
     /**
-     * Synchronize rules across specified targets (e.g. 'all', 'global', 'workspace', or specific array of targets).
+     * Resolve effective Rule / Configuration Target IDs strictly scoped to the detected IDE / AI agent.
+     * Ensures no foreign IDE rule files (.cursorrules, .windsurfrules, .clinerules, CLAUDE.md, etc.)
+     * are created or modified when running in another IDE/agent.
      */
-    static syncRules(enabled = true, targetScope = 'all') {
+    static resolveEffectiveRuleTargets(targetScope = 'current') {
+        const detected = this.detectCurrentIde();
+        const allowedTargets = Array.isArray(detected.targetIds) ? detected.targetIds : [];
+        const targetMap = this.getTargetPaths();
+
+        let requestedTargets = [];
+        let isExplicitSingleTarget = false;
+
+        if (!targetScope || targetScope === 'current' || targetScope === 'all') {
+            requestedTargets = [...allowedTargets];
+        } else if (targetScope === 'global') {
+            const globalOnly = allowedTargets.filter(id => id.includes('global'));
+            requestedTargets = globalOnly.length > 0 ? globalOnly : [...allowedTargets];
+        } else if (targetScope === 'workspace') {
+            const wsOnly = allowedTargets.filter(id => !id.includes('global'));
+            requestedTargets = wsOnly.length > 0 ? wsOnly : [...allowedTargets];
+            isExplicitSingleTarget = true;
+        } else if (Array.isArray(targetScope)) {
+            requestedTargets = targetScope.filter(id => allowedTargets.includes(id));
+            isExplicitSingleTarget = true;
+        } else if (typeof targetScope === 'string' && targetMap[targetScope]) {
+            if (allowedTargets.includes(targetScope)) {
+                requestedTargets = [targetScope];
+                isExplicitSingleTarget = true;
+            } else {
+                // Requested target belongs to a different IDE/agent; fallback strictly to detected IDE's targets
+                requestedTargets = [...allowedTargets];
+            }
+        } else {
+            requestedTargets = [...allowedTargets];
+        }
+
+        // For multi-target IDEs (e.g. Antigravity global + workspace), avoid auto-creating workspace rule
+        // file on routine syncs unless it already exists on disk or was explicitly requested.
+        const hasGlobalTarget = requestedTargets.some(id => id.includes('global'));
+        if (hasGlobalTarget && !isExplicitSingleTarget && requestedTargets.length > 1) {
+            requestedTargets = requestedTargets.filter(id => {
+                if (id.includes('global')) return true;
+                const paths = targetMap[id] || [];
+                return paths.some(fp => fs.existsSync(fp));
+            });
+        }
+
+        return {
+            detectedIde: detected,
+            selectedTargets: requestedTargets
+        };
+    }
+
+    /**
+     * Synchronize rules strictly for the detected active IDE / AI Agent's Rule / Configuration Target.
+     */
+    static syncRules(enabled = true, targetScope = 'current', options = {}) {
         const results = [];
         const targetMap = this.getTargetPaths();
 
@@ -1396,22 +1489,9 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         const masterEnabled = this.isMasterEnabled();
         const effectiveEnabled = Boolean(enabled && masterEnabled);
 
-        let selectedTargets = [];
-        if (targetScope === 'current') {
-            selectedTargets = this.detectCurrentIde().targetIds;
-        } else if (targetScope === 'all') {
-            selectedTargets = Object.keys(targetMap);
-        } else if (targetScope === 'global') {
-            selectedTargets = ['antigravity_global'];
-        } else if (targetScope === 'workspace') {
-            selectedTargets = ['antigravity_workspace', 'copilot', 'cursor', 'windsurf', 'cline', 'claude', 'agents'];
-        } else if (Array.isArray(targetScope)) {
-            selectedTargets = targetScope;
-        } else if (typeof targetScope === 'string' && targetMap[targetScope]) {
-            selectedTargets = [targetScope];
-        } else {
-            selectedTargets = Object.keys(targetMap);
-        }
+        // Always check which IDE / AI agent is running this plugin first
+        // and only run the specific Rule / Configuration Target(s) for that IDE/agent.
+        const { detectedIde, selectedTargets } = this.resolveEffectiveRuleTargets(targetScope);
 
         for (const targetId of selectedTargets) {
             const filePaths = targetMap[targetId] || [];
@@ -1419,11 +1499,16 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
                 try {
                     const blockContent = this.formatWrappedRule(`RTK Token Saver Rule (${targetId})`);
                     const result = this.safeApplyBlockToFile(filePath, blockContent, effectiveEnabled);
-                    results.push({ target: targetId, ...result });
+                    results.push({ target: targetId, ide: detectedIde.id, ...result });
                 } catch (err) {
                     console.error(`Failed to sync rule for ${targetId} at ${filePath}:`, err);
                 }
             }
+        }
+
+        // Respect currently disabled upstreams so their skills are not exposed on agent quick list
+        if (!options.skipUpstreamVisibility) {
+            this.syncUpstreamSkillsVisibility(enabled);
         }
 
         return results;
@@ -1580,6 +1665,9 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
             }
         }
 
+        // Respect currently disabled upstreams so their skills are not exposed on agent quick list
+        this.syncUpstreamSkillsVisibility();
+
         return results;
     }
 
@@ -1619,6 +1707,9 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
                 console.warn(`Failed to install specific skills to ${t.dir}:`, err);
             }
         }
+        // Respect currently disabled upstreams so their skills are not exposed on agent quick list
+        this.syncUpstreamSkillsVisibility();
+
         return results;
     }
 
@@ -2146,6 +2237,13 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         const items = [];
 
         if (targetScope === 'all' || targetScope === 'global') {
+            const userDefinedDir = this.getUserDefinedSkillsPath();
+            if (userDefinedDir) {
+                const userDisabledDir = path.join(path.dirname(userDefinedDir), '.disabled-skills');
+                if (userDisabledDir !== globalDisabledDir) {
+                    items.push(...this.listInstalledSkillsInDir(userDisabledDir, 'global'));
+                }
+            }
             if (globalDisabledDir) {
                 items.push(...this.listInstalledSkillsInDir(globalDisabledDir, 'global'));
             }
@@ -2158,120 +2256,201 @@ For UI, copy, people, mobile layout, or code comments work, load the matching an
         return items;
     }
 
+    static getUpstreamSkillsMap() {
+        return {
+            ponytail: ['ponytail', 'ponytail-audit', 'ponytail-debt', 'ponytail-gain', 'ponytail-help', 'ponytail-review'],
+            antislop: ['antislop', 'antislop-code', 'antislop-copywriting', 'antislop-human', 'antislop-layoutmobile', 'antislop-ui'],
+            jevgraph: ['jevgraph-build', 'jevgraph-query'],
+            codegraph: ['codegraph-index', 'codegraph-query'],
+            ecc: ['strategic-compact', 'ck', 'council', 'agent-evaluator'],
+            omniroute: ['rtk-omniroute'],
+            rtk: [
+                'rtk-compress', 'rtk-diff', 'rtk-doctor', 'rtk-gain', 'rtk-outline',
+                'rtk-roi', 'rtk-run', 'rtk-savedtokenoff', 'rtk-savedtokenon',
+                'rtk-sync', 'rtk-tree', 'rtk-update', 'tool-management-rules'
+            ]
+        };
+    }
+
+    static getSkillAndDisabledDirPairs(targetScope = 'current') {
+        const pairs = [];
+        const seenSkillsDirs = new Set();
+        const detected = this.detectCurrentIde();
+        const addPair = (scope, skillsDir, disabledDir) => {
+            if (!skillsDir || !disabledDir) return;
+            const resolved = path.resolve(skillsDir);
+            if (seenSkillsDirs.has(resolved)) return;
+            seenSkillsDirs.add(resolved);
+            pairs.push({ scope, skillsDir, disabledDir, ide: detected.id });
+        };
+
+        if (targetScope === 'current' || targetScope === 'all' || targetScope === 'workspace') {
+            addPair('workspace', this.getWorkspaceSkillsPath(), this.getWorkspaceDisabledSkillsPath());
+        }
+        if (targetScope === 'current' || targetScope === 'all' || targetScope === 'global') {
+            const userDefinedDir = this.getUserDefinedSkillsPath();
+            if (userDefinedDir) {
+                addPair('global', userDefinedDir, path.join(path.dirname(userDefinedDir), '.disabled-skills'));
+            }
+            addPair('global', this.getGlobalSkillsPath(), this.getGlobalDisabledSkillsPath());
+        }
+        return pairs;
+    }
+
     /**
      * Temporarily disable specified skills by moving their folders into .disabled-skills
      * This physically removes them from the IDE's skill discovery index, ensuring they
      * cannot be @-mentioned or shown in / slash action lists.
      */
-    static disableSkills(skillNames = [], targetScope = 'all') {
-        const globalSkillsDir = this.getGlobalSkillsPath();
-        const globalDisabledDir = this.getGlobalDisabledSkillsPath();
-        const wsSkillsDir = this.getWorkspaceSkillsPath();
-        const wsDisabledDir = this.getWorkspaceDisabledSkillsPath();
-
+    static disableSkills(skillNames = [], targetScope = 'all', skipSyncRules = false) {
+        const pairs = this.getSkillAndDisabledDirPairs(targetScope);
         const disabledGlobal = [];
         const disabledWs = [];
 
         for (const skill of skillNames) {
-            // Workspace
-            if (targetScope === 'all' || targetScope === 'workspace') {
-                if (wsSkillsDir && wsDisabledDir) {
-                    const src = path.join(wsSkillsDir, skill);
-                    const dest = path.join(wsDisabledDir, skill);
-                    if (fs.existsSync(src)) {
-                        const moved = this.moveDir(src, dest);
-                        if (moved) disabledWs.push(skill);
-                    }
-                }
-            }
-            // Global
-            if (targetScope === 'all' || targetScope === 'global') {
-                if (globalSkillsDir && globalDisabledDir) {
-                    const src = path.join(globalSkillsDir, skill);
-                    const dest = path.join(globalDisabledDir, skill);
-                    if (fs.existsSync(src)) {
-                        const moved = this.moveDir(src, dest);
-                        if (moved) disabledGlobal.push(skill);
+            for (const pair of pairs) {
+                const src = path.join(pair.skillsDir, skill);
+                const dest = path.join(pair.disabledDir, skill);
+                if (fs.existsSync(src)) {
+                    const moved = this.moveDir(src, dest);
+                    if (moved) {
+                        if (pair.scope === 'workspace') disabledWs.push(skill);
+                        else disabledGlobal.push(skill);
                     }
                 }
             }
         }
 
-        // Re-sync rules so IDE rule files instruct agents about disabled skills
-        this.syncRules(true, targetScope);
+        if (!skipSyncRules) {
+            // Re-sync rules so IDE rule files instruct agents about disabled skills
+            this.syncRules(true, targetScope, { skipUpstreamVisibility: true });
+        }
 
         return {
             targetScope,
             skills: skillNames,
-            global: disabledGlobal,
-            workspace: disabledWs,
+            global: [...new Set(disabledGlobal)],
+            workspace: [...new Set(disabledWs)],
             total: [...new Set([...disabledGlobal, ...disabledWs])]
         };
+    }
+
+    /**
+     * Re-enable specific skills by moving them back from .disabled-skills to skills/
+     */
+    static enableSkills(skillNames = [], targetScope = 'all', skipSyncRules = false) {
+        const pairs = this.getSkillAndDisabledDirPairs(targetScope);
+        const restoredGlobal = [];
+        const restoredWs = [];
+
+        for (const skill of skillNames) {
+            for (const pair of pairs) {
+                const src = path.join(pair.disabledDir, skill);
+                const dest = path.join(pair.skillsDir, skill);
+                if (fs.existsSync(src)) {
+                    const moved = this.moveDir(src, dest);
+                    if (moved) {
+                        if (pair.scope === 'workspace') restoredWs.push(skill);
+                        else restoredGlobal.push(skill);
+                    }
+                }
+                // Cleanup empty quarantine directory
+                try {
+                    if (fs.existsSync(pair.disabledDir) && fs.readdirSync(pair.disabledDir).length === 0) {
+                        fs.rmSync(pair.disabledDir, { recursive: true, force: true });
+                    }
+                } catch (_) {}
+            }
+        }
+
+        if (!skipSyncRules) {
+            this.syncRules(true, targetScope, { skipUpstreamVisibility: true });
+        }
+
+        return {
+            targetScope,
+            skills: skillNames,
+            global: [...new Set(restoredGlobal)],
+            workspace: [...new Set(restoredWs)],
+            total: [...new Set([...restoredGlobal, ...restoredWs])]
+        };
+    }
+
+    /**
+     * Synchronize skill visibility for all upstreams based on current configuration.
+     * Any turned-off upstream has its skills moved to .disabled-skills so agents cannot see them.
+     */
+    static syncUpstreamSkillsVisibility(masterEnabled = null) {
+        try {
+            const config = vscode.workspace.getConfiguration('tokenSaver');
+            const isMasterOn = masterEnabled !== null
+                ? Boolean(masterEnabled)
+                : (this.extensionContext
+                    ? this.extensionContext.globalState.get('tokenSaver.enabled', config.get('enableOnStartup', true))
+                    : config.get('enableOnStartup', true));
+
+            const upstreamMap = this.getUpstreamSkillsMap();
+            const states = {
+                ponytail: isMasterOn && config.get('ponytailMode', 'full') !== 'off',
+                antislop: isMasterOn && config.get('antiSlopEnabled', true) && config.get('antiSlopMode', 'during') !== 'off',
+                jevgraph: isMasterOn && config.get('jevGraphEnabled', true),
+                codegraph: isMasterOn && config.get('codeGraphEnabled', true),
+                ecc: isMasterOn && config.get('eccEnabled', true),
+                omniroute: isMasterOn && config.get('omniRouteEnabled', true),
+                rtk: isMasterOn
+            };
+
+            for (const [key, skills] of Object.entries(upstreamMap)) {
+                if (states[key]) {
+                    this.enableSkills(skills, 'all', true);
+                } else {
+                    this.disableSkills(skills, 'all', true);
+                }
+            }
+        } catch (err) {
+            console.warn('[SkillInstaller] syncUpstreamSkillsVisibility notice:', err.message);
+        }
     }
 
     /**
      * Re-enable all temporarily disabled skills by moving them back from .disabled-skills to skills/
      */
     static reEnableAllSkills(targetScope = 'all') {
-        const globalSkillsDir = this.getGlobalSkillsPath();
-        const globalDisabledDir = this.getGlobalDisabledSkillsPath();
-        const wsSkillsDir = this.getWorkspaceSkillsPath();
-        const wsDisabledDir = this.getWorkspaceDisabledSkillsPath();
-
+        const pairs = this.getSkillAndDisabledDirPairs(targetScope);
         const restoredGlobal = [];
         const restoredWs = [];
 
-        // Restore Workspace
-        if ((targetScope === 'all' || targetScope === 'workspace') && wsDisabledDir && fs.existsSync(wsDisabledDir)) {
+        for (const pair of pairs) {
+            if (!pair.disabledDir || !fs.existsSync(pair.disabledDir)) continue;
             try {
-                const entries = fs.readdirSync(wsDisabledDir, { withFileTypes: true });
+                const entries = fs.readdirSync(pair.disabledDir, { withFileTypes: true });
                 for (const entry of entries) {
                     if (entry.isDirectory()) {
-                        const src = path.join(wsDisabledDir, entry.name);
-                        const dest = path.join(wsSkillsDir, entry.name);
+                        const src = path.join(pair.disabledDir, entry.name);
+                        const dest = path.join(pair.skillsDir, entry.name);
                         const moved = this.moveDir(src, dest);
-                        if (moved) restoredWs.push(entry.name);
+                        if (moved) {
+                            if (pair.scope === 'workspace') restoredWs.push(entry.name);
+                            else restoredGlobal.push(entry.name);
+                        }
                     }
                 }
-                // Cleanup empty quarantine directory
                 try {
-                    const remaining = fs.readdirSync(wsDisabledDir);
-                    if (remaining.length === 0) fs.rmSync(wsDisabledDir, { recursive: true, force: true });
+                    const remaining = fs.readdirSync(pair.disabledDir);
+                    if (remaining.length === 0) fs.rmSync(pair.disabledDir, { recursive: true, force: true });
                 } catch (_) {}
             } catch (err) {
-                console.warn('Error restoring workspace disabled skills:', err);
-            }
-        }
-
-        // Restore Global
-        if ((targetScope === 'all' || targetScope === 'global') && globalDisabledDir && fs.existsSync(globalDisabledDir)) {
-            try {
-                const entries = fs.readdirSync(globalDisabledDir, { withFileTypes: true });
-                for (const entry of entries) {
-                    if (entry.isDirectory()) {
-                        const src = path.join(globalDisabledDir, entry.name);
-                        const dest = path.join(globalSkillsDir, entry.name);
-                        const moved = this.moveDir(src, dest);
-                        if (moved) restoredGlobal.push(entry.name);
-                    }
-                }
-                // Cleanup empty quarantine directory
-                try {
-                    const remaining = fs.readdirSync(globalDisabledDir);
-                    if (remaining.length === 0) fs.rmSync(globalDisabledDir, { recursive: true, force: true });
-                } catch (_) {}
-            } catch (err) {
-                console.warn('Error restoring global disabled skills:', err);
+                console.warn(`Error restoring ${pair.scope} disabled skills:`, err);
             }
         }
 
         // Re-sync rules to remove disabled skills notice
-        this.syncRules(true, targetScope);
+        this.syncRules(true, targetScope, { skipUpstreamVisibility: true });
 
         return {
             targetScope,
-            global: restoredGlobal,
-            workspace: restoredWs,
+            global: [...new Set(restoredGlobal)],
+            workspace: [...new Set(restoredWs)],
             total: [...new Set([...restoredGlobal, ...restoredWs])]
         };
     }
@@ -2310,14 +2489,14 @@ ${disabledNames.length > 0 ? `\n#### ⏸️ Already Disabled Skills (${disabledN
     }
 
     /**
-     * Completely remove all injected RTK / Token Saver rule blocks from all IDE target files
+     * Remove injected RTK / Token Saver rule blocks from the detected IDE / AI agent target files
      */
     static removeAllRules() {
-        return this.syncRules(false, 'all');
+        return this.syncRules(false, 'current');
     }
 
     /**
-     * Auto-detect the currently active IDE host environment
+     * Auto-detect the currently active IDE / AI Agent host environment
      */
     static detectCurrentIde() {
         const appName = (vscode.env.appName || '').toLowerCase();
@@ -2325,19 +2504,18 @@ ${disabledNames.length > 0 ? `\n#### ⏸️ Already Disabled Skills (${disabledN
         const execPath = (process.execPath || '').toLowerCase();
         const appRoot = (vscode.env.appRoot || '').toLowerCase();
 
-        // 1. Antigravity IDE detection
+        // 1. Explicit Antigravity IDE runtime host detection
         if (
             appName.includes('antigravity') ||
             uriScheme.includes('antigravity') ||
             execPath.includes('antigravity') ||
-            appRoot.includes('antigravity') ||
-            fs.existsSync(path.join(os.homedir(), '.gemini', 'antigravity-ide')) ||
-            fs.existsSync(path.join(os.homedir(), '.gemini', 'config'))
+            appRoot.includes('antigravity')
         ) {
             return {
                 id: 'antigravity',
                 displayName: 'Antigravity IDE',
                 shortName: 'Antigravity',
+                binaryName: 'antigravity',
                 targetIds: ['antigravity_global', 'antigravity_workspace']
             };
         }
@@ -2353,6 +2531,7 @@ ${disabledNames.length > 0 ? `\n#### ⏸️ Already Disabled Skills (${disabledN
                 id: 'cursor',
                 displayName: 'Cursor IDE',
                 shortName: 'Cursor',
+                binaryName: 'cursor',
                 targetIds: ['cursor']
             };
         }
@@ -2362,42 +2541,125 @@ ${disabledNames.length > 0 ? `\n#### ⏸️ Already Disabled Skills (${disabledN
             appName.includes('windsurf') ||
             uriScheme.includes('windsurf') ||
             execPath.includes('windsurf') ||
-            appRoot.includes('windsurf')
+            appRoot.includes('windsurf') ||
+            appName.includes('codeium')
         ) {
             return {
                 id: 'windsurf',
                 displayName: 'Windsurf IDE',
                 shortName: 'Windsurf',
+                binaryName: 'windsurf',
                 targetIds: ['windsurf']
             };
         }
 
-        // 4. Cline / Roo Code detection
-        if (appName.includes('cline') || appName.includes('roo')) {
+        // 4. Cline / Roo Code explicit host detection
+        if (
+            appName.includes('cline') ||
+            appName.includes('roo') ||
+            uriScheme.includes('cline') ||
+            uriScheme.includes('roo')
+        ) {
             return {
                 id: 'cline',
                 displayName: 'Cline & Roo Code',
                 shortName: 'Cline',
+                binaryName: 'code',
                 targetIds: ['cline']
             };
         }
 
-        // 5. Claude Code detection
-        if (appName.includes('claude')) {
+        // 5. Claude Code explicit host/env detection
+        if (
+            appName.includes('claude') ||
+            uriScheme.includes('claude') ||
+            execPath.includes('claude') ||
+            Boolean(process.env.CLAUDECODE) ||
+            Boolean(process.env.CLAUDE_CODE_ENTRYPOINT)
+        ) {
             return {
                 id: 'claude',
                 displayName: 'Claude Code',
                 shortName: 'Claude',
+                binaryName: 'claude',
                 targetIds: ['claude']
             };
         }
 
-        // 6. Default to Visual Studio Code (GitHub Copilot)
+        // 6. Universal Agents (OpenCode / Aider) explicit detection
+        if (
+            appName.includes('opencode') ||
+            appName.includes('aider') ||
+            Boolean(process.env.OPENCODE) ||
+            Boolean(process.env.AIDER_MODEL)
+        ) {
+            return {
+                id: 'agents',
+                displayName: 'Universal Agents',
+                shortName: 'Agents',
+                binaryName: 'code',
+                targetIds: ['agents']
+            };
+        }
+
+        // 7. Inside standard VS Code: inspect active AI agent extensions (Cline/Roo, Claude Code, Copilot)
+        const isStandardVsCode = appName.includes('visual studio code') || uriScheme === 'vscode' || uriScheme === 'vscode-insiders';
+        if (isStandardVsCode && vscode.extensions && Array.isArray(vscode.extensions.all)) {
+            const allExts = vscode.extensions.all;
+            const findExt = (ids) => allExts.find(e => e && e.id && ids.includes(e.id.toLowerCase()));
+            const clineExt = findExt(['saoudrizwan.claude-dev', 'rooveterinaryinc.roo-cline']);
+            const claudeExt = findExt(['anthropic.claude-code']);
+            const copilotExt = findExt(['github.copilot', 'github.copilot-chat']);
+
+            if (clineExt && clineExt.isActive && (!copilotExt || !copilotExt.isActive)) {
+                return {
+                    id: 'cline',
+                    displayName: 'Cline & Roo Code',
+                    shortName: 'Cline',
+                    binaryName: 'code',
+                    targetIds: ['cline']
+                };
+            }
+            if (claudeExt && claudeExt.isActive && (!copilotExt || !copilotExt.isActive)) {
+                return {
+                    id: 'claude',
+                    displayName: 'Claude Code',
+                    shortName: 'Claude',
+                    binaryName: 'claude',
+                    targetIds: ['claude']
+                };
+            }
+            return {
+                id: 'vscode',
+                displayName: 'VS Code (GitHub Copilot)',
+                shortName: 'VS Code',
+                binaryName: 'code',
+                targetIds: ['copilot']
+            };
+        }
+
+        // 8. Fallback for Antigravity host / headless environment when .gemini config exists
+        if (
+            fs.existsSync(path.join(os.homedir(), '.gemini', 'antigravity')) ||
+            fs.existsSync(path.join(os.homedir(), '.gemini', 'antigravity-ide')) ||
+            fs.existsSync(path.join(os.homedir(), '.gemini', 'config'))
+        ) {
+            return {
+                id: 'antigravity',
+                displayName: 'Antigravity IDE',
+                shortName: 'Antigravity',
+                binaryName: 'antigravity',
+                targetIds: ['antigravity_global', 'antigravity_workspace']
+            };
+        }
+
+        // 9. Default to Visual Studio Code (GitHub Copilot)
         const currentName = vscode.env.appName || 'Visual Studio Code';
         return {
             id: 'vscode',
             displayName: currentName,
             shortName: 'VS Code',
+            binaryName: 'code',
             targetIds: ['copilot']
         };
     }

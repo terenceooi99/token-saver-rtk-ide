@@ -338,7 +338,7 @@ class JevGraphService {
      */
     static async ingestWebUrl(targetUrl, outputChannel) {
         try {
-            vscode.window.showInformationMessage(`🌐 JevGraph: Fetching document from ${targetUrl}...`);
+            vscode.window.showInformationMessage(`JevGraph: Fetching document from ${targetUrl}...`);
             if (outputChannel) outputChannel.appendLine(`[Token Saver] JevGraph: Fetching web URL: ${targetUrl}`);
 
             const content = await this.fetchUrlContent(targetUrl);
@@ -357,7 +357,7 @@ class JevGraphService {
             if (outputChannel) outputChannel.appendLine(`[Token Saver] JevGraph: Saved web document to ${savePath}`);
 
             await this.ingestDocuments([savePath], outputChannel, false, targetUrl);
-            vscode.window.showInformationMessage(`🕸️ JevGraph: Successfully ingested and combined web document (${fileName}) into runs/graph.json`);
+            vscode.window.showInformationMessage(`JevGraph: Ingested and combined web document (${fileName}) into runs/graph.json.`);
         } catch (err) {
             vscode.window.showErrorMessage(`JevGraph Web Ingestion Error: ${err.message}`);
             if (outputChannel) outputChannel.appendLine(`[Token Saver] JevGraph Web Ingestion Error: ${err.message}`);
@@ -418,7 +418,7 @@ class JevGraphService {
 
         if (showToast) {
             vscode.window.showInformationMessage(
-                `🕸️ JevGraph: Successfully combined ${combinedCount} document(s) into runs/graph.json (${existingGraph.entities.length} entities, ${existingGraph.relations.length} relations).`
+                `JevGraph: Combined ${combinedCount} document(s) into runs/graph.json (${existingGraph.entities.length} entities, ${existingGraph.relations.length} relations).`
             );
         }
     }
@@ -677,7 +677,7 @@ class JevGraphService {
     static async autoInitialBuild(outputChannel, force = false) {
         if (!this.isEnabled()) return;
         const config = vscode.workspace.getConfiguration('tokenSaver');
-        if (!force && !config.get('jevGraphAutoBuild', true)) return;
+        if (!force && !config.get('jevGraphAutoBuild', false)) return;
 
         const root = this.getWorkspaceRoot();
         const repoName = path.basename(root);
@@ -739,7 +739,7 @@ class JevGraphService {
     static setupDocumentWatcher(context, outputChannel) {
         if (!this.isEnabled()) return;
         const config = vscode.workspace.getConfiguration('tokenSaver');
-        if (!config.get('jevGraphAutoWatch', true)) return;
+        if (!config.get('jevGraphAutoWatch', false)) return;
 
         let debounceTimer = null;
         const pendingFiles = new Set();
@@ -752,7 +752,7 @@ class JevGraphService {
             if (outputChannel) outputChannel.appendLine(`[Token Saver] JevGraph: Auto-combining ${filesToProcess.length} changed/new document(s) into knowledge graph...`);
             this.ingestDocuments(filesToProcess, outputChannel, false).then(() => {
                 const names = filesToProcess.map(f => path.basename(f)).join(', ');
-                vscode.window.setStatusBarMessage(`🕸️ JevGraph: Auto-combined (${names}) into graph.json`, 4000);
+                vscode.window.setStatusBarMessage(`JevGraph: Auto-combined (${names}) into graph.json`, 4000);
             });
         };
 
@@ -814,7 +814,7 @@ class JevGraphService {
         }
 
         if (showToast) {
-            vscode.window.showInformationMessage(`🗑️ JevGraph: Knowledge graph reset for active project '${repoName}'.`);
+            vscode.window.showInformationMessage(`JevGraph: Knowledge graph reset for active project '${repoName}'.`);
         }
         return deleted;
     }

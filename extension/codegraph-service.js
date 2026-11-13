@@ -188,12 +188,12 @@ class CodeGraphService {
         if (fs.existsSync(graphDir)) {
             try {
                 fs.rmSync(graphDir, { recursive: true, force: true });
-                vscode.window.showInformationMessage('🧹 CodeGraphContext cache cleared for current repository.');
+                vscode.window.showInformationMessage('CodeGraphContext cache cleared for current repository.');
             } catch (err) {
                 vscode.window.showErrorMessage(`Failed to clear CodeGraphContext cache: ${err.message}`);
             }
         } else {
-            vscode.window.showInformationMessage('ℹ️ No .codegraphcontext directory found to clear.');
+            vscode.window.showInformationMessage('No .codegraphcontext directory found to clear.');
         }
     }
 }
